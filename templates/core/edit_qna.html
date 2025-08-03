@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Q&As - AI Agent Customer Service{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Q&As for {{ assistant.business_type.name }}
+                    </h5>
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Edit your Q&As:</strong> You can modify existing questions and answers, delete unwanted ones, or add new Q&As. 
+                        Changes will automatically update your AI assistant's knowledge.
+                    </div>
+                    
+                    <form method="post" id="qnaEditForm">
+                        {% csrf_token %}
+                        
+                        <!-- Existing Q&As -->
+                        <div id="existingQnas">
+                            <h6 class="mb-3">
+                                <i class="fas fa-list me-2"></i>Current Q&As ({{ qnas.count }})
+                            </h6>
+                            
+                            {% for qna in qnas %}
+                            <div class="qna-item existing-qna mb-4 p-3 border rounded" data-qna-id="{{ qna.id }}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-question-circle me-2"></i>
+                                        Q&A #{{ forloop.counter }}
+                                    </h6>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="markForDeletion({{ qna.id }})">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Question:</label>
+                                    <textarea name="question_{{ qna.id }}" class="form-control" rows="2" required>{{ qna.question }}</textarea>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <label class="form-label">Answer:</label>
+                                    <textarea name="answer_{{ qna.id }}" class="form-control" rows="3" required>{{ qna.answer }}</textarea>
+                                </div>
+                                
+                                <input type="hidden" name="delete_qna" value="" class="delete-marker" disabled>
+                            </div>
+                            {% empty %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-question-circle fa-3x mb-3"></i>
+                                <p>No Q&As found. Add some below!</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- New Q&As Section -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-plus me-2"></i>Add New Q&As
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="newQnasContainer">
+                                    <!-- New Q&As will be added here -->
+                                </div>
+                                
+                                <button type="button" class="btn btn-outline-primary" onclick="addNewQnA()">
+                                    <i class="fas fa-plus me-2"></i>Add New Q&A
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-warning" onclick="regenerateQnAs()">
+                                    <i class="fas fa-sync-alt me-2"></i>Regenerate All Q&As
+                                </button>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Tips for Better Q&As
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Be Specific:</strong> Write clear, specific questions that customers would actually ask</li>
+                        <li><strong>Complete Answers:</strong> Provide comprehensive answers that fully address the question</li>
+                        <li><strong>Use Keywords:</strong> Include relevant keywords that customers might use when searching</li>
+                        <li><strong>Update Regularly:</strong> Keep your Q&As current with business changes</li>
+                        <li><strong>Test Often:</strong> Use the test chat feature to verify your Q&As work correctly</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Regenerate Q&As Modal -->
+<div class="modal fade" id="regenerateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sync-alt me-2"></i>Regenerate Q&As
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This will replace ALL existing Q&As with new auto-generated ones for your {{ assistant.business_type.name }} business. This action cannot be undone.
+                </div>
+                <p>Are you sure you want to regenerate all Q&As?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmRegenerate()">
+                    <i class="fas fa-sync-alt me-2"></i>Yes, Regenerate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+let newQnACounter = 0;
+
+function addNewQnA() {
+    const container = document.getElementById('newQnasContainer');
+    const newIndex = newQnACounter;
+    
+    const qnaItem = document.createElement('div');
+    qnaItem.className = 'qna-item new-qna mb-4 p-3 border rounded bg-light';
+    qnaItem.setAttribute('data-new-index', newIndex);
+    
+    qnaItem.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="mb-0">
+                <i class="fas fa-plus-circle me-2 text-success"></i>
+                New Q&A #${newIndex + 1}
+            </h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeNewQnA(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Question:</label>
+            <textarea name="new_question" class="form-control" rows="2" required placeholder="Enter your question here..."></textarea>
+        </div>
+        
+        <div class="mb-2">
+            <label class="form-label">Answer:</label>
+            <textarea name="new_answer" class="form-control" rows="3" required placeholder="Enter your answer here..."></textarea>
+        </div>
+    `;
+    
+    container.appendChild(qnaItem);
+    newQnACounter++;
+    
+    // Auto-focus on new question field
+    qnaItem.querySelector('textarea[name="new_question"]').focus();
+}
+
+function removeNewQnA(button) {
+    const qnaItem = button.closest('.qna-item');
+    qnaItem.remove();
+}
+
+function markForDeletion(qnaId) {
+    const qnaItem = document.querySelector(`[data-qna-id="${qnaId}"]`);
+    const deleteMarker = qnaItem.querySelector('.delete-marker');
+    
+    if (qnaItem.classList.contains('marked-for-deletion')) {
+        // Unmark for deletion
+        qnaItem.classList.remove('marked-for-deletion');
+        qnaItem.style.opacity = '1';
+        qnaItem.style.background = '';
+        deleteMarker.value = '';
+        deleteMarker.disabled = true;
+        qnaItem.querySelector('.btn-outline-danger').innerHTML = '<i class="fas fa-trash"></i> Delete';
+    } else {
+        // Mark for deletion
+        qnaItem.classList.add('marked-for-deletion');
+        qnaItem.style.opacity = '0.5';
+        qnaItem.style.background = '#f8d7da';
+        deleteMarker.value = qnaId;
+        deleteMarker.disabled = false;
+        qnaItem.querySelector('.btn-outline-danger').innerHTML = '<i class="fas fa-undo"></i> Undo';
+    }
+}
+
+function regenerateQnAs() {
+    const modal = new bootstrap.Modal(document.getElementById('regenerateModal'));
+    modal.show();
+}
+
+function confirmRegenerate() {
+    // Create a form to regenerate Q&As
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "edit_qna" %}';
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const regenerateField = document.createElement('input');
+    regenerateField.type = 'hidden';
+    regenerateField.name = 'regenerate';
+    regenerateField.value = 'true';
+    
+    form.appendChild(csrfToken);
+    form.appendChild(regenerateField);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Form validation
+document.getElementById('qnaEditForm').addEventListener('submit', function(e) {
+    const existingQnas = document.querySelectorAll('.existing-qna:not(.marked-for-deletion)');
+    const newQnas = document.querySelectorAll('.new-qna');
+    
+    if (existingQnas.length === 0 && newQnas.length === 0) {
+        e.preventDefault();
+        alert('You must have at least one Q&A. Please add a new Q&A or unmark existing ones for deletion.');
+        return;
+    }
+    
+    // Validate existing Q&As
+    let hasEmptyExisting = false;
+    existingQnas.forEach(item => {
+        const question = item.querySelector('textarea[name^="question_"]').value.trim();
+        const answer = item.querySelector('textarea[name^="answer_"]').value.trim();
+        
+        if (!question || !answer) {
+            hasEmptyExisting = true;
+        }
+    });
+    
+    // Validate new Q&As
+    let hasEmptyNew = false;
+    newQnas.forEach(item => {
+        const question = item.querySelector('textarea[name="new_question"]').value.trim();
+        const answer = item.querySelector('textarea[name="new_answer"]').value.trim();
+        
+        if (!question || !answer) {
+            hasEmptyNew = true;
+        }
+    });
+    
+    if (hasEmptyExisting || hasEmptyNew) {
+        e.preventDefault();
+        alert('Please fill in all questions and answers before saving.');
+    }
+});
+
+// Auto-resize textareas
+document.addEventListener('input', function(e) {
+    if (e.target.tagName === 'TEXTAREA') {
+        e.target.style.height = 'auto';
+        e.target.style.height = e.target.scrollHeight + 'px';
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

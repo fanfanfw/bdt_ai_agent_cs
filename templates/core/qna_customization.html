@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Customize Q&As - AI Agent Customer Service{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step completed">1</div>
+                <div class="step active">2</div>
+                <div class="step">3</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Customize Q&As for {{ business_type.name }}
+                    </h4>
+                    <p class="mb-0 mt-2 text-light">Review and edit the generated questions and answers</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Generated Q&As:</strong> We've created {{ qnas|length }} common questions for your {{ business_type.name }} business. 
+                        You can edit, add, or remove any of these to better match your specific needs.
+                    </div>
+                    
+                    <form method="post" id="qnaForm">
+                        {% csrf_token %}
+                        <div id="qnaContainer">
+                            {% for qna in qnas %}
+                            <div class="qna-item mb-4 p-3 border rounded" data-index="{{ forloop.counter0 }}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-question-circle me-2"></i>
+                                        Question {{ forloop.counter }}
+                                    </h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-qna" onclick="removeQnA(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Question:</label>
+                                    <textarea name="question_{{ forloop.counter0 }}" class="form-control" rows="2" required>{{ qna.question }}</textarea>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <label class="form-label">Answer:</label>
+                                    <textarea name="answer_{{ forloop.counter0 }}" class="form-control" rows="3" required>{{ qna.answer }}</textarea>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-primary" onclick="addQnA()">
+                                    <i class="fas fa-plus me-2"></i>Add New Q&A
+                                </button>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <a href="{% url 'business_type_selection' %}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-arrow-right me-2"></i>Next: Knowledge Base
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-lightbulb me-1"></i>
+                    Tip: The more specific your Q&As, the better your AI assistant will perform
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+let qnaCounter = {{ qnas|length }};
+
+function addQnA() {
+    const container = document.getElementById('qnaContainer');
+    const newIndex = qnaCounter;
+    
+    const qnaItem = document.createElement('div');
+    qnaItem.className = 'qna-item mb-4 p-3 border rounded';
+    qnaItem.setAttribute('data-index', newIndex);
+    
+    qnaItem.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="mb-0">
+                <i class="fas fa-question-circle me-2"></i>
+                Question ${newIndex + 1}
+            </h6>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-qna" onclick="removeQnA(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Question:</label>
+            <textarea name="question_${newIndex}" class="form-control" rows="2" required placeholder="Enter your question here..."></textarea>
+        </div>
+        
+        <div class="mb-2">
+            <label class="form-label">Answer:</label>
+            <textarea name="answer_${newIndex}" class="form-control" rows="3" required placeholder="Enter your answer here..."></textarea>
+        </div>
+    `;
+    
+    container.appendChild(qnaItem);
+    qnaCounter++;
+    updateQuestionNumbers();
+}
+
+function removeQnA(button) {
+    const qnaItem = button.closest('.qna-item');
+    qnaItem.remove();
+    updateQuestionNumbers();
+    updateFormNames();
+}
+
+function updateQuestionNumbers() {
+    const qnaItems = document.querySelectorAll('.qna-item');
+    qnaItems.forEach((item, index) => {
+        const questionLabel = item.querySelector('h6');
+        questionLabel.innerHTML = `<i class="fas fa-question-circle me-2"></i>Question ${index + 1}`;
+    });
+}
+
+function updateFormNames() {
+    const qnaItems = document.querySelectorAll('.qna-item');
+    qnaItems.forEach((item, index) => {
+        const questionTextarea = item.querySelector('textarea[name^="question_"]');
+        const answerTextarea = item.querySelector('textarea[name^="answer_"]');
+        
+        if (questionTextarea) questionTextarea.name = `question_${index}`;
+        if (answerTextarea) answerTextarea.name = `answer_${index}`;
+        
+        item.setAttribute('data-index', index);
+    });
+    qnaCounter = qnaItems.length;
+}
+
+// Form validation
+document.getElementById('qnaForm').addEventListener('submit', function(e) {
+    const qnaItems = document.querySelectorAll('.qna-item');
+    if (qnaItems.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one Q&A pair before proceeding.');
+        return;
+    }
+    
+    let hasEmpty = false;
+    qnaItems.forEach(item => {
+        const question = item.querySelector('textarea[name^="question_"]').value.trim();
+        const answer = item.querySelector('textarea[name^="answer_"]').value.trim();
+        
+        if (!question || !answer) {
+            hasEmpty = true;
+        }
+    });
+    
+    if (hasEmpty) {
+        e.preventDefault();
+        alert('Please fill in all questions and answers before proceeding.');
+    }
+});
+
+// Auto-resize textareas
+document.addEventListener('input', function(e) {
+    if (e.target.tagName === 'TEXTAREA') {
+        e.target.style.height = 'auto';
+        e.target.style.height = e.target.scrollHeight + 'px';
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

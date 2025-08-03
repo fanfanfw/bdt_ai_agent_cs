@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Business Type - AI Agent Customer Service{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-store me-2"></i>Edit Business Type
+                    </h5>
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Change Business Type:</strong> Updating your business type will change how your AI assistant responds to customers. 
+                        You can choose to regenerate Q&As to match your new business type.
+                    </div>
+                    
+                    <!-- Current Business Type -->
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-building me-2"></i>Current Business Type
+                            </h6>
+                            <p class="card-text mb-0">
+                                <span class="badge bg-primary fs-6">{{ assistant.business_type.name }}</span>
+                            </p>
+                            {% if assistant.business_type.description %}
+                                <small class="text-muted">{{ assistant.business_type.description }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Change Form -->
+                    <form method="post" id="businessTypeForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.business_type.id_for_label }}" class="form-label">
+                                <i class="fas fa-exchange-alt me-1"></i>New Business Type
+                            </label>
+                            {{ form.business_type }}
+                            {% if form.business_type.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.business_type.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Select the new business type that better describes your business.
+                            </div>
+                        </div>
+                        
+                        <!-- Regenerate Q&As Option -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-question-circle me-2"></i>Q&A Options
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="regenerate_qnas" name="regenerate_qnas">
+                                    <label class="form-check-label" for="regenerate_qnas">
+                                        <strong>Regenerate Q&As for new business type</strong>
+                                    </label>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                    <strong>Warning:</strong> If checked, all your current Q&As ({{ assistant.qnas.count }} items) will be replaced 
+                                    with new auto-generated Q&As for the selected business type. If unchecked, your existing Q&As will be kept.
+                                </div>
+                                
+                                <!-- Current Q&As Preview -->
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <strong>Current Q&As ({{ assistant.qnas.count }} items):</strong>
+                                    </small>
+                                    {% if assistant.qnas.count > 0 %}
+                                        <div class="mt-2">
+                                            {% for qna in assistant.qnas.all|slice:":3" %}
+                                                <div class="border rounded p-2 mb-2 bg-white">
+                                                    <small>
+                                                        <strong>Q:</strong> {{ qna.question|truncatechars:60 }}<br>
+                                                        <strong>A:</strong> {{ qna.answer|truncatechars:80 }}
+                                                    </small>
+                                                </div>
+                                            {% endfor %}
+                                            {% if assistant.qnas.count > 3 %}
+                                                <small class="text-muted">... and {{ assistant.qnas.count|add:"-3" }} more</small>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted small">No Q&As currently configured.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Knowledge Base Info -->
+                        <div class="alert alert-warning">
+                            <i class="fas fa-database me-2"></i>
+                            <strong>Note:</strong> Your knowledge base content ({{ assistant.knowledge_base.count }} items) will remain unchanged. 
+                            You can manage it separately from the 
+                            <a href="{% url 'edit_knowledge_base' %}" class="alert-link">Knowledge Base Management</a> page.
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="submit" class="btn btn-primary" onclick="return confirmChange()">
+                                    <i class="fas fa-save me-2"></i>Update Business Type
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Impact Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>What Will Change?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">✅ Will Be Updated:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>AI Assistant name in OpenAI</li>
+                                <li><i class="fas fa-check text-success me-2"></i>System instructions</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Business context for responses</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Q&As (if regenerate is selected)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info">🔄 Will Stay The Same:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-minus text-info me-2"></i>Your API key</li>
+                                <li><i class="fas fa-minus text-info me-2"></i>Knowledge base content</li>
+                                <li><i class="fas fa-minus text-info me-2"></i>Chat history</li>
+                                <li><i class="fas fa-minus text-info me-2"></i>Assistant settings</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Business Type Change
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="confirmMessage"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitForm()">
+                    <i class="fas fa-save me-2"></i>Yes, Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmChange() {
+    const currentType = "{{ assistant.business_type.name }}";
+    const newTypeSelect = document.querySelector('select[name="business_type"]');
+    const newType = newTypeSelect.options[newTypeSelect.selectedIndex].text;
+    const regenerateQnAs = document.getElementById('regenerate_qnas').checked;
+    
+    // Check if business type actually changed
+    if (currentType === newType) {
+        alert('Please select a different business type to make changes.');
+        return false;
+    }
+    
+    let message = `
+        <div class="alert alert-warning">
+            <strong>You are about to change your business type from:</strong><br>
+            <span class="badge bg-secondary">${currentType}</span> → <span class="badge bg-primary">${newType}</span>
+        </div>
+    `;
+    
+    if (regenerateQnAs) {
+        message += `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Warning:</strong> You have chosen to regenerate Q&As. 
+                This will <strong>permanently delete</strong> all your current Q&As 
+                ({{ assistant.qnas.count }} items) and replace them with new ones for ${newType}.
+            </div>
+        `;
+    } else {
+        message += `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Your existing Q&As will be kept, but the AI assistant will respond 
+                in the context of a ${newType} business.
+            </div>
+        `;
+    }
+    
+    message += '<p><strong>Are you sure you want to proceed?</strong></p>';
+    
+    document.getElementById('confirmMessage').innerHTML = message;
+    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    modal.show();
+    
+    return false; // Prevent form submission
+}
+
+function submitForm() {
+    // Close modal and submit form
+    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+    modal.hide();
+    document.getElementById('businessTypeForm').submit();
+}
+
+// Update form styling
+document.addEventListener('DOMContentLoaded', function() {
+    const selectElement = document.querySelector('select[name="business_type"]');
+    if (selectElement) {
+        selectElement.classList.add('form-select');
+    }
+    
+    // Show/hide warning based on checkbox
+    const checkbox = document.getElementById('regenerate_qnas');
+    checkbox.addEventListener('change', function() {
+        // Could add dynamic warning updates here
+    });
+});
+</script>
+{% endblock %}

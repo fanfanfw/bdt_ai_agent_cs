@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Knowledge Base - AI Agent Customer Service{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database me-2"></i>Manage Knowledge Base
+                    </h5>
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Knowledge Base Management:</strong> Add, edit, or remove content that your AI assistant uses to answer questions not covered in your Q&As.
+                    </div>
+                    
+                    <!-- Existing Knowledge Base Items -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-list me-2"></i>Current Knowledge Base ({{ knowledge_items.count }} items)
+                        </h6>
+                        
+                        {% for item in knowledge_items %}
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">
+                                        {% if item.file_path %}
+                                            <i class="fas fa-file me-2"></i>{{ item.title }}
+                                        {% else %}
+                                            <i class="fas fa-text-width me-2"></i>{{ item.title }}
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">
+                                        Added: {{ item.created_at|date:"M d, Y H:i" }}
+                                        {% if item.file_path %}| File: {{ item.file_path.name }}{% endif %}
+                                    </small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editKnowledgeItem({{ item.id }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteKnowledgeItem({{ item.id }}, '{{ item.title|escapejs }}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="content-view-{{ item.id }}">
+                                    <p class="mb-0">{{ item.content|truncatewords:50 }}</p>
+                                    {% if item.content|length > 200 %}
+                                        <small class="text-muted">
+                                            <a href="#" onclick="toggleFullContent({{ item.id }}); return false;">
+                                                <span id="toggle-text-{{ item.id }}">Show more...</span>
+                                            </a>
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Edit Form (Hidden by default) -->
+                                <div id="edit-form-{{ item.id }}" style="display: none;">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update">
+                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Content:</label>
+                                            <textarea name="content" class="form-control" rows="8" required>{{ item.content }}</textarea>
+                                        </div>
+                                        
+                                        <div class="text-end">
+                                            <button type="button" class="btn btn-outline-secondary" onclick="cancelEdit({{ item.id }})">
+                                                Cancel
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i>Save Changes
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                
+                                <!-- Full Content (Hidden by default) -->
+                                <div id="full-content-{{ item.id }}" style="display: none;">
+                                    <p class="mb-0">{{ item.content|linebreaksbr }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-database fa-3x mb-3"></i>
+                            <p>No knowledge base items found. Add some content below!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Add New Knowledge Base Content -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-plus me-2"></i>Add New Knowledge Base Content
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add">
+                                
+                                <!-- Manual Content Tab -->
+                                <ul class="nav nav-tabs" id="addContentTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-content" type="button">
+                                            <i class="fas fa-keyboard me-2"></i>Manual Content
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-upload" type="button">
+                                            <i class="fas fa-file-upload me-2"></i>File Upload
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content" id="addContentTabsContent">
+                                    <!-- Manual Content -->
+                                    <div class="tab-pane fade show active" id="manual-content">
+                                        <div class="p-3">
+                                            <div class="mb-3">
+                                                <label for="title" class="form-label">Title:</label>
+                                                <input type="text" class="form-control" id="title" name="title" placeholder="Enter a descriptive title...">
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="manual_content" class="form-label">Content:</label>
+                                                <textarea 
+                                                    id="manual_content" 
+                                                    name="manual_content" 
+                                                    class="form-control" 
+                                                    rows="8" 
+                                                    placeholder="Enter your content here...
+
+Example:
+- Store policies and procedures
+- Product information and specifications  
+- Frequently asked questions
+- Company information and history
+- Contact details and locations"
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- File Upload -->
+                                    <div class="tab-pane fade" id="file-upload">
+                                        <div class="p-3">
+                                            <div class="mb-3">
+                                                <label for="knowledge_files" class="form-label">
+                                                    Upload Documents (PDF, TXT, DOCX):
+                                                </label>
+                                                <input 
+                                                    type="file" 
+                                                    class="form-control" 
+                                                    id="knowledge_files" 
+                                                    name="knowledge_files" 
+                                                    multiple 
+                                                    accept=".pdf,.txt,.docx,.doc"
+                                                >
+                                                <div class="form-text">
+                                                    You can upload multiple files. Supported formats: PDF, TXT, DOCX.
+                                                    Maximum file size: 10MB each.
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="filePreview" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add to Knowledge Base
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Knowledge Base Best Practices
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Organize Content:</strong> Use clear titles and organize related information together</li>
+                        <li><strong>Keep Updated:</strong> Regularly review and update content to keep it current</li>
+                        <li><strong>Be Comprehensive:</strong> Include detailed information that customers might need</li>
+                        <li><strong>Use Keywords:</strong> Include terms and phrases customers might search for</li>
+                        <li><strong>Structure Well:</strong> Use headings, bullet points, and clear formatting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2"></i>Delete Knowledge Base Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete "<span id="deleteItemTitle"></span>"?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="item_id" value="" id="deleteItemId">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function editKnowledgeItem(itemId) {
+    document.getElementById(`content-view-${itemId}`).style.display = 'none';
+    document.getElementById(`edit-form-${itemId}`).style.display = 'block';
+}
+
+function cancelEdit(itemId) {
+    document.getElementById(`content-view-${itemId}`).style.display = 'block';
+    document.getElementById(`edit-form-${itemId}`).style.display = 'none';
+}
+
+function deleteKnowledgeItem(itemId, itemTitle) {
+    document.getElementById('deleteItemId').value = itemId;
+    document.getElementById('deleteItemTitle').textContent = itemTitle;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function toggleFullContent(itemId) {
+    const shortView = document.getElementById(`content-view-${itemId}`);
+    const fullView = document.getElementById(`full-content-${itemId}`);
+    const toggleText = document.getElementById(`toggle-text-${itemId}`);
+    
+    if (fullView.style.display === 'none') {
+        shortView.style.display = 'none';
+        fullView.style.display = 'block';
+        toggleText.textContent = 'Show less...';
+    } else {
+        shortView.style.display = 'block';
+        fullView.style.display = 'none';
+        toggleText.textContent = 'Show more...';
+    }
+}
+
+// File preview functionality
+document.getElementById('knowledge_files').addEventListener('change', function(e) {
+    const filePreview = document.getElementById('filePreview');
+    filePreview.innerHTML = '';
+    
+    if (e.target.files.length > 0) {
+        const fileList = document.createElement('div');
+        fileList.className = 'file-list';
+        
+        for (let i = 0; i < e.target.files.length; i++) {
+            const file = e.target.files[i];
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item d-flex align-items-center justify-content-between p-2 mb-2 border rounded';
+            
+            const fileInfo = document.createElement('div');
+            fileInfo.innerHTML = `
+                <i class="fas fa-file me-2"></i>
+                <strong>${file.name}</strong>
+                <span class="text-muted ms-2">(${formatFileSize(file.size)})</span>
+            `;
+            
+            fileItem.appendChild(fileInfo);
+            fileList.appendChild(fileItem);
+        }
+        
+        filePreview.appendChild(fileList);
+    }
+});
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Auto-resize textarea
+document.addEventListener('input', function(e) {
+    if (e.target.tagName === 'TEXTAREA') {
+        e.target.style.height = 'auto';
+        e.target.style.height = e.target.scrollHeight + 'px';
+    }
+});
+
+// Form validation for manual content
+document.querySelector('form').addEventListener('submit', function(e) {
+    const activeTab = document.querySelector('.nav-link.active').id;
+    
+    if (activeTab === 'manual-tab') {
+        const title = document.getElementById('title').value.trim();
+        const content = document.getElementById('manual_content').value.trim();
+        
+        if (!title && !content) {
+            // Allow submission if both are empty (no manual content to add)
+            return;
+        }
+        
+        if (!title || !content) {
+            e.preventDefault();
+            alert('Please provide both title and content for manual knowledge base entry.');
+        }
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

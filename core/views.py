@@ -1,0 +1,582 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from django.conf import settings
+import json
+import openai
+
+from .models import BusinessType, AIAssistant, QnA, KnowledgeBase
+from .forms import CustomUserCreationForm, BusinessTypeForm
+
+
+def home(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return render(request, 'core/home.html')
+
+
+def register_view(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}!')
+            login(request, user)
+            return redirect('business_type_selection')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'core/register.html', {'form': form})
+
+
+@login_required
+def dashboard(request):
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+        return render(request, 'core/dashboard.html', {'assistant': assistant})
+    except AIAssistant.DoesNotExist:
+        return redirect('business_type_selection')
+
+
+@login_required
+def business_type_selection(request):
+    if request.method == 'POST':
+        form = BusinessTypeForm(request.POST)
+        if form.is_valid():
+            business_type = form.cleaned_data['business_type']
+            
+            # Generate default Q&As for the business type
+            qnas = generate_default_qnas(business_type.name)
+            
+            # Store in session for next step
+            request.session['selected_business_type'] = business_type.id
+            request.session['generated_qnas'] = qnas
+            
+            return redirect('qna_customization')
+    else:
+        form = BusinessTypeForm()
+    
+    return render(request, 'core/business_type_selection.html', {'form': form})
+
+
+@login_required
+def qna_customization(request):
+    business_type_id = request.session.get('selected_business_type')
+    if not business_type_id:
+        return redirect('business_type_selection')
+    
+    business_type = BusinessType.objects.get(id=business_type_id)
+    generated_qnas = request.session.get('generated_qnas', [])
+    
+    if request.method == 'POST':
+        # Process Q&A customizations
+        qnas_data = []
+        for i in range(len(generated_qnas)):
+            question = request.POST.get(f'question_{i}')
+            answer = request.POST.get(f'answer_{i}')
+            if question and answer:
+                qnas_data.append({'question': question, 'answer': answer})
+        
+        request.session['customized_qnas'] = qnas_data
+        return redirect('knowledge_base_setup')
+    
+    return render(request, 'core/qna_customization.html', {
+        'business_type': business_type,
+        'qnas': generated_qnas
+    })
+
+
+@login_required
+def knowledge_base_setup(request):
+    if request.method == 'POST':
+        # Create AI Assistant
+        business_type_id = request.session.get('selected_business_type')
+        qnas_data = request.session.get('customized_qnas', [])
+        
+        business_type = BusinessType.objects.get(id=business_type_id)
+        
+        # Create system instructions from Q&As
+        system_instructions = create_system_instructions(business_type.name, qnas_data)
+        
+        # Create AI Assistant
+        assistant = AIAssistant.objects.create(
+            user=request.user,
+            business_type=business_type,
+            system_instructions=system_instructions
+        )
+        
+        # Save Q&As
+        for i, qna in enumerate(qnas_data):
+            QnA.objects.create(
+                assistant=assistant,
+                question=qna['question'],
+                answer=qna['answer'],
+                order=i
+            )
+        
+        # Process knowledge base files/content
+        manual_content = request.POST.get('manual_content', '')
+        if manual_content:
+            KnowledgeBase.objects.create(
+                assistant=assistant,
+                title="Manual Content",
+                content=manual_content
+            )
+        
+        # Handle file uploads
+        if 'knowledge_files' in request.FILES:
+            for file in request.FILES.getlist('knowledge_files'):
+                # Process file and extract content
+                content = process_uploaded_file(file)
+                kb_item = KnowledgeBase.objects.create(
+                    assistant=assistant,
+                    title=file.name,
+                    content=content,
+                    file_path=file
+                )
+                
+                # Generate embeddings using new RAG system
+                from .services import EmbeddingService
+                embedding_service = EmbeddingService()
+                embedding_service.generate_embeddings_for_item(kb_item)
+        
+        # Process embeddings for knowledge base (for manual content)
+        try:
+            from .services import EmbeddingService
+            embedding_service = EmbeddingService()
+            embedding_service.process_knowledge_base(assistant)
+        except Exception as e:
+            print(f"Error processing embeddings: {e}")
+        
+        # Create OpenAI Assistant
+        try:
+            openai_assistant = create_openai_assistant(assistant)
+            assistant.openai_assistant_id = openai_assistant.id
+            assistant.save()
+        except Exception as e:
+            messages.error(request, f"Error creating AI assistant: {e}")
+        
+        # Clear session
+        for key in ['selected_business_type', 'generated_qnas', 'customized_qnas']:
+            request.session.pop(key, None)
+        
+        messages.success(request, "AI Assistant created successfully!")
+        return redirect('dashboard')
+    
+    return render(request, 'core/knowledge_base_setup.html')
+
+
+def generate_default_qnas(business_type):
+    """Generate default Q&As using OpenAI based on business type"""
+    client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+    
+    prompt = f"""Generate 10 common customer service questions and answers for a {business_type} business. 
+    Format as JSON array with 'question' and 'answer' keys. 
+    Make answers helpful but concise (2-3 sentences max).
+    Focus on typical customer inquiries like hours, location, services, pricing, policies etc."""
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that generates customer service Q&As."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+        
+        content = response.choices[0].message.content
+        # Extract JSON from response
+        start = content.find('[')
+        end = content.rfind(']') + 1
+        if start != -1 and end != 0:
+            qnas = json.loads(content[start:end])
+            return qnas
+    except Exception as e:
+        print(f"Error generating Q&As: {e}")
+    
+    # Fallback default Q&As
+    return [
+        {"question": "What are your business hours?", "answer": "We are open Monday to Friday from 9 AM to 6 PM."},
+        {"question": "Where are you located?", "answer": "Please contact us for our current location information."},
+        {"question": "What services do you offer?", "answer": f"We offer various {business_type.lower()} services. Please contact us for detailed information."},
+        {"question": "How can I contact you?", "answer": "You can reach us through this chat system or check our website for contact details."},
+        {"question": "Do you offer delivery?", "answer": "Please inquire about our delivery options as they may vary by location."},
+    ]
+
+
+def create_system_instructions(business_type, qnas):
+    """Create system instructions for the AI assistant"""
+    qna_text = "\n".join([f"Q: {qa['question']}\nA: {qa['answer']}\n" for qa in qnas])
+    
+    instructions = f"""You are a helpful customer service assistant for a {business_type} business.
+
+Your primary job is to:
+1. Answer customer questions accurately and professionally
+2. Use the provided Q&A knowledge base first
+3. If you don't know something, admit it and offer to help find the answer
+4. Be friendly, concise, and helpful
+5. Stay in character as a customer service representative
+
+Here are the specific Q&As for this business:
+
+{qna_text}
+
+Always prioritize these Q&As when answering similar questions. If asked about something not covered in the Q&As, use your general knowledge but mention that the customer should verify with the business directly for the most current information."""
+    
+    return instructions
+
+
+def create_openai_assistant(assistant):
+    """Create OpenAI assistant"""
+    client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+    
+    return client.beta.assistants.create(
+        name=f"{assistant.business_type.name} Customer Service",
+        instructions=assistant.system_instructions,
+        model="gpt-4o-mini",
+        tools=[{"type": "file_search"}] if assistant.knowledge_base.exists() else []
+    )
+
+
+def process_uploaded_file(file):
+    """Extract text content from uploaded file"""
+    from .services import EmbeddingService
+    embedding_service = EmbeddingService()
+    return embedding_service.extract_file_content(file)
+
+
+@login_required
+def test_chat_view(request):
+    """Test chat functionality"""
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+        
+        if request.method == 'POST':
+            from .services import ChatService
+            import json
+            
+            data = json.loads(request.body)
+            message = data.get('message', '')
+            session_id = data.get('session_id')
+            
+            chat_service = ChatService(assistant)
+            session_id, response = chat_service.process_message(message, session_id)
+            
+            return JsonResponse({
+                'session_id': str(session_id),
+                'response': response,
+                'status': 'success'
+            })
+        
+        return render(request, 'core/test_chat.html', {'assistant': assistant})
+        
+    except AIAssistant.DoesNotExist:
+        return redirect('business_type_selection')
+
+
+@login_required
+def edit_qna_view(request):
+    """Edit Q&A for existing assistant"""
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+        qnas = assistant.qnas.all().order_by('order')
+        
+        if request.method == 'POST':
+            # Check if regenerate was requested
+            if request.POST.get('regenerate') == 'true':
+                # Delete all existing Q&As
+                assistant.qnas.all().delete()
+                
+                # Generate new Q&As
+                qnas = generate_default_qnas(assistant.business_type.name)
+                
+                # Save new Q&As
+                for i, qna in enumerate(qnas):
+                    QnA.objects.create(
+                        assistant=assistant,
+                        question=qna['question'],
+                        answer=qna['answer'],
+                        order=i
+                    )
+                
+                # Update system instructions
+                system_instructions = create_system_instructions(assistant.business_type.name, qnas)
+                assistant.system_instructions = system_instructions
+                assistant.save()
+                
+                # Update OpenAI Assistant if exists
+                if assistant.openai_assistant_id:
+                    try:
+                        from .services import OpenAIService
+                        openai_service = OpenAIService()
+                        openai_service.client.beta.assistants.update(
+                            assistant.openai_assistant_id,
+                            instructions=system_instructions
+                        )
+                    except Exception as e:
+                        print(f"Error updating OpenAI assistant: {e}")
+                
+                messages.success(request, "Q&As regenerated successfully!")
+                return redirect('edit_qna')
+            
+            # Delete Q&As marked for deletion
+            delete_ids = request.POST.getlist('delete_qna')
+            # Filter out empty strings
+            delete_ids = [id for id in delete_ids if id.strip()]
+            if delete_ids:
+                assistant.qnas.filter(id__in=delete_ids).delete()
+            
+            # Update existing Q&As and create new ones
+            qna_data = []
+            order = 0
+            
+            # Get fresh list of Q&As after deletion
+            current_qnas = assistant.qnas.all().order_by('order')
+            
+            # Process existing Q&As
+            for qna in current_qnas:
+                if str(qna.id) not in delete_ids:
+                    question = request.POST.get(f'question_{qna.id}', '').strip()
+                    answer = request.POST.get(f'answer_{qna.id}', '').strip()
+                    
+                    if question and answer:
+                        qna.question = question
+                        qna.answer = answer
+                        qna.order = order
+                        qna.save()
+                        qna_data.append({'question': question, 'answer': answer})
+                        order += 1
+            
+            # Process new Q&As
+            new_questions = request.POST.getlist('new_question')
+            new_answers = request.POST.getlist('new_answer')
+            
+            for i, (question, answer) in enumerate(zip(new_questions, new_answers)):
+                question = question.strip()
+                answer = answer.strip()
+                if question and answer:
+                    QnA.objects.create(
+                        assistant=assistant,
+                        question=question,
+                        answer=answer,
+                        order=order
+                    )
+                    qna_data.append({'question': question, 'answer': answer})
+                    order += 1
+            
+            # Update system instructions
+            system_instructions = create_system_instructions(assistant.business_type.name, qna_data)
+            assistant.system_instructions = system_instructions
+            assistant.save()
+            
+            # Update OpenAI Assistant if exists
+            if assistant.openai_assistant_id:
+                try:
+                    from .services import OpenAIService
+                    openai_service = OpenAIService()
+                    openai_service.client.beta.assistants.update(
+                        assistant.openai_assistant_id,
+                        instructions=system_instructions
+                    )
+                except Exception as e:
+                    print(f"Error updating OpenAI assistant: {e}")
+            
+            messages.success(request, "Q&As updated successfully!")
+            return redirect('dashboard')
+        
+        return render(request, 'core/edit_qna.html', {
+            'assistant': assistant,
+            'qnas': qnas
+        })
+        
+    except AIAssistant.DoesNotExist:
+        return redirect('business_type_selection')
+
+
+@login_required
+def edit_knowledge_base_view(request):
+    """Edit knowledge base for existing assistant"""
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+        knowledge_items = assistant.knowledge_base.all().order_by('-created_at')
+        
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            
+            if action == 'delete':
+                item_id = request.POST.get('item_id')
+                if not item_id or not item_id.strip():
+                    messages.error(request, "Invalid item ID!")
+                    return redirect('edit_knowledge_base')
+                try:
+                    item = assistant.knowledge_base.get(id=item_id)
+                    if item.file_path:
+                        # Delete file from storage
+                        item.file_path.delete()
+                    item.delete()
+                    messages.success(request, "Knowledge base item deleted successfully!")
+                except KnowledgeBase.DoesNotExist:
+                    messages.error(request, "Knowledge base item not found!")
+                    
+            elif action == 'update':
+                item_id = request.POST.get('item_id')
+                new_content = request.POST.get('content', '').strip()
+                if not item_id or not item_id.strip():
+                    messages.error(request, "Invalid item ID!")
+                    return redirect('edit_knowledge_base')
+                try:
+                    item = assistant.knowledge_base.get(id=item_id)
+                    if new_content:
+                        item.content = new_content
+                        item.title = f"Updated: {item.title}"
+                        
+                        # Refresh embeddings when content changes
+                        from .services import EmbeddingService
+                        embedding_service = EmbeddingService()
+                        embedding_service.refresh_embeddings_for_item(item)
+                        
+                        messages.success(request, "Knowledge base item updated successfully!")
+                    else:
+                        messages.error(request, "Content cannot be empty!")
+                except KnowledgeBase.DoesNotExist:
+                    messages.error(request, "Knowledge base item not found!")
+                    
+            elif action == 'add':
+                # Add new knowledge base content
+                manual_content = request.POST.get('manual_content', '').strip()
+                title = request.POST.get('title', '').strip()
+                
+                if manual_content and title:
+                    kb_item = KnowledgeBase.objects.create(
+                        assistant=assistant,
+                        title=title,
+                        content=manual_content
+                    )
+                    
+                    # Generate embeddings using new RAG system
+                    from .services import EmbeddingService
+                    embedding_service = EmbeddingService()
+                    embedding_service.generate_embeddings_for_item(kb_item)
+                    
+                    messages.success(request, "Knowledge base item added successfully!")
+                
+                # Handle file uploads
+                if 'knowledge_files' in request.FILES:
+                    for file in request.FILES.getlist('knowledge_files'):
+                        content = process_uploaded_file(file)
+                        kb_item = KnowledgeBase.objects.create(
+                            assistant=assistant,
+                            title=file.name,
+                            content=content,
+                            file_path=file
+                        )
+                        
+                        # Generate embeddings using new RAG system
+                        from .services import EmbeddingService
+                        embedding_service = EmbeddingService()
+                        embedding_service.generate_embeddings_for_item(kb_item)
+                    
+                    messages.success(request, "Files uploaded and processed successfully!")
+            
+            return redirect('edit_knowledge_base')
+        
+        return render(request, 'core/edit_knowledge_base.html', {
+            'assistant': assistant,
+            'knowledge_items': knowledge_items
+        })
+        
+    except AIAssistant.DoesNotExist:
+        return redirect('business_type_selection')
+
+
+@login_required
+def edit_business_type_view(request):
+    """Edit business type for existing assistant"""
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+        
+        if request.method == 'POST':
+            form = BusinessTypeForm(request.POST)
+            if form.is_valid():
+                new_business_type = form.cleaned_data['business_type']
+                old_business_type = assistant.business_type
+                
+                # Check if business type actually changed
+                if new_business_type != old_business_type:
+                    assistant.business_type = new_business_type
+                    
+                    # Option to regenerate Q&As for new business type
+                    regenerate_qnas = request.POST.get('regenerate_qnas') == 'on'
+                    
+                    if regenerate_qnas:
+                        # Delete existing Q&As
+                        assistant.qnas.all().delete()
+                        
+                        # Generate new Q&As for new business type
+                        qnas = generate_default_qnas(new_business_type.name)
+                        
+                        # Save new Q&As
+                        for i, qna in enumerate(qnas):
+                            QnA.objects.create(
+                                assistant=assistant,
+                                question=qna['question'],
+                                answer=qna['answer'],
+                                order=i
+                            )
+                        
+                        qna_data = qnas
+                    else:
+                        # Keep existing Q&As, just update business type references
+                        qna_data = [{'question': qna.question, 'answer': qna.answer} 
+                                   for qna in assistant.qnas.all()]
+                    
+                    # Update system instructions with new business type
+                    system_instructions = create_system_instructions(new_business_type.name, qna_data)
+                    assistant.system_instructions = system_instructions
+                    assistant.save()
+                    
+                    # Update OpenAI Assistant if exists
+                    if assistant.openai_assistant_id:
+                        try:
+                            from .services import OpenAIService
+                            openai_service = OpenAIService()
+                            openai_service.client.beta.assistants.update(
+                                assistant.openai_assistant_id,
+                                name=f"{new_business_type.name} Customer Service",
+                                instructions=system_instructions
+                            )
+                        except Exception as e:
+                            print(f"Error updating OpenAI assistant: {e}")
+                    
+                    if regenerate_qnas:
+                        messages.success(request, f"Business type updated to {new_business_type.name} and Q&As regenerated successfully!")
+                    else:
+                        messages.success(request, f"Business type updated to {new_business_type.name} successfully!")
+                else:
+                    messages.info(request, "No changes were made.")
+                
+                return redirect('dashboard')
+        else:
+            # Pre-populate form with current business type
+            form = BusinessTypeForm(initial={'business_type': assistant.business_type})
+        
+        return render(request, 'core/edit_business_type.html', {
+            'assistant': assistant,
+            'form': form
+        })
+        
+    except AIAssistant.DoesNotExist:
+        return redirect('business_type_selection')
+
+
+def logout_view(request):
+    """Custom logout view that handles both GET and POST"""
+    logout(request)
+    messages.success(request, "You have been logged out successfully!")
+    return redirect('home')

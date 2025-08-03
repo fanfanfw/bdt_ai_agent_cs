@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - AI Agent Customer Service{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Welcome back, {{ user.first_name|default:user.username }}!
+                </h2>
+                <div class="badge bg-success fs-6">
+                    <i class="fas fa-check-circle me-1"></i>AI Assistant Active
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assistant Info -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>Your AI Assistant
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Business Type:</strong> 
+                                {{ assistant.business_type.name }}
+                                <a href="{% url 'edit_business_type' %}" class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fas fa-edit"></i> Change
+                                </a>
+                            </p>
+                            <p><strong>Created:</strong> {{ assistant.created_at|date:"F d, Y" }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if assistant.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Q&As Configured:</strong> {{ assistant.qnas.count }}</p>
+                            <p><strong>Knowledge Base Items:</strong> {{ assistant.knowledge_base.count }}</p>
+                            <p><strong>Assistant:</strong> 
+                                {% if assistant.openai_assistant_id %}
+                                    <span class="badge bg-success">Connected</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-key me-2"></i>API Integration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Your API Key:</p>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control font-monospace small" value="{{ assistant.api_key }}" readonly id="apiKey">
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#integrationModal">
+                        <i class="fas fa-code me-2"></i>Integration Guide
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{% url 'test_chat' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-comments me-2"></i>Test Chat
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'edit_qna' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-edit me-2"></i>Edit Q&As
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'edit_knowledge_base' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-database me-2"></i>Manage Knowledge
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'edit_business_type' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-store me-2"></i>Change Business
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity (placeholder) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <p>No recent chat activity. Your AI assistant is ready to help customers!</p>
+                        <button class="btn btn-primary" onclick="testChat()">
+                            <i class="fas fa-play me-2"></i>Start Test Conversation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Integration Modal -->
+<div class="modal fade" id="integrationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-code me-2"></i>Integration Guide
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Option 1: Embed Chat Widget</h6>
+                        <p class="text-muted">Add this iframe to your website:</p>
+                        <pre class="bg-light p-3 rounded"><code>&lt;!-- AI Chat Widget --&gt;
+&lt;iframe 
+  src="{{ request.scheme }}://{{ request.get_host }}/api/widget/?api_key={{ assistant.api_key }}" 
+  style="position: fixed; bottom: 20px; right: 20px; width: 400px; height: 600px; border: none; z-index: 1000;"
+  title="AI Chat Assistant"&gt;
+&lt;/iframe&gt;</code></pre>
+                        
+                        <h6 class="mt-4">Option 2: API Integration</h6>
+                        <p class="text-muted">Use our REST API for custom integration:</p>
+                        <pre class="bg-light p-3 rounded"><code>POST {{ request.scheme }}://{{ request.get_host }}/api/chat/
+Content-Type: application/json
+Authorization: Bearer {{ assistant.api_key }}
+
+{
+  "message": "Hello, I need help",
+  "session_id": "optional-session-id"
+}</code></pre>
+                        
+                        <h6 class="mt-4">Option 3: Voice Integration</h6>
+                        <p class="text-muted">Enable voice chat with our JavaScript SDK:</p>
+                        <pre class="bg-light p-3 rounded"><code>// Enable voice features
+const voiceChat = new AIVoiceChat('{{ assistant.api_key }}');
+voiceChat.startListening();</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary">
+                    <i class="fas fa-download me-2"></i>Download SDK
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Test Modal -->
+<div class="modal fade" id="chatTestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-comments me-2"></i>Test Your AI Assistant
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="chatMessages" class="border rounded p-3 mb-3" style="height: 300px; overflow-y: auto;">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-robot fa-2x mb-2"></i>
+                        <p>Start a conversation with your AI assistant</p>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Type your message..." id="chatInput">
+                    <button class="btn btn-primary" onclick="sendTestMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+function copyApiKey() {
+    const apiKeyInput = document.getElementById('apiKey');
+    apiKeyInput.select();
+    apiKeyInput.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(apiKeyInput.value);
+    
+    // Show feedback
+    const button = apiKeyInput.nextElementSibling;
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    button.classList.add('btn-success');
+    button.classList.remove('btn-outline-secondary');
+    
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+function testChat() {
+    const modal = new bootstrap.Modal(document.getElementById('chatTestModal'));
+    modal.show();
+}
+
+function sendTestMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    const messagesContainer = document.getElementById('chatMessages');
+    
+    // Add user message
+    const userMessage = document.createElement('div');
+    userMessage.className = 'mb-2 text-end';
+    userMessage.innerHTML = `
+        <div class="bg-primary text-white rounded p-2 d-inline-block">
+            ${message}
+        </div>
+    `;
+    messagesContainer.appendChild(userMessage);
+    
+    // Clear input
+    input.value = '';
+    
+    // Add typing indicator
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'mb-2';
+    typingIndicator.innerHTML = `
+        <div class="bg-light rounded p-2 d-inline-block">
+            <i class="fas fa-robot me-2"></i>
+            <span class="typing-dots">Typing...</span>
+        </div>
+    `;
+    messagesContainer.appendChild(typingIndicator);
+    
+    // Scroll to bottom
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Simulate AI response (replace with actual API call)
+    setTimeout(() => {
+        typingIndicator.remove();
+        
+        const aiMessage = document.createElement('div');
+        aiMessage.className = 'mb-2';
+        aiMessage.innerHTML = `
+            <div class="bg-light rounded p-2 d-inline-block">
+                <i class="fas fa-robot me-2"></i>
+                Thank you for your message! This is a test response from your AI assistant. In the live version, I would provide a helpful answer based on your Q&As and knowledge base.
+            </div>
+        `;
+        messagesContainer.appendChild(aiMessage);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 1500);
+}
+
+// Enter key to send message
+document.getElementById('chatInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendTestMessage();
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

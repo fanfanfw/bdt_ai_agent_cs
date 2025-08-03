@@ -1,0 +1,9 @@
+Django==5.2.4
+psycopg2-binary==2.9.10
+openai==1.98.0
+python-dotenv==1.1.1
+Pillow==11.3.0
+PyPDF2==3.0.1
+python-docx==1.2.0
+scikit-learn==1.7.1
+numpy==2.3.2

@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Knowledge Base - AI Agent Customer Service{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step completed">1</div>
+                <div class="step completed">2</div>
+                <div class="step active">3</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-database me-2"></i>Knowledge Base Setup
+                    </h4>
+                    <p class="mb-0 mt-2 text-light">Add additional knowledge for your AI assistant</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Optional Step:</strong> You can add additional knowledge to make your AI assistant more helpful. 
+                        This can include company policies, product information, FAQs, or any relevant documentation.
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Manual Content Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-keyboard me-2"></i>Manual Content
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="manual_content" class="form-label">
+                                        Add text content directly:
+                                    </label>
+                                    <textarea 
+                                        id="manual_content" 
+                                        name="manual_content" 
+                                        class="form-control" 
+                                        rows="8" 
+                                        placeholder="Enter your business information, policies, product details, or any other relevant content here...
+
+Example:
+- Our store hours are Monday-Friday 9AM-8PM, Saturday 9AM-6PM, Sunday 10AM-5PM
+- We offer free delivery for orders over $50 within 5 miles
+- Return policy: 30 days with receipt
+- We accept cash, credit cards, and PayPal
+- Customer service phone: (555) 123-4567"
+                                    ></textarea>
+                                    <div class="form-text">
+                                        This content will be used to answer customer questions not covered in your Q&As.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- File Upload Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-file-upload me-2"></i>File Upload
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="knowledge_files" class="form-label">
+                                        Upload documents (PDF, TXT, DOCX):
+                                    </label>
+                                    <input 
+                                        type="file" 
+                                        class="form-control" 
+                                        id="knowledge_files" 
+                                        name="knowledge_files" 
+                                        multiple 
+                                        accept=".pdf,.txt,.docx,.doc"
+                                    >
+                                    <div class="form-text">
+                                        You can upload multiple files. Supported formats: PDF, TXT, DOCX.
+                                        Maximum file size: 10MB each.
+                                    </div>
+                                </div>
+                                
+                                <div id="filePreview" class="mt-3"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Info Section -->
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> The content you provide will be processed and used to train your AI assistant. 
+                            Make sure all information is accurate and up-to-date.
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-primary" onclick="skipKnowledgeBase()">
+                                    <i class="fas fa-forward me-2"></i>Skip This Step
+                                </button>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <a href="{% url 'qna_customization' %}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-rocket me-2"></i>Create AI Assistant
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Your files are processed securely and used only for your AI assistant
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// File preview functionality
+document.getElementById('knowledge_files').addEventListener('change', function(e) {
+    const filePreview = document.getElementById('filePreview');
+    filePreview.innerHTML = '';
+    
+    if (e.target.files.length > 0) {
+        const fileList = document.createElement('div');
+        fileList.className = 'file-list';
+        
+        for (let i = 0; i < e.target.files.length; i++) {
+            const file = e.target.files[i];
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item d-flex align-items-center justify-content-between p-2 mb-2 border rounded';
+            
+            const fileInfo = document.createElement('div');
+            fileInfo.innerHTML = `
+                <i class="fas fa-file me-2"></i>
+                <strong>${file.name}</strong>
+                <span class="text-muted ms-2">(${formatFileSize(file.size)})</span>
+            `;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-sm btn-outline-danger';
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.onclick = function() {
+                // Remove file from input (this is a simplified approach)
+                fileItem.remove();
+            };
+            
+            fileItem.appendChild(fileInfo);
+            fileItem.appendChild(removeBtn);
+            fileList.appendChild(fileItem);
+        }
+        
+        filePreview.appendChild(fileList);
+    }
+});
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function skipKnowledgeBase() {
+    if (confirm('Are you sure you want to skip adding knowledge base content? You can always add this later.')) {
+        // Submit form without any content
+        document.querySelector('form').submit();
+    }
+}
+
+// Auto-resize textarea
+document.getElementById('manual_content').addEventListener('input', function(e) {
+    e.target.style.height = 'auto';
+    e.target.style.height = e.target.scrollHeight + 'px';
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const manualContent = document.getElementById('manual_content').value.trim();
+    const filesSelected = document.getElementById('knowledge_files').files.length > 0;
+    
+    if (!manualContent && !filesSelected) {
+        if (!confirm('You haven\'t added any knowledge base content. Your AI assistant will only use the Q&As you configured. Continue anyway?')) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}
