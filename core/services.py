@@ -89,8 +89,9 @@ class OpenAIService:
         try:
             response = self.client.audio.speech.create(
                 model="tts-1",
-                voice="alloy",
-                input=text
+                voice="alloy",  # Good English voice
+                input=text,
+                speed=1.0  # Normal speed for clarity
             )
             return response.content
         except Exception as e:
@@ -100,10 +101,25 @@ class OpenAIService:
     def speech_to_text(self, audio_file):
         """Convert speech to text using OpenAI Whisper"""
         try:
-            transcript = self.client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file
-            )
+            # Handle Django InMemoryUploadedFile
+            if hasattr(audio_file, 'read'):
+                # Reset file pointer to beginning
+                audio_file.seek(0)
+                # Create a tuple with file content and name for OpenAI
+                file_tuple = (audio_file.name or 'audio.webm', audio_file.read(), 'audio/webm')
+                
+                transcript = self.client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=file_tuple,
+                    language="en"  # Force English for transcription
+                )
+            else:
+                # Handle regular file objects
+                transcript = self.client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language="en"  # Force English for transcription
+                )
             return transcript.text
         except Exception as e:
             print(f"Error with STT: {e}")
@@ -162,20 +178,19 @@ class EmbeddingService:
 
     def generate_embeddings_for_item(self, knowledge_item):
         """Generate embeddings for a specific knowledge base item"""
-        knowledge_item.status = 'processing'
-        knowledge_item.save()
+        # Update status using direct SQL to avoid signal triggers
+        from .models import KnowledgeBase
+        KnowledgeBase.objects.filter(pk=knowledge_item.pk).update(status='processing')
         
         # Extract text content
         text_content = self.extract_text_content(knowledge_item)
         
         if not text_content.strip():
             print(f"No content found for {knowledge_item.title}")
-            knowledge_item.status = 'error'
-            knowledge_item.save()
+            KnowledgeBase.objects.filter(pk=knowledge_item.pk).update(status='error')
             return
         
-        knowledge_item.status = 'embedding'
-        knowledge_item.save()
+        KnowledgeBase.objects.filter(pk=knowledge_item.pk).update(status='embedding')
         
         # Split into chunks
         chunks = self.chunk_text(text_content)
@@ -202,8 +217,7 @@ class EmbeddingService:
             print(f"Saved {len(chunk_embeddings)} embeddings for {knowledge_item.title}")
         else:
             print(f"No embeddings generated for {knowledge_item.title}")
-            knowledge_item.status = 'error'
-            knowledge_item.save()
+            KnowledgeBase.objects.filter(pk=knowledge_item.pk).update(status='error')
 
     def get_embedding_file_path(self, knowledge_item):
         """Get the file path for storing embeddings"""
@@ -234,7 +248,8 @@ class EmbeddingService:
                 "embedding_model": knowledge_item.embedding_model,
                 "processed_at": datetime.now().isoformat(),
                 "user_id": knowledge_item.assistant.user.id,
-                "knowledge_base_id": str(knowledge_item.id)
+                "knowledge_base_id": str(knowledge_item.id),
+                "content_hash": self._generate_content_hash(knowledge_item)
             },
             "chunks": []
         }
@@ -252,17 +267,26 @@ class EmbeddingService:
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(embedding_data, f, ensure_ascii=False, indent=2)
         
-        # Update knowledge base record
-        knowledge_item.embedding_file_path = file_path
-        knowledge_item.chunks_count = len(chunks_with_embeddings)
-        knowledge_item.status = 'completed'
-        knowledge_item.save()
+        # Update knowledge base record using direct SQL to avoid signal triggers
+        from .models import KnowledgeBase
+        KnowledgeBase.objects.filter(pk=knowledge_item.pk).update(
+            embedding_file_path=file_path,
+            chunks_count=len(chunks_with_embeddings),
+            status='completed'
+        )
         
         print(f"Saved embeddings to: {file_path}")
         return file_path
     
+    def _generate_content_hash(self, knowledge_item):
+        """Generate hash of content for change detection"""
+        import hashlib
+        
+        content = self.extract_text_content(knowledge_item)
+        return hashlib.md5(content.encode('utf-8')).hexdigest()
+    
     def load_embeddings_from_file(self, knowledge_item):
-        """Load embeddings from JSON file"""
+        """Load embeddings from JSON file with content validation"""
         import json
         import os
         
@@ -271,7 +295,18 @@ class EmbeddingService:
             
         try:
             with open(knowledge_item.embedding_file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                embedding_data = json.load(f)
+                
+            # Validate if embeddings are still valid (content hasn't changed)
+            if 'metadata' in embedding_data:
+                stored_hash = embedding_data['metadata'].get('content_hash')
+                current_hash = self._generate_content_hash(knowledge_item)
+                
+                if stored_hash and stored_hash != current_hash:
+                    print(f"Content hash mismatch for {knowledge_item.title}, embeddings may be outdated")
+                    # Could trigger refresh here if needed
+                    
+            return embedding_data
         except Exception as e:
             print(f"Error loading embeddings from {knowledge_item.embedding_file_path}: {e}")
             return None
@@ -284,7 +319,11 @@ class EmbeddingService:
         if knowledge_item.embedding_file_path:
             import os
             if os.path.exists(knowledge_item.embedding_file_path):
-                os.remove(knowledge_item.embedding_file_path)
+                try:
+                    os.remove(knowledge_item.embedding_file_path)
+                    print(f"Deleted old embedding file: {knowledge_item.embedding_file_path}")
+                except Exception as e:
+                    print(f"Error deleting old embedding file: {e}")
         
         # Clear database embeddings and file path
         knowledge_item.embeddings = {}
@@ -295,6 +334,35 @@ class EmbeddingService:
         
         # Generate new embeddings
         self.generate_embeddings_for_item(knowledge_item)
+    
+    def delete_embeddings_for_item(self, knowledge_item):
+        """Delete all embeddings for a knowledge base item"""
+        print(f"Deleting embeddings for {knowledge_item.title}")
+        
+        # Delete embedding file
+        if knowledge_item.embedding_file_path:
+            import os
+            if os.path.exists(knowledge_item.embedding_file_path):
+                try:
+                    os.remove(knowledge_item.embedding_file_path)
+                    print(f"Deleted embedding file: {knowledge_item.embedding_file_path}")
+                except Exception as e:
+                    print(f"Error deleting embedding file: {e}")
+        
+        # Clear database embeddings
+        knowledge_item.embeddings = {}
+        knowledge_item.embedding_file_path = ""
+        knowledge_item.chunks_count = 0
+        knowledge_item.status = 'uploading'
+        
+        # Use update to avoid triggering signals
+        from .models import KnowledgeBase
+        KnowledgeBase.objects.filter(pk=knowledge_item.pk).update(
+            embeddings=knowledge_item.embeddings,
+            embedding_file_path=knowledge_item.embedding_file_path,
+            chunks_count=knowledge_item.chunks_count,
+            status=knowledge_item.status
+        )
 
     def extract_text_content(self, knowledge_item):
         """Extract text content from knowledge base item"""
@@ -350,6 +418,34 @@ class EmbeddingService:
         except Exception as e:
             print(f"Error extracting DOCX content: {e}")
             return "Error processing DOCX file"
+    
+    def validate_embeddings_integrity(self, assistant):
+        """Validate that all embeddings are up to date"""
+        knowledge_items = assistant.knowledge_base.all()
+        outdated_items = []
+        
+        for item in knowledge_items:
+            if item.status == 'completed' and item.embedding_file_path:
+                embedding_data = self.load_embeddings_from_file(item)
+                if embedding_data and 'metadata' in embedding_data:
+                    stored_hash = embedding_data['metadata'].get('content_hash')
+                    current_hash = self._generate_content_hash(item)
+                    
+                    if stored_hash != current_hash:
+                        outdated_items.append(item)
+                        print(f"Found outdated embeddings for: {item.title}")
+                        
+        return outdated_items
+    
+    def refresh_outdated_embeddings(self, assistant):
+        """Refresh all outdated embeddings for an assistant"""
+        outdated_items = self.validate_embeddings_integrity(assistant)
+        
+        for item in outdated_items:
+            print(f"Refreshing outdated embeddings for: {item.title}")
+            self.refresh_embeddings_for_item(item)
+            
+        return len(outdated_items)
 
     def cosine_similarity(self, vec1, vec2):
         """Calculate cosine similarity between two vectors"""
@@ -411,6 +507,13 @@ class EmbeddingService:
                                 })
 
         # Sort by similarity and return top chunks
+        # Validate embeddings integrity before returning results
+        if not relevant_chunks:
+            # Check if embeddings might be outdated
+            outdated_count = self.refresh_outdated_embeddings(assistant)
+            if outdated_count > 0:
+                print(f"Refreshed {outdated_count} outdated embeddings, you may want to retry the search")
+        
         relevant_chunks.sort(key=lambda x: x['similarity'], reverse=True)
         return relevant_chunks[:5]  # Return top 5 most relevant chunks
 
@@ -440,6 +543,7 @@ class ChatService:
 
     def process_message(self, message, session_id=None, is_voice=False):
         """Process user message and generate response with improved flow"""
+        
         session = self.get_or_create_session(session_id)
         if not session:
             return None, "Error creating chat session"
@@ -467,11 +571,11 @@ class ChatService:
             
             if relevant_knowledge:
                 # Step 3: Generate response using LLM with knowledge base context
-                response = self.generate_ai_response(message, relevant_knowledge)
+                response = self.generate_ai_response(message, relevant_knowledge, session)
                 response_source = "kb+llm"
             else:
                 # Step 4: Fallback to pure LLM response
-                response = self.generate_ai_response(message, [])
+                response = self.generate_ai_response(message, [], session)
                 response_source = "llm"
 
         # Save assistant response
@@ -481,6 +585,7 @@ class ChatService:
             content=response,
             is_voice=False
         )
+
 
         return session.session_id, response
 
@@ -525,45 +630,70 @@ class ChatService:
         
         return best_match
 
-    def generate_ai_response(self, message, relevant_knowledge):
+    def generate_ai_response(self, message, relevant_knowledge, session=None):
         """Generate AI response using OpenAI with improved RAG context handling"""
+        # Get conversation history for context
+        conversation_context = ""
+        if session:
+            recent_messages = ChatMessage.objects.filter(
+                session=session
+            ).order_by('-created_at')[:6]  # Last 6 messages (3 exchanges)
+            
+            if recent_messages:
+                conversation_context = "\n\nRecent conversation history:\n"
+                for msg in reversed(recent_messages):
+                    role = "Customer" if msg.message_type == 'user' else "Assistant"
+                    conversation_context += f"{role}: {msg.content}\n"
+        
         if relevant_knowledge:
+            # Sort chunks by similarity (highest first) to prioritize most relevant
+            sorted_knowledge = sorted(relevant_knowledge, key=lambda x: x['similarity'], reverse=True)
+            
             # Use knowledge base context from chunks
             context_parts = []
-            for chunk in relevant_knowledge:
+            for i, chunk in enumerate(sorted_knowledge):
                 content = chunk['content']
                 similarity = chunk['similarity']
                 source = chunk['source']
-                context_parts.append(f"[Source: {source}, Relevance: {similarity:.1%}]\n{content}")
+                priority = "MOST RELEVANT" if i == 0 else f"Relevance: {similarity:.1%}"
+                context_parts.append(f"[{priority} - Source: {source}]\n{content}")
             
-            context = "\n\nRelevant information from knowledge base:\n" + "\n\n---\n\n".join(context_parts)
+            context = "\n\nRelevant information from knowledge base (sorted by relevance):\n" + "\n\n---\n\n".join(context_parts)
             
             prompt = f"""
-            Based on the system instructions and the relevant knowledge chunks provided below, please answer the customer's question accurately and professionally.
+            You are a {self.assistant.business_type.name} customer service assistant. Answer the customer's question using the provided knowledge base information and conversation history for context.
 
             Customer Question: {message}
             {context}
+            {conversation_context}
 
-            Instructions:
-            1. Use the provided knowledge base information as your primary source
-            2. Synthesize information from multiple chunks if relevant
-            3. If the knowledge base doesn't fully answer the question, combine it with general knowledge
-            4. Be specific and helpful, citing the most relevant information
-            5. Maintain a professional customer service tone
-            6. If you're not certain about something, mention that the customer should verify with the business
-            """
+            CRITICAL INSTRUCTIONS:
+            1. Consider the conversation history to understand the context and maintain continuity
+            2. The customer is asking: "{message}"
+            3. Look for the EXACT information that answers this specific question
+            4. If they ask "how many" or "how much", look for NUMBERS and QUANTITIES
+            5. If they ask about "agents", look for agent counts or specializations  
+            6. If they ask about "luxury properties", look for luxury-specific information
+            7. IGNORE unrelated information like commission rates, fees, or other services
+            8. Use ONLY the information that directly answers their question
+            9. Be specific and cite the exact numbers/details found
+            10. Reference previous conversation if relevant to the current question
+
+            What does the knowledge base say about their specific question?"""
         else:
             # No knowledge base context, use general response
             prompt = f"""
             Please answer the following customer question based on your general knowledge and the system instructions. Since no specific business information was found, provide a helpful general response and suggest the customer contact the business directly for specific details.
 
             Customer Question: {message}
+            {conversation_context}
 
             Instructions:
-            1. Provide a helpful, general response
-            2. Acknowledge that specific business details should be verified
-            3. Maintain a professional customer service tone
-            4. Suggest appropriate next steps for the customer
+            1. Consider the conversation history to maintain context and continuity
+            2. Provide a helpful, general response
+            3. Acknowledge that specific business details should be verified
+            4. Maintain a professional customer service tone
+            5. Suggest appropriate next steps for the customer
             """
 
         try:
@@ -592,16 +722,16 @@ class VoiceService:
     def process_voice_message(self, audio_file, session_id=None):
         """Process voice message: STT -> Chat -> TTS"""
         # Speech to Text
-        text = self.openai_service.speech_to_text(audio_file)
-        if not text:
-            return None, None, "Error processing audio"
+        transcribed_text = self.openai_service.speech_to_text(audio_file)
+        if not transcribed_text:
+            return None, None, None, "Error processing audio"
 
         # Process text message
         session_id, response_text = self.chat_service.process_message(
-            text, session_id, is_voice=True
+            transcribed_text, session_id, is_voice=True
         )
 
         # Text to Speech
         audio_response = self.openai_service.text_to_speech(response_text)
 
-        return session_id, audio_response, response_text
+        return session_id, audio_response, response_text, transcribed_text

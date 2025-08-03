@@ -8,4 +8,6 @@ urlpatterns = [
     path('speech-to-text/', api_views.speech_to_text_api, name='speech_to_text_api'),
     path('assistant-info/', api_views.assistant_info_api, name='assistant_info_api'),
     path('widget/', api_views.ChatWidgetView.as_view(), name='chat_widget'),
+    path('voice-test/', api_views.voice_test_api, name='voice_test_api'),
+    path('voice-stt-test/', api_views.voice_stt_test_api, name='voice_stt_test_api'),
 ]

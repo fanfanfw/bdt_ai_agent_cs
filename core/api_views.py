@@ -80,7 +80,7 @@ def voice_chat_api(request):
         
         # Process voice message
         voice_service = VoiceService(assistant)
-        session_id, audio_response, text_response = voice_service.process_voice_message(
+        session_id, audio_response, text_response, transcribed_text = voice_service.process_voice_message(
             audio_file, session_id
         )
         
@@ -91,6 +91,7 @@ def voice_chat_api(request):
         response = HttpResponse(audio_response, content_type='audio/mp3')
         response['X-Session-ID'] = str(session_id)
         response['X-Text-Response'] = text_response
+        response['X-Transcribed-Text'] = transcribed_text
         return response
         
     except Exception as e:
@@ -608,3 +609,83 @@ class ChatWidgetView(View):
         """
         
         return HttpResponse(html_content, content_type='text/html')
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def voice_test_api(request):
+    """Voice test API for internal testing (uses session-based auth)"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        
+        session_id = request.POST.get('session_id')
+        audio_file = request.FILES.get('audio')
+        
+        if not audio_file:
+            return JsonResponse({'error': 'Audio file is required'}, status=400)
+        
+        # Get assistant for current user
+        try:
+            assistant = AIAssistant.objects.get(user=request.user)
+        except AIAssistant.DoesNotExist:
+            return JsonResponse({'error': 'No assistant found for user'}, status=404)
+        
+        # Process voice message
+        voice_service = VoiceService(assistant)
+        session_id, audio_response, text_response, transcribed_text = voice_service.process_voice_message(
+            audio_file, session_id
+        )
+        
+        if not session_id:
+            return JsonResponse({'error': 'Error processing voice message'}, status=500)
+        
+        # Return JSON response with both audio and text
+        import base64
+        audio_b64 = base64.b64encode(audio_response).decode('utf-8') if audio_response else None
+        
+        return JsonResponse({
+            'session_id': str(session_id),
+            'text_response': text_response,
+            'transcribed_text': transcribed_text,
+            'audio_response': audio_b64,
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def voice_stt_test_api(request):
+    """STT only test API for internal testing"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        
+        audio_file = request.FILES.get('audio')
+        
+        if not audio_file:
+            return JsonResponse({'error': 'Audio file is required'}, status=400)
+        
+        # Get assistant for current user
+        try:
+            assistant = AIAssistant.objects.get(user=request.user)
+        except AIAssistant.DoesNotExist:
+            return JsonResponse({'error': 'No assistant found for user'}, status=404)
+        
+        # Convert speech to text only
+        voice_service = VoiceService(assistant)
+        text = voice_service.openai_service.speech_to_text(audio_file)
+        
+        if not text:
+            return JsonResponse({'error': 'Error processing audio'}, status=500)
+        
+        return JsonResponse({
+            'transcribed_text': text,
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

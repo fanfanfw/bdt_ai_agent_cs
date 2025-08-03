@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.conf import settings
 import json
 import openai
+from django.db import transaction
 
 from .models import BusinessType, AIAssistant, QnA, KnowledgeBase
 from .forms import CustomUserCreationForm, BusinessTypeForm
@@ -281,6 +282,17 @@ def test_chat_view(request):
 
 
 @login_required
+def test_voice_view(request):
+    """Test voice functionality with STT -> LLM -> TTS pipeline"""
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+        return render(request, 'core/test_voice.html', {'assistant': assistant})
+        
+    except AIAssistant.DoesNotExist:
+        return redirect('business_type_selection')
+
+
+@login_required
 def edit_qna_view(request):
     """Edit Q&A for existing assistant"""
     try:
@@ -416,11 +428,12 @@ def edit_knowledge_base_view(request):
                     return redirect('edit_knowledge_base')
                 try:
                     item = assistant.knowledge_base.get(id=item_id)
-                    if item.file_path:
-                        # Delete file from storage
-                        item.file_path.delete()
+                    
+                    # Django signals will automatically handle:
+                    # - Embedding file cleanup (post_delete signal)
+                    # - Upload file cleanup (post_delete signal)
                     item.delete()
-                    messages.success(request, "Knowledge base item deleted successfully!")
+                    messages.success(request, "Knowledge base item and its embeddings deleted successfully!")
                 except KnowledgeBase.DoesNotExist:
                     messages.error(request, "Knowledge base item not found!")
                     
@@ -433,15 +446,17 @@ def edit_knowledge_base_view(request):
                 try:
                     item = assistant.knowledge_base.get(id=item_id)
                     if new_content:
+                        old_content = item.content
                         item.content = new_content
-                        item.title = f"Updated: {item.title}"
                         
-                        # Refresh embeddings when content changes
-                        from .services import EmbeddingService
-                        embedding_service = EmbeddingService()
-                        embedding_service.refresh_embeddings_for_item(item)
-                        
-                        messages.success(request, "Knowledge base item updated successfully!")
+                        # Only update title if content actually changed
+                        if old_content != new_content:
+                            if not item.title.startswith("Updated: "):
+                                item.title = f"Updated: {item.title}"
+                            item.save()  # This will trigger the signal to refresh embeddings
+                            messages.success(request, "Knowledge base item updated and embeddings are being refreshed!")
+                        else:
+                            messages.info(request, "No changes detected in content.")
                     else:
                         messages.error(request, "Content cannot be empty!")
                 except KnowledgeBase.DoesNotExist:
@@ -458,13 +473,8 @@ def edit_knowledge_base_view(request):
                         title=title,
                         content=manual_content
                     )
-                    
-                    # Generate embeddings using new RAG system
-                    from .services import EmbeddingService
-                    embedding_service = EmbeddingService()
-                    embedding_service.generate_embeddings_for_item(kb_item)
-                    
-                    messages.success(request, "Knowledge base item added successfully!")
+                    # Embeddings will be generated automatically via post_save signal
+                    messages.success(request, "Knowledge base item added and embeddings are being generated!")
                 
                 # Handle file uploads
                 if 'knowledge_files' in request.FILES:
@@ -476,13 +486,9 @@ def edit_knowledge_base_view(request):
                             content=content,
                             file_path=file
                         )
-                        
-                        # Generate embeddings using new RAG system
-                        from .services import EmbeddingService
-                        embedding_service = EmbeddingService()
-                        embedding_service.generate_embeddings_for_item(kb_item)
+                        # Embeddings will be generated automatically via post_save signal
                     
-                    messages.success(request, "Files uploaded and processed successfully!")
+                    messages.success(request, "Files uploaded and embeddings are being generated!")
             
             return redirect('edit_knowledge_base')
         
