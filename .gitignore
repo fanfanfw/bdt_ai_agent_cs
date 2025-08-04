@@ -6,3 +6,6 @@ media/
 ss/
 .env
 memory/
+notes.txt
+logs
+test/

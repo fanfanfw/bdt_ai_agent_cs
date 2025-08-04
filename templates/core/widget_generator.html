@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}Widget Generator - AI Agent{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code me-2"></i>Widget Generator
+                    </h5>
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Customize your embeddable widget and copy the code to add it to any website.
+                    </p>
+                    
+                    <form method="post" id="widgetForm">
+                        {% csrf_token %}
+                        
+                        <!-- Widget Mode -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="mode" class="form-label">Widget Mode</label>
+                                <select class="form-select" name="mode" id="mode">
+                                    <option value="chat" {% if widget_config.mode == 'chat' %}selected{% endif %}>Chat Only</option>
+                                    <option value="voice" {% if widget_config.mode == 'voice' %}selected{% endif %}>Voice Only</option>
+                                    <option value="both" {% if widget_config.mode == 'both' %}selected{% endif %}>Chat & Voice</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="theme" class="form-label">Theme</label>
+                                <select class="form-select" name="theme" id="theme">
+                                    <option value="light" {% if widget_config.theme == 'light' %}selected{% endif %}>Light</option>
+                                    <option value="dark" {% if widget_config.theme == 'dark' %}selected{% endif %}>Dark</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Colors -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="accent_color" class="form-label">Accent Color</label>
+                                <input type="color" class="form-control form-control-color" name="accent_color" id="accent_color" value="{{ widget_config.accent_color }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="cta_button_color" class="form-label">Button Color</label>
+                                <input type="color" class="form-control form-control-color" name="cta_button_color" id="cta_button_color" value="{{ widget_config.cta_button_color }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="base_bg_color" class="form-label">Background Color</label>
+                                <input type="color" class="form-control form-control-color" name="base_bg_color" id="base_bg_color" value="{{ widget_config.base_bg_color }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Layout -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="size" class="form-label">Size</label>
+                                <select class="form-select" name="size" id="size">
+                                    <option value="small" {% if widget_config.size == 'small' %}selected{% endif %}>Small</option>
+                                    <option value="medium" {% if widget_config.size == 'medium' %}selected{% endif %}>Medium</option>
+                                    <option value="large" {% if widget_config.size == 'large' %}selected{% endif %}>Large</option>
+                                    <option value="full" {% if widget_config.size == 'full' %}selected{% endif %}>Full Screen</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="position" class="form-label">Position</label>
+                                <select class="form-select" name="position" id="position">
+                                    <option value="bottom-right" {% if widget_config.position == 'bottom-right' %}selected{% endif %}>Bottom Right</option>
+                                    <option value="bottom-left" {% if widget_config.position == 'bottom-left' %}selected{% endif %}>Bottom Left</option>
+                                    <option value="top-right" {% if widget_config.position == 'top-right' %}selected{% endif %}>Top Right</option>
+                                    <option value="top-left" {% if widget_config.position == 'top-left' %}selected{% endif %}>Top Left</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="border_radius" class="form-label">Border Radius</label>
+                                <select class="form-select" name="border_radius" id="border_radius">
+                                    <option value="small" {% if widget_config.border_radius == 'small' %}selected{% endif %}>Small</option>
+                                    <option value="medium" {% if widget_config.border_radius == 'medium' %}selected{% endif %}>Medium</option>
+                                    <option value="large" {% if widget_config.border_radius == 'large' %}selected{% endif %}>Large</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Text Content -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Widget Title</label>
+                            <input type="text" class="form-control" name="title" id="title" value="{{ widget_config.title }}">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="chat_first_message" class="form-label">Chat Welcome Message</label>
+                                <textarea class="form-control" name="chat_first_message" id="chat_first_message" rows="2">{{ widget_config.chat_first_message }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="chat_placeholder" class="form-label">Chat Placeholder</label>
+                                <input type="text" class="form-control" name="chat_placeholder" id="chat_placeholder" value="{{ widget_config.chat_placeholder }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Voice Options -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="voice_show_transcript" id="voice_show_transcript" value="true" {% if widget_config.voice_show_transcript == 'true' %}checked{% endif %}>
+                                    <label class="form-check-label" for="voice_show_transcript">
+                                        Show Voice Transcript
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="consent_required" id="consent_required" value="true" {% if widget_config.consent_required == 'true' %}checked{% endif %}>
+                                    <label class="form-check-label" for="consent_required">
+                                        Require User Consent
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Consent Content (shown if consent required) -->
+                        <div id="consentFields" style="display: {% if widget_config.consent_required == 'true' %}block{% else %}none{% endif %};">
+                            <div class="mb-3">
+                                <label for="consent_title" class="form-label">Consent Dialog Title</label>
+                                <input type="text" class="form-control" name="consent_title" id="consent_title" value="{{ widget_config.consent_title }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="consent_content" class="form-label">Consent Dialog Content</label>
+                                <textarea class="form-control" name="consent_content" id="consent_content" rows="3">{{ widget_config.consent_content }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-code me-2"></i>Generate Widget Code
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Widget Preview -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Preview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="widget-preview-container" style="position: relative; height: 200px; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">
+                            <div class="widget-preview-button" style="
+                                position: absolute;
+                                bottom: 20px;
+                                right: 20px;
+                                width: 50px;
+                                height: 50px;
+                                border-radius: 50%;
+                                background: {{ widget_config.cta_button_color }};
+                                color: {{ widget_config.cta_button_text_color }};
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 20px;
+                                cursor: pointer;
+                            ">💬</div>
+                            <div class="text-center mt-5 pt-5">
+                                <small class="text-muted">Widget will appear here<br>on your website</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Configuration Summary:</h6>
+                        <ul class="list-unstyled small">
+                            <li><strong>Mode:</strong> {{ widget_config.mode|title }}</li>
+                            <li><strong>Theme:</strong> {{ widget_config.theme|title }}</li>
+                            <li><strong>Size:</strong> {{ widget_config.size|title }}</li>
+                            <li><strong>Position:</strong> {{ widget_config.position|title }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assistant Info -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>Assistant Info
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Business:</strong> {{ assistant.business_type.name }}</p>
+                    <p><strong>API Key:</strong> <code class="small">{{ assistant.api_key }}</code></p>
+                    <p><strong>Assistant ID:</strong> <code class="small">{{ assistant.id }}</code></p>
+                    <p class="mb-0"><strong>Knowledge Base:</strong> {{ assistant.knowledge_base.count }} items</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if show_code %}
+    <!-- Generated Code -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-copy me-2"></i>Generated Widget Code
+                    </h5>
+                    <button class="btn btn-sm btn-success" onclick="copyToClipboard()">
+                        <i class="fas fa-copy me-1"></i>Copy Code
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Copy this code and paste it into any HTML page where you want the widget to appear:
+                    </p>
+                    
+                    <pre id="widgetCode" class="bg-dark text-light p-3 rounded"><code>{{ widget_code }}</code></pre>
+                    
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="fas fa-info-circle me-2"></i>How to use:</h6>
+                        <ol class="mb-0">
+                            <li>Copy the code above</li>
+                            <li>Paste it anywhere in your HTML page (preferably before the closing &lt;/body&gt; tag)</li>
+                            <li>The widget will automatically appear on your website</li>
+                            <li>Visitors can start chatting immediately!</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Notes:</h6>
+                        <ul class="mb-0">
+                            <li>Keep your API key secure - don't share it publicly</li>
+                            <li>The widget works on any website or HTML page</li>
+                            <li>Conversation history is maintained per session</li>
+                            <li>Both chat and voice features work out of the box</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Toggle consent fields visibility
+document.getElementById('consent_required').addEventListener('change', function() {
+    const consentFields = document.getElementById('consentFields');
+    consentFields.style.display = this.checked ? 'block' : 'none';
+});
+
+// Update preview colors when changed
+document.getElementById('cta_button_color').addEventListener('change', function() {
+    document.querySelector('.widget-preview-button').style.background = this.value;
+});
+
+// Copy to clipboard function
+function copyToClipboard() {
+    const codeElement = document.getElementById('widgetCode');
+    const textArea = document.createElement('textarea');
+    textArea.value = codeElement.textContent;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // Show success message
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+    btn.classList.remove('btn-success');
+    btn.classList.add('btn-success');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+    }, 2000);
+}
+
+// Auto-submit form when preview values change (optional)
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInputs = document.querySelectorAll('input[type="color"]');
+    colorInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Update preview immediately
+            if (this.id === 'cta_button_color') {
+                document.querySelector('.widget-preview-button').style.background = this.value;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

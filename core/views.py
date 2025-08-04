@@ -581,6 +581,99 @@ def edit_business_type_view(request):
         return redirect('business_type_selection')
 
 
+@login_required
+def widget_generator_view(request):
+    """Generate embeddable widget code"""
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+    except AIAssistant.DoesNotExist:
+        messages.error(request, 'Please set up your assistant first.')
+        return redirect('business_type_selection')
+    
+    if request.method == 'POST':
+        # Handle widget configuration updates
+        widget_config = {
+            'mode': request.POST.get('mode', 'chat'),
+            'theme': request.POST.get('theme', 'light'),
+            'base_bg_color': request.POST.get('base_bg_color', '#ffffff'),
+            'accent_color': request.POST.get('accent_color', '#007bff'),
+            'cta_button_color': request.POST.get('cta_button_color', '#007bff'),
+            'cta_button_text_color': request.POST.get('cta_button_text_color', '#ffffff'),
+            'border_radius': request.POST.get('border_radius', 'medium'),
+            'size': request.POST.get('size', 'medium'),
+            'position': request.POST.get('position', 'bottom-right'),
+            'title': request.POST.get('title', f'{assistant.business_type.name} Assistant'),
+            'chat_first_message': request.POST.get('chat_first_message', 'Hello! How can I help you today?'),
+            'chat_placeholder': request.POST.get('chat_placeholder', 'Type your message...'),
+            'voice_show_transcript': request.POST.get('voice_show_transcript', 'true'),
+            'consent_required': request.POST.get('consent_required', 'false'),
+            'consent_title': request.POST.get('consent_title', 'Terms and Conditions'),
+            'consent_content': request.POST.get('consent_content', 'By using this chat, you agree to our terms of service.'),
+        }
+        
+        # Generate widget code
+        widget_code = generate_widget_code(assistant, widget_config, request)
+        
+        return render(request, 'core/widget_generator.html', {
+            'assistant': assistant,
+            'widget_config': widget_config,
+            'widget_code': widget_code,
+            'show_code': True
+        })
+    
+    # Default configuration
+    default_config = {
+        'mode': 'both',
+        'theme': 'light',
+        'base_bg_color': '#ffffff',
+        'accent_color': '#007bff',
+        'cta_button_color': '#007bff',
+        'cta_button_text_color': '#ffffff',
+        'border_radius': 'medium',
+        'size': 'medium',
+        'position': 'bottom-right',
+        'title': f'{assistant.business_type.name} Assistant',
+        'chat_first_message': 'Hello! How can I help you today?',
+        'chat_placeholder': 'Type your message...',
+        'voice_show_transcript': 'true',
+        'consent_required': 'false',
+        'consent_title': 'Terms and Conditions',
+        'consent_content': 'By using this chat, you agree to our terms of service.',
+    }
+    
+    return render(request, 'core/widget_generator.html', {
+        'assistant': assistant,
+        'widget_config': default_config,
+        'show_code': False
+    })
+
+
+def generate_widget_code(assistant, config, request):
+    """Generate the embeddable widget code"""
+    base_url = f"{request.scheme}://{request.get_host()}"
+    
+    # Build widget attributes
+    attributes = []
+    attributes.append(f'api-key="{assistant.api_key}"')
+    attributes.append(f'assistant-id="{assistant.id}"')
+    
+    for key, value in config.items():
+        if value:  # Only add non-empty values
+            attr_name = key.replace('_', '-')
+            attributes.append(f'{attr_name}="{value}"')
+    
+    widget_attributes = '\n  '.join(attributes)
+    
+    widget_code = f'''<!-- AI Agent Widget -->
+<ai-agent-widget
+  {widget_attributes}
+></ai-agent-widget>
+
+<script src="{base_url}/static/js/ai-agent-widget.js" async type="text/javascript"></script>'''
+    
+    return widget_code
+
+
 def logout_view(request):
     """Custom logout view that handles both GET and POST"""
     logout(request)

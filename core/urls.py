@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from .widget_api import widget_chat_api, widget_voice_api, widget_status_api
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -16,4 +17,10 @@ urlpatterns = [
     path('edit-qna/', views.edit_qna_view, name='edit_qna'),
     path('edit-knowledge-base/', views.edit_knowledge_base_view, name='edit_knowledge_base'),
     path('edit-business-type/', views.edit_business_type_view, name='edit_business_type'),
+    path('widget-generator/', views.widget_generator_view, name='widget_generator'),
+    
+    # Widget API endpoints
+    path('api/widget/chat/', widget_chat_api, name='widget_chat_api'),
+    path('api/widget/voice/', widget_voice_api, name='widget_voice_api'),
+    path('api/widget/status/', widget_status_api, name='widget_status_api'),
 ]
