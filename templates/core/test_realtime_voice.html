@@ -1,0 +1,797 @@
+{% extends 'base.html' %}
+
+{% block title %}Realtime Voice Test{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <!-- Header Card -->
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">
+                                <i class="fas fa-microphone me-2"></i>
+                                Realtime Voice Assistant Test
+                            </h4>
+                            <small>Speech-to-Speech with OpenAI Realtime API + RAG</small>
+                        </div>
+                        <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Assistant Info -->
+                    <div class="alert alert-info">
+                        <strong>Assistant:</strong> {{ assistant.business_type.name }} Customer Service<br>
+                        <strong>Knowledge Base Items:</strong> {{ assistant.knowledge_base.count }}<br>
+                        <strong>Q&A Items:</strong> {{ assistant.qnas.count }}<br>
+                        <strong>API:</strong> OpenAI Realtime API (WebRTC)
+                    </div>
+
+                    <!-- Connection Status -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-header bg-secondary text-white text-center">
+                                    <h6 class="mb-0">Connection Status</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="connection-status" class="mb-2">
+                                        <i class="fas fa-circle text-muted fa-2x"></i>
+                                    </div>
+                                    <div id="connection-text" class="fw-bold">Initializing...</div>
+                                    <small class="text-muted">WebRTC Connection</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-info">
+                                <div class="card-header bg-info text-white text-center">
+                                    <h6 class="mb-0">Voice Activity</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="voice-activity" class="mb-2">
+                                        <i class="fas fa-microphone-slash text-muted fa-2x"></i>
+                                    </div>
+                                    <div id="voice-text" class="fw-bold">Ready</div>
+                                    <small class="text-muted">Speech Detection</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white text-center">
+                                    <h6 class="mb-0">AI Response</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="ai-status" class="mb-2">
+                                        <i class="fas fa-robot text-muted fa-2x"></i>
+                                    </div>
+                                    <div id="ai-text" class="fw-bold">Standby</div>
+                                    <small class="text-muted">Model Response</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Control Panel -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card shadow-lg h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-microphone me-2"></i>Voice Control
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <!-- Voice Button -->
+                            <div class="my-4">
+                                <button id="voice-btn" class="btn btn-success rounded-circle" 
+                                        style="width: 120px; height: 120px;" 
+                                        disabled>
+                                    <i class="fas fa-microphone fa-3x"></i>
+                                </button>
+                                <div class="mt-3">
+                                    <div id="voice-btn-text" class="fw-bold fs-5">Initializing...</div>
+                                    <small class="text-muted">Click to start conversation</small>
+                                </div>
+                            </div>
+
+                            <!-- Conversation State -->
+                            <div id="conversation-state" class="alert alert-secondary">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <span id="state-indicator" class="fs-4 me-2">🤖</span>
+                                    <span id="state-text" class="fw-bold">Getting ready...</span>
+                                </div>
+                            </div>
+
+                            <!-- Instructions -->
+                            <div class="alert alert-light border">
+                                <h6><i class="fas fa-info-circle me-2"></i>How to use:</h6>
+                                <ul class="list-unstyled mb-0 small">
+                                    <li>• Click the microphone to start conversation</li>
+                                    <li>• Speak naturally - AI responds in real-time</li>
+                                    <li>• Click again to end conversation</li>
+                                    <li>• Uses your knowledge base for answers</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-lg h-100">
+                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-comments me-2"></i>Conversation History
+                            </h5>
+                            <button class="btn btn-sm btn-outline-light" onclick="clearConversation()">
+                                <i class="fas fa-trash me-1"></i>Clear
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="conversation-messages" class="p-3" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                                <!-- Welcome Message -->
+                                <div class="message assistant mb-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="avatar me-3">
+                                            <i class="fas fa-robot fa-2x text-primary"></i>
+                                        </div>
+                                        <div class="message-content bg-white p-3 rounded shadow-sm">
+                                            <strong>{{ assistant.business_type.name }} Assistant</strong><br>
+                                            Hello! I'm your realtime AI assistant. Click the microphone and start speaking - I'll respond instantly using your knowledge base!
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Panel -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-cog me-2"></i>Session Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="session-info" class="small">
+                                <div><strong>Session ID:</strong> <span id="session-id-display">Not connected</span></div>
+                                <div><strong>Status:</strong> <span id="session-status-text">Initializing</span></div>
+                                <div><strong>Connection:</strong> <span>WebRTC + Ephemeral Token</span></div>
+                                <div><strong>Model:</strong> <span>gpt-4o-realtime-preview</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-bug me-2"></i>Debug Console
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="debug-info" class="small bg-dark text-light p-3 rounded" style="height: 150px; overflow-y: auto; font-family: monospace;">
+=== Realtime Voice AI Debug Console ===
+🚀 System initializing...
+⚡ Connecting to OpenAI Realtime API...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="notification-toast" class="toast" role="alert">
+        <div class="toast-header">
+            <strong class="me-auto">Voice Assistant</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            <!-- Dynamic message content -->
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Configuration
+const REALTIME_API_BASE = '/api/realtime-test/';
+const FUNCTION_CALL_API = '/api/realtime-function-call/';
+
+// Global state
+let currentSessionId = null;
+let pc = null; // WebRTC peer connection
+let dc = null; // Data channel
+let isConnected = false;
+let isListening = false;
+let isInConversation = false; // New state for conversation mode
+let audioEl = null;
+
+// DOM elements
+const voiceBtn = document.getElementById('voice-btn');
+const voiceBtnText = document.getElementById('voice-btn-text');
+const conversationMessages = document.getElementById('conversation-messages');
+const sessionInfo = document.getElementById('session-info');
+const debugInfo = document.getElementById('debug-info');
+const sessionIdDisplay = document.getElementById('session-id-display');
+const sessionStatusText = document.getElementById('session-status-text');
+
+// New conversation state elements
+const conversationState = document.getElementById('conversation-state');
+const stateIndicator = document.getElementById('state-indicator');
+const stateText = document.getElementById('state-text');
+
+// Status indicators
+const connectionStatus = document.getElementById('connection-status');
+const connectionText = document.getElementById('connection-text');
+const voiceActivity = document.getElementById('voice-activity');
+const voiceText = document.getElementById('voice-text');
+const aiStatus = document.getElementById('ai-status');
+const aiText = document.getElementById('ai-text');
+
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    updateDebugInfo('🎬 Realtime Voice AI initializing...');
+    updateDebugInfo('⚡ Powered by OpenAI Realtime API');
+    
+    // Start initialization
+    setTimeout(() => {
+        initializeRealtimeVoice();
+    }, 1000);
+});
+
+// Initialize realtime voice connection
+async function initializeRealtimeVoice() {
+    updateDebugInfo('🚀 Starting realtime voice initialization...');
+    updateConnectionStatus('connecting', 'Initializing...');
+    updateStatus('session', 'processing');
+    
+    try {
+        // Step 1: Get ephemeral token from server
+        updateDebugInfo('🔑 Requesting ephemeral token from server...');
+        const tokenResponse = await fetch('/api/realtime-test/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                session_id: currentSessionId || ''
+            })
+        });
+        
+        if (!tokenResponse.ok) {
+            throw new Error(`Token request failed: ${tokenResponse.status}`);
+        }
+        
+        const tokenData = await tokenResponse.json();
+        updateDebugInfo('✅ Ephemeral token received');
+        
+        if (tokenData.status !== 'success') {
+            throw new Error(tokenData.error || 'Failed to get token');
+        }
+        
+        // Step 2: Setup WebRTC connection
+        await setupWebRTC(tokenData.client_secret.value);
+        
+    } catch (error) {
+        updateDebugInfo(`❌ Initialization failed: ${error.message}`);
+        updateConnectionStatus('error', 'Connection failed');
+        updateStatus('session', 'error');
+        showToast('Failed to initialize voice connection: ' + error.message, 'error');
+    }
+}
+
+// Setup WebRTC connection
+async function setupWebRTC(ephemeralKey) {
+    updateDebugInfo('🌐 Setting up WebRTC connection...');
+    updateConnectionStatus('connecting', 'Establishing WebRTC...');
+    updateStatus('connection', 'processing');
+
+    try {
+        // Create peer connection
+        pc = new RTCPeerConnection();
+        updateDebugInfo('📡 RTCPeerConnection created');
+
+        // Set up audio element for remote audio from model
+        audioEl = document.createElement("audio");
+        audioEl.autoplay = true;
+        updateDebugInfo('🔊 Audio element created');
+
+        // Handle remote audio stream
+        pc.ontrack = (event) => {
+            updateDebugInfo('🎵 Remote audio track received');
+            audioEl.srcObject = event.streams[0];
+        };
+
+        // Add local audio track for microphone input
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            pc.addTrack(mediaStream.getTracks()[0]);
+            updateDebugInfo('🎤 Local microphone track added');
+        } catch (error) {
+            throw new Error(`Microphone access denied: ${error.message}`);
+        }
+
+        // Set up data channel for sending and receiving events
+        dc = pc.createDataChannel("oai-events");
+        updateDebugInfo('📡 Data channel created');
+        
+        dc.addEventListener("open", () => {
+            updateDebugInfo('✅ Data channel opened');
+            isConnected = true;
+            enableVoiceButton();
+        });
+
+        dc.addEventListener("message", (event) => {
+            handleRealtimeEvent(JSON.parse(event.data));
+        });
+
+        dc.addEventListener("error", (error) => {
+            updateDebugInfo(`❌ Data channel error: ${error}`);
+        });
+
+        // Create offer and set local description
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        updateDebugInfo('📋 SDP offer created and set');
+
+        // Send offer to OpenAI Realtime API
+        const baseUrl = "https://api.openai.com/v1/realtime";
+        const model = "gpt-4o-realtime-preview-2024-12-17";
+        
+        updateDebugInfo(`🔗 Connecting to ${baseUrl}?model=${model}`);
+        
+        const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+            method: "POST",
+            body: offer.sdp,
+            headers: {
+                Authorization: `Bearer ${ephemeralKey}`,
+                "Content-Type": "application/sdp"
+            }
+        });
+
+        if (!sdpResponse.ok) {
+            throw new Error(`SDP exchange failed: ${sdpResponse.status}`);
+        }
+
+        // Set remote description
+        const answerSdp = await sdpResponse.text();
+        await pc.setRemoteDescription({
+            type: "answer",
+            sdp: answerSdp
+        });
+        
+        updateDebugInfo('✅ WebRTC connection established');
+        updateConnectionStatus('connected', 'Connected');
+        updateStatus('connection', 'connected');
+        
+    } catch (error) {
+        updateDebugInfo(`❌ WebRTC setup failed: ${error.message}`);
+        updateConnectionStatus('error', 'Connection failed');
+        updateStatus('connection', 'error');
+        throw error;
+    }
+}
+
+// Handle realtime events from OpenAI
+function handleRealtimeEvent(event) {
+    updateDebugInfo(`📨 Received event: ${event.type}`);
+    
+    switch (event.type) {
+        case 'session.created':
+            currentSessionId = event.session.id;
+            sessionIdDisplay.textContent = currentSessionId;
+            updateDebugInfo(`🆔 Session created: ${currentSessionId}`);
+            break;
+            
+        case 'input_audio_buffer.speech_started':
+            updateStatus('voice', 'listening');
+            updateConversationState('listening', '👂', 'Listening...');
+            updateDebugInfo('🎤 Speech detected');
+            break;
+            
+        case 'input_audio_buffer.speech_stopped':
+            updateStatus('voice', 'processing');
+            updateConversationState('processing', '⚙️', 'Processing...');
+            updateDebugInfo('🔄 Speech ended, processing...');
+            break;
+            
+        case 'response.function_call_arguments.done':
+            // Handle function call for RAG search
+            handleFunctionCall(event);
+            break;
+            
+        case 'input_audio_buffer.committed':
+            updateDebugInfo('🎤 Audio committed for processing');
+            break;
+            
+        case 'response.audio.delta':
+            updateStatus('ai', 'speaking');
+            updateConversationState('speaking', '🗣️', 'AI Speaking...');
+            updateDebugInfo('🗣️ AI speaking...');
+            break;
+            
+        case 'response.done':
+            updateStatus('ai', 'ready');
+            updateConversationState('listening', '👂', 'Listening...');
+            updateDebugInfo('✅ Response completed');
+            break;
+            
+        case 'conversation.item.created':
+            if (event.item.role === 'user' && event.item.content) {
+                const transcript = event.item.content[0]?.transcript || 'Audio message';
+                addMessageToHistory('user', transcript);
+                updateDebugInfo(`🎤 User said: "${transcript}"`);
+            } else if (event.item.role === 'assistant' && event.item.content) {
+                const transcript = event.item.content[0]?.transcript || 'Audio response';
+                addMessageToHistory('assistant', transcript);
+                updateDebugInfo(`🗣️ Assistant said: "${transcript}"`);
+            }
+            break;
+            
+        case 'response.output_item.added':
+            if (event.item && event.item.content) {
+                for (const content of event.item.content) {
+                    if (content.type === 'audio' && content.transcript) {
+                        updateDebugInfo(`🎵 Audio transcript: "${content.transcript}"`);
+                        addMessageToHistory('assistant', content.transcript);
+                    }
+                }
+            }
+            break;
+            
+        case 'response.audio_transcript.delta':
+            // Handle streaming transcript
+            updateDebugInfo(`📝 Transcript delta: ${event.delta}`);
+            break;
+            
+        case 'response.audio_transcript.done':
+            // Handle complete transcript
+            updateDebugInfo(`✅ Complete transcript: "${event.transcript}"`);
+            addMessageToHistory('assistant', event.transcript);
+            break;
+            
+        case 'error':
+            updateDebugInfo(`❌ Error: ${event.error.message}`);
+            showToast('Error: ' + event.error.message, 'error');
+            break;
+    }
+}
+
+// Handle function calls for RAG integration
+async function handleFunctionCall(event) {
+    try {
+        const functionName = event.name;
+        const args = JSON.parse(event.arguments);
+        
+        updateDebugInfo(`🔍 Function call: ${functionName} with args: ${JSON.stringify(args)}`);
+        
+        if (functionName === 'search_knowledge') {
+            // Call our backend to perform RAG search
+            const response = await fetch('/api/realtime-function-call/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    function_name: functionName,
+                    arguments: args,
+                    session_id: currentSessionId
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Function call failed: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            updateDebugInfo(`📊 RAG search result: ${result.success ? 'Found' : 'Not found'}`);
+            
+            // Send function result back to OpenAI
+            if (dc && dc.readyState === 'open') {
+                const functionResult = {
+                    type: 'conversation.item.create',
+                    item: {
+                        type: 'function_call_output',
+                        call_id: event.call_id,
+                        output: JSON.stringify(result)
+                    }
+                };
+                
+                dc.send(JSON.stringify(functionResult));
+                updateDebugInfo('📤 Function result sent to OpenAI');
+                
+                // Create response after sending function result
+                const createResponse = {
+                    type: 'response.create'
+                };
+                dc.send(JSON.stringify(createResponse));
+                updateDebugInfo('🔄 Response creation triggered');
+            }
+        }
+    } catch (error) {
+        updateDebugInfo(`❌ Function call error: ${error.message}`);
+        
+        // Send error result back to OpenAI
+        if (dc && dc.readyState === 'open') {
+            const errorResult = {
+                type: 'conversation.item.create',
+                item: {
+                    type: 'function_call_output',
+                    call_id: event.call_id,
+                    output: JSON.stringify({
+                        success: false,
+                        error: error.message,
+                        message: 'Sorry, I encountered an error searching the knowledge base. Please try again.'
+                    })
+                }
+            };
+            
+            dc.send(JSON.stringify(errorResult));
+            updateDebugInfo('📤 Error result sent to OpenAI');
+        }
+    }
+}
+
+// Add message to conversation history
+function addMessageToHistory(role, content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role} mb-3`;
+    
+    const avatar = role === 'user' ? 
+        '<i class="fas fa-user fa-2x text-success"></i>' : 
+        '<i class="fas fa-robot fa-2x text-primary"></i>';
+    
+    const alignment = role === 'user' ? 'justify-content-end' : 'align-items-start';
+    const bgClass = role === 'user' ? 'bg-primary text-white' : 'bg-white';
+    
+    // Clean up content
+    const cleanContent = content.replace(/^[^:]*:\s*/, '').trim() || content;
+    
+    messageDiv.innerHTML = `
+        <div class="d-flex ${alignment}">
+            ${role === 'assistant' ? `<div class="avatar me-3">${avatar}</div>` : ''}
+            <div class="message-content ${bgClass} p-3 rounded shadow-sm" style="max-width: 80%;">
+                ${role === 'assistant' ? '<strong>AI Assistant</strong><br>' : ''}
+                ${cleanContent}
+                <div class="small text-muted mt-2">
+                    <i class="fas fa-clock me-1"></i>${new Date().toLocaleTimeString()}
+                    <i class="fas fa-microphone ms-2 me-1"></i>Voice
+                </div>
+            </div>
+            ${role === 'user' ? `<div class="avatar ms-3">${avatar}</div>` : ''}
+        </div>
+    `;
+    
+    conversationMessages.appendChild(messageDiv);
+    conversationMessages.scrollTop = conversationMessages.scrollHeight;
+}
+
+// Status update functions
+function updateConnectionStatus(status, text) {
+    connectionText.textContent = text;
+    const icon = connectionStatus.querySelector('i');
+    
+    icon.className = 'fas fa-circle fa-2x';
+    
+    switch (status) {
+        case 'connected':
+            icon.classList.add('text-success');
+            break;
+        case 'connecting':
+            icon.classList.add('text-warning');
+            break;
+        case 'error':
+            icon.classList.add('text-danger');
+            break;
+        default:
+            icon.classList.add('text-muted');
+    }
+}
+
+function updateStatus(type, status) {
+    let statusEl, textEl, iconClass;
+    
+    switch (type) {
+        case 'voice':
+            statusEl = voiceActivity.querySelector('i');
+            textEl = voiceText;
+            break;
+        case 'ai':
+            statusEl = aiStatus.querySelector('i');
+            textEl = aiText;
+            break;
+        default:
+            return;
+    }
+    
+    statusEl.className = 'fas fa-2x';
+    
+    switch (status) {
+        case 'listening':
+            statusEl.classList.add('fa-microphone', 'text-success');
+            textEl.textContent = 'Listening';
+            break;
+        case 'processing':
+            statusEl.classList.add('fa-spinner', 'fa-spin', 'text-warning');
+            textEl.textContent = 'Processing';
+            break;
+        case 'speaking':
+            statusEl.classList.add('fa-volume-up', 'text-info');
+            textEl.textContent = 'Speaking';
+            break;
+        case 'ready':
+            statusEl.classList.add('fa-check-circle', 'text-success');
+            textEl.textContent = 'Ready';
+            break;
+        case 'error':
+            statusEl.classList.add('fa-exclamation-triangle', 'text-danger');
+            textEl.textContent = 'Error';
+            break;
+        default:
+            statusEl.classList.add('fa-circle', 'text-muted');
+            textEl.textContent = 'Standby';
+    }
+}
+
+function updateDebugInfo(message) {
+    const timestamp = new Date().toLocaleTimeString();
+    debugInfo.textContent += `[${timestamp}] ${message}\n`;
+    debugInfo.scrollTop = debugInfo.scrollHeight;
+}
+
+function enableVoiceButton() {
+    voiceBtn.disabled = false;
+    voiceBtn.onclick = toggleConversation;
+    voiceBtnText.textContent = 'Start Conversation';
+    updateConversationState('ready', '🤖', 'Ready to chat');
+    showToast('🎉 Realtime voice connection established! Click to start a natural conversation.', 'success');
+}
+
+function toggleConversation() {
+    if (!isInConversation) {
+        startConversation();
+    } else {
+        endConversation();
+    }
+}
+
+function startConversation() {
+    if (!isConnected) return;
+    
+    isInConversation = true;
+    voiceBtn.classList.remove('btn-success');
+    voiceBtn.classList.add('btn-danger');
+    voiceBtnText.textContent = 'End Conversation';
+    updateConversationState('listening', '👂', 'Listening...');
+    updateDebugInfo('💬 Started conversation mode');
+    
+    // Send session configuration with RAG integration instructions
+    if (dc && dc.readyState === 'open') {
+        const sessionUpdate = {
+            type: 'session.update',
+            session: {
+                instructions: `You are a helpful ${document.querySelector('.alert-info strong').textContent.split(':')[1]} assistant. 
+                
+                Before responding to any question, you should:
+                1. Check if this is a common question that can be answered from predefined Q&A
+                2. Search the knowledge base for relevant information using search_knowledge function
+                3. Provide accurate, helpful responses based on the available information
+                
+                If you need to search the knowledge base, use the search_knowledge function with the user's question.
+                
+                Be conversational, helpful, and natural in your responses. Keep responses concise but informative.`,
+                voice: 'alloy',
+                input_audio_format: 'pcm16',
+                output_audio_format: 'pcm16',
+                input_audio_transcription: {
+                    model: 'whisper-1'
+                },
+                turn_detection: {
+                    type: 'server_vad',
+                    threshold: 0.5,
+                    prefix_padding_ms: 300,
+                    silence_duration_ms: 500
+                },
+                tools: [{
+                    type: 'function',
+                    name: 'search_knowledge',
+                    description: 'Search the knowledge base for relevant information',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            query: {
+                                type: 'string',
+                                description: 'The search query to find relevant information'
+                            }
+                        },
+                        required: ['query']
+                    }
+                }]
+            }
+        };        dc.send(JSON.stringify(sessionUpdate));
+        updateDebugInfo('⚙️ Session configured with RAG capabilities');
+    }
+}
+
+function endConversation() {
+    isInConversation = false;
+    voiceBtn.classList.remove('btn-danger');
+    voiceBtn.classList.add('btn-success');
+    voiceBtnText.textContent = 'Start Conversation';
+    updateConversationState('ready', '🤖', 'Ready to chat');
+    updateDebugInfo('✋ Ended conversation mode');
+}
+
+function updateConversationState(state, icon, text) {
+    conversationState.className = `alert alert-${getAlertClass(state)}`;
+    stateIndicator.textContent = icon;
+    stateText.textContent = text;
+}
+
+function getAlertClass(state) {
+    switch (state) {
+        case 'listening': return 'success';
+        case 'processing': return 'warning';
+        case 'speaking': return 'info';
+        case 'error': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function clearConversation() {
+    const welcomeMessage = conversationMessages.querySelector('.message.assistant');
+    conversationMessages.innerHTML = '';
+    if (welcomeMessage) {
+        conversationMessages.appendChild(welcomeMessage);
+    }
+    updateDebugInfo('🧹 Conversation history cleared');
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('notification-toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    toastMessage.textContent = message;
+    toast.className = `toast ${type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}`;
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// Utility function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

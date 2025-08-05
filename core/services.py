@@ -1,6 +1,9 @@
 import openai
 import json
 import numpy as np
+import os
+import hashlib
+import math
 from django.conf import settings
 from sklearn.metrics.pairwise import cosine_similarity
 from .models import KnowledgeBase, ChatSession, ChatMessage, AIAssistant
@@ -735,3 +738,316 @@ class VoiceService:
         audio_response = self.openai_service.text_to_speech(response_text)
 
         return session_id, audio_response, response_text, transcribed_text
+
+
+class RealtimeVoiceService:
+    def __init__(self, assistant):
+        self.assistant = assistant
+        self.openai_service = OpenAIService()
+        self.embedding_service = EmbeddingService()
+        self.chat_service = ChatService(assistant)
+
+    def get_voice_for_language(self, language_hint="auto"):
+        """Get appropriate voice based on language preference"""
+        # Use assistant's preferred language first
+        preferred_lang = getattr(self.assistant, 'preferred_language', 'en')
+        
+        # Override with hint if provided
+        if language_hint != "auto":
+            preferred_lang = language_hint
+        
+        # Supported voices: 'alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'
+        voice_mapping = {
+            'ms': 'shimmer',  # Better for Malaysian/Malay pronunciation 
+            'en': 'alloy',    # Good for English
+        }
+        
+        return voice_mapping.get(preferred_lang, 'alloy')
+    
+    def create_ephemeral_token(self):
+        """Create ephemeral token for client-side WebRTC"""
+        try:
+            import requests
+            import json as json_lib
+            
+            # Prepare session configuration
+            session_config = {
+                "model": "gpt-4o-realtime-preview-2024-12-17",
+                "voice": self.get_voice_for_language(),  # Dynamic voice selection
+                "instructions": self.get_realtime_instructions(),
+                "tools": self.get_knowledge_base_tools(),
+                "tool_choice": "auto",
+                "modalities": ["text", "audio"],
+                "temperature": 0.7
+            }
+            
+            print(f"Creating session with config: {json_lib.dumps(session_config, indent=2)}")
+            
+            response = requests.post(
+                "https://api.openai.com/v1/realtime/sessions",
+                headers={
+                    "Authorization": f"Bearer {self.openai_service.client.api_key}",
+                    "Content-Type": "application/json"
+                },
+                json=session_config
+            )
+            
+            print(f"OpenAI API Response: {response.status_code}")
+            print(f"Response headers: {dict(response.headers)}")
+            print(f"Response body: {response.text}")
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                print(f"Parsed response data: {response_data}")
+                return response_data
+            else:
+                print(f"Error creating ephemeral token: {response.status_code} - {response.text}")
+                return {
+                    "error": f"HTTP {response.status_code}: {response.text}",
+                    "status_code": response.status_code
+                }
+                
+        except Exception as e:
+            print(f"Exception creating ephemeral token: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "error": str(e),
+                "exception": True
+            }
+
+    def get_realtime_instructions(self):
+        """Get system instructions for realtime voice agent with embedded Q&A and Knowledge Base"""
+        # Get language preference
+        preferred_lang = getattr(self.assistant, 'preferred_language', 'en')
+        
+        # Get Q&As from database (same as test_chat)
+        qnas = self.assistant.qnas.all()
+        qna_text = ""
+        if qnas:
+            qna_text = "\n\nHere are the specific Q&As for this business:\n\n"
+            for qna in qnas:
+                qna_text += f"Q: {qna.question}\nA: {qna.answer}\n\n"
+            qna_text += "Always prioritize these Q&As when answering similar questions."
+        
+        # Get ALL knowledge base content (not just summary)
+        knowledge_context = ""
+        kb_items = self.assistant.knowledge_base.filter(status='completed')
+        if kb_items:
+            knowledge_context = "\n\nKnowledge Base Information:\n\n"
+            for kb in kb_items:
+                # Include full content (truncated if too long)
+                content = kb.content[:2000] if len(kb.content) > 2000 else kb.content
+                knowledge_context += f"=== {kb.title} ===\n{content}\n\n"
+            knowledge_context += "Use this knowledge base information when customers ask about business-specific details, services, policies, etc."
+
+        # Language-specific instructions
+        if preferred_lang == 'ms':
+            return f"""Anda adalah pembantu perkhidmatan pelanggan {self.assistant.business_type.name} yang bercakap dengan suara yang semulajadi dan berkomunikasi.
+
+PERSONALITI & SUARA:
+- Bercakap secara semula jadi dan berkomunikasi dalam BAHASA MALAYSIA sahaja
+- Gunakan ungkapan Malaysia yang semula jadi, intonasi, dan frasa
+- Gunakan nada yang mesra dan membantu dengan konteks budaya yang sesuai
+- Beri jeda secara semula jadi dengan jeda ringkas
+- Akui emosi pelanggan dan balas dengan empati
+- Gunakan "awak", "saya", "boleh", "macam mana", "bagaimana" secara semula jadi
+
+PANDUAN BAHASA:
+- SENTIASA balas dalam BAHASA MALAYSIA sahaja
+- Gunakan ungkapan Malaysia yang sesuai seperti "Terima kasih", "Maaf", "Baiklah", "Bagaimana"
+- Bercakap seperti orang Malaysia yang membantu pelanggan
+
+STRATEGI JAWAPAN:
+1. PERTAMA: Periksa sama ada soalan sepadan dengan Q&A di bawah - ini adalah keutamaan tinggi
+2. KEDUA: Cari melalui maklumat Knowledge Base untuk butiran yang berkaitan  
+3. KETIGA: Gunakan pengetahuan umum tetapi sebut mereka harus sahkan dengan perniagaan
+4. Sentiasa membantu dan berusaha untuk memajukan perbualan
+
+PANDUAN PERBUALAN:
+- Beri jawapan yang ringkas tetapi lengkap (perbualan suara)
+- Rujuk perbualan terdahulu secara semula jadi
+- Tanya soalan pengklarifikasian apabila diperlukan
+- Akui emosi dan balas dengan empati{qna_text}{knowledge_context}
+
+CONTOH RESPONS BAHASA MALAYSIA:
+- "Terima kasih kerana bertanya!"
+- "Maaf, saya tak faham. Boleh awak ulang semula?"
+- "Baiklah, saya akan bantu awak dengan perkara ini."
+- "Adakah ada lagi yang saya boleh bantu?"
+
+Ingat: Anda sedang bercakap secara semula jadi, jadi bercakap seperti anda bercakap dengan seseorang yang berdiri di sebelah anda, dalam BAHASA MALAYSIA sahaja.
+"""
+        else:  # English
+            return f"""You are a {self.assistant.business_type.name} customer service assistant speaking in a conversational, natural voice.
+
+PERSONALITY & VOICE:
+- Speak naturally and conversationally in ENGLISH ONLY
+- Use a warm, helpful tone with appropriate cultural context
+- Pace your speech naturally with brief pauses
+- Acknowledge customer emotions and respond empathetically
+- Use clear, professional English expressions
+
+LANGUAGE GUIDELINES:
+- ALWAYS respond in ENGLISH ONLY
+- Use standard conversational English
+- Be professional yet friendly in your communication style
+
+RESPONSE STRATEGY:
+1. FIRST: Check if the question matches any of the Q&As below - these are high priority
+2. SECOND: Search through the Knowledge Base information for relevant details
+3. THIRD: Use general knowledge but mention they should verify with the business
+4. Always be helpful and aim to move the conversation forward
+
+CONVERSATION GUIDELINES:
+- Keep responses concise but complete (voice conversation)
+- Reference previous conversation naturally
+- Ask clarifying questions when needed
+- Acknowledge emotions and respond empathetically{qna_text}{knowledge_context}
+
+EXAMPLE ENGLISH RESPONSES:
+- "Thank you for asking!"
+- "I'm sorry, I didn't understand. Could you please repeat that?"
+- "Alright, I'll help you with this matter."
+- "Is there anything else I can help you with?"
+
+Remember: You're having a natural voice conversation in ENGLISH ONLY, so speak as you would to a person standing next to you.
+"""
+
+    def get_knowledge_base_tools(self):
+        """Define knowledge base search as a function tool - DISABLED for now due to auth issues"""
+        # Temporarily disable function calling due to 401 authorization issues
+        # Return empty array to use embedded Q&A approach only
+        return []
+        
+        # Original function definition (keeping for reference):
+        # return [
+        #     {
+        #         "type": "function",
+        #         "name": "search_knowledge",
+        #         "description": "Search the knowledge base for information relevant to the customer's question. Use this whenever customers ask about business-specific information like services, policies, hours, contact details, etc.",
+        #         "parameters": {
+        #             "type": "object",
+        #             "properties": {
+        #                 "query": {
+        #                     "type": "string",
+        #                     "description": "The customer's question or key terms to search for in the knowledge base"
+        #                 }
+        #             },
+        #             "required": ["query"]
+        #         }
+        #     }
+        # ]
+
+    def handle_function_call(self, function_name, arguments, session_id=None):
+        """Handle function calls from the realtime model - Using same logic as chat service"""
+        if function_name == "search_knowledge":
+            try:
+                args = json.loads(arguments) if isinstance(arguments, str) else arguments
+                query = args.get("query", "")
+                
+                print(f"🔍 RAG Search called with query: '{query}'")
+                
+                # Step 1: Check Q&As first (same as chat service)
+                qna_response = self.chat_service.check_qna_match(query)
+                if qna_response:
+                    print(f"✅ Found QnA match")
+                    return {
+                        "success": True,
+                        "source": "qna",
+                        "result": qna_response,
+                        "query": query
+                    }
+                
+                # Step 2: Search knowledge base with embeddings (same as chat service)
+                relevant_knowledge = self.embedding_service.find_relevant_knowledge(
+                    self.assistant, query, similarity_threshold=0.4
+                )
+                
+                print(f"📊 Found {len(relevant_knowledge)} relevant chunks")
+                
+                if relevant_knowledge:
+                    # Format knowledge for the model (same as chat service)
+                    knowledge_text = self.format_knowledge_for_realtime(relevant_knowledge)
+                    print(f"✅ Found knowledge base match")
+                    
+                    return {
+                        "success": True,
+                        "source": "knowledge_base",
+                        "result": knowledge_text,
+                        "sources": [chunk['source'] for chunk in relevant_knowledge[:3]],
+                        "query": query
+                    }
+                else:
+                    print(f"❌ No relevant information found")
+                    return {
+                        "success": False,
+                        "source": "none",
+                        "result": "I don't have specific information about that in our knowledge base. Let me help you with general information or you can contact us directly for more details.",
+                        "query": query
+                    }
+                    
+            except Exception as e:
+                print(f"Error in search_knowledge function: {e}")
+                return {
+                    "success": False,
+                    "error": str(e)
+                }
+        
+        return {"success": False, "error": "Unknown function"}
+
+    def format_knowledge_for_realtime(self, relevant_knowledge):
+        """Format knowledge chunks for realtime model consumption"""
+        if not relevant_knowledge:
+            return "No relevant information found."
+        
+        formatted_parts = []
+        for i, chunk in enumerate(relevant_knowledge[:3]):  # Top 3 most relevant
+            similarity = chunk['similarity']
+            source = chunk['source']
+            content = chunk['content']
+            
+            priority = "MOST RELEVANT" if i == 0 else f"Relevance: {similarity:.1%}"
+            formatted_parts.append(f"[{priority} - {source}]\n{content}")
+        
+        return "\n\n---\n\n".join(formatted_parts)
+
+    def create_session_config(self, session_id=None):
+        """Create session configuration for realtime API"""
+        # Get or create chat session for continuity
+        chat_session = self.chat_service.get_or_create_session(session_id)
+        
+        # Get recent conversation for context
+        conversation_context = ""
+        if chat_session:
+            recent_messages = ChatMessage.objects.filter(
+                session=chat_session
+            ).order_by('-created_at')[:6]
+            
+            if recent_messages:
+                context_parts = []
+                for msg in reversed(recent_messages):
+                    role = "customer" if msg.message_type == 'user' else "assistant"
+                    context_parts.append(f"{role}: {msg.content}")
+                conversation_context = "\n".join(context_parts)
+
+        instructions = self.get_realtime_instructions()
+        if conversation_context:
+            instructions += f"\n\nRECENT CONVERSATION CONTEXT:\n{conversation_context}\n\nUse this context to maintain conversation continuity."
+
+        return {
+            "model": "gpt-4o-realtime-preview-2024-12-17",
+            "voice": self.get_voice_for_language(),  # Dynamic voice selection
+            "instructions": instructions,
+            "tools": self.get_knowledge_base_tools(),
+            "tool_choice": "auto",
+            "modalities": ["text", "audio"],
+            "temperature": 0.7,
+            "max_response_output_tokens": 4096,
+            "turn_detection": {
+                "type": "server_vad",
+                "threshold": 0.5,
+                "prefix_padding_ms": 300,
+                "silence_duration_ms": 200
+            }
+        }

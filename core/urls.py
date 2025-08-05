@@ -2,6 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from .widget_api import widget_chat_api, widget_voice_api, widget_status_api
+from .language_views import switch_language, get_current_language
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -14,10 +15,15 @@ urlpatterns = [
     path('knowledge-base/', views.knowledge_base_setup, name='knowledge_base_setup'),
     path('test-chat/', views.test_chat_view, name='test_chat'),
     path('test-voice/', views.test_voice_view, name='test_voice'),
+    path('test-realtime-voice/', views.test_realtime_voice_view, name='test_realtime_voice'),
     path('edit-qna/', views.edit_qna_view, name='edit_qna'),
     path('edit-knowledge-base/', views.edit_knowledge_base_view, name='edit_knowledge_base'),
     path('edit-business-type/', views.edit_business_type_view, name='edit_business_type'),
     path('widget-generator/', views.widget_generator_view, name='widget_generator'),
+    
+    # Language switching
+    path('api/switch-language/', switch_language, name='switch_language'),
+    path('api/current-language/', get_current_language, name='get_current_language'),
     
     # Widget API endpoints
     path('api/widget/chat/', widget_chat_api, name='widget_chat_api'),

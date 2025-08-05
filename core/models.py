@@ -17,11 +17,17 @@ class BusinessType(models.Model):
 
 
 class AIAssistant(models.Model):
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('ms', 'Bahasa Malaysia'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     business_type = models.ForeignKey(BusinessType, on_delete=models.CASCADE)
     openai_assistant_id = models.CharField(max_length=100, blank=True, null=True)
     api_key = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
     system_instructions = models.TextField()
+    preferred_language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

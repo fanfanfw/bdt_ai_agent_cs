@@ -293,6 +293,18 @@ def test_voice_view(request):
 
 
 @login_required
+@login_required
+def test_realtime_voice_view(request):
+    """Test realtime voice functionality with OpenAI Realtime API"""
+    try:
+        assistant = AIAssistant.objects.get(user=request.user)
+        return render(request, 'core/test_realtime_voice.html', {'assistant': assistant})
+        
+    except AIAssistant.DoesNotExist:
+        return redirect('business_type_selection')
+
+
+@login_required
 def edit_qna_view(request):
     """Edit Q&A for existing assistant"""
     try:

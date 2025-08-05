@@ -10,4 +10,8 @@ urlpatterns = [
     path('widget/', api_views.ChatWidgetView.as_view(), name='chat_widget'),
     path('voice-test/', api_views.voice_test_api, name='voice_test_api'),
     path('voice-stt-test/', api_views.voice_stt_test_api, name='voice_stt_test_api'),
+    # Realtime Voice API endpoints
+    path('realtime-session/', api_views.realtime_session_api, name='realtime_session_api'),
+    path('realtime-function-call/', api_views.realtime_function_call_api, name='realtime_function_call_api'),
+    path('realtime-test/', api_views.realtime_test_api, name='realtime_test_api'),
 ]

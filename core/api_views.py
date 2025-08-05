@@ -6,7 +6,7 @@ from django.views import View
 import json
 import uuid
 from .models import AIAssistant
-from .services import ChatService, VoiceService, EmbeddingService
+from .services import ChatService, VoiceService, EmbeddingService, RealtimeVoiceService
 
 
 def get_assistant_from_api_key(api_key):
@@ -686,6 +686,134 @@ def voice_stt_test_api(request):
             'transcribed_text': text,
             'status': 'success'
         })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def realtime_session_api(request):
+    """Create ephemeral token for realtime voice chat"""
+    try:
+        api_key = request.POST.get('api_key') or request.headers.get('Authorization', '').replace('Bearer ', '')
+        session_id = request.POST.get('session_id')
+        
+        if not api_key:
+            return JsonResponse({'error': 'API key is required'}, status=401)
+        
+        # Get assistant
+        assistant = get_assistant_from_api_key(api_key)
+        if not assistant:
+            return JsonResponse({'error': 'Invalid API key'}, status=401)
+        
+        # Create realtime service
+        realtime_service = RealtimeVoiceService(assistant)
+        
+        # Create ephemeral token
+        token_response = realtime_service.create_ephemeral_token()
+        if not token_response:
+            return JsonResponse({'error': 'Failed to create session token'}, status=500)
+        
+        # Get session config for additional setup
+        session_config = realtime_service.create_session_config(session_id)
+        
+        return JsonResponse({
+            'client_secret': token_response,
+            'session_config': session_config,
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt  
+@require_http_methods(["POST"])
+def realtime_function_call_api(request):
+    """Handle function calls from realtime API"""
+    try:
+        data = json.loads(request.body)
+        function_name = data.get('function_name')
+        arguments = data.get('arguments')
+        session_id = data.get('session_id')
+        
+        # Use session authentication for internal calls
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not function_name:
+            return JsonResponse({'error': 'Function name is required'}, status=400)
+        
+        # Get assistant for current user
+        try:
+            assistant = AIAssistant.objects.get(user=request.user)
+        except AIAssistant.DoesNotExist:
+            return JsonResponse({'error': 'No assistant found for user'}, status=404)
+        
+        # Create realtime service and handle function call
+        realtime_service = RealtimeVoiceService(assistant)
+        result = realtime_service.handle_function_call(function_name, arguments, session_id)
+        
+        return JsonResponse(result)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def realtime_test_api(request):
+    """Realtime voice test API for internal testing"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        
+        session_id = request.POST.get('session_id')
+        
+        # Get assistant for current user
+        try:
+            assistant = AIAssistant.objects.get(user=request.user)
+        except AIAssistant.DoesNotExist:
+            return JsonResponse({'error': 'No assistant found for user'}, status=404)
+        
+        # Create realtime service
+        realtime_service = RealtimeVoiceService(assistant)
+        
+        # Create ephemeral token
+        token_response = realtime_service.create_ephemeral_token()
+        if not token_response:
+            return JsonResponse({'error': 'Failed to create session token'}, status=500)
+        
+        # Check if there's an error in the token response
+        if 'error' in token_response:
+            return JsonResponse({
+                'error': token_response.get('error', 'Failed to create session token'),
+                'status': 'error'
+            }, status=500)
+        
+        # Extract the necessary fields and ensure proper structure
+        response_data = {
+            'status': 'success'
+        }
+        
+        # Add all the session data from OpenAI response
+        if 'id' in token_response:
+            response_data['session_id'] = token_response['id']
+        if 'client_secret' in token_response:
+            response_data['client_secret'] = token_response['client_secret']
+        if 'model' in token_response:
+            response_data['model'] = token_response['model']
+        if 'voice' in token_response:
+            response_data['voice'] = token_response['voice']
+        if 'instructions' in token_response:
+            response_data['instructions'] = token_response['instructions']
+        if 'tools' in token_response:
+            response_data['tools'] = token_response['tools']
+        
+        return JsonResponse(response_data)
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
