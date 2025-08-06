@@ -281,15 +281,6 @@ def test_chat_view(request):
         return redirect('business_type_selection')
 
 
-@login_required
-def test_voice_view(request):
-    """Test voice functionality with STT -> LLM -> TTS pipeline"""
-    try:
-        assistant = AIAssistant.objects.get(user=request.user)
-        return render(request, 'core/test_voice.html', {'assistant': assistant})
-        
-    except AIAssistant.DoesNotExist:
-        return redirect('business_type_selection')
 
 
 @login_required

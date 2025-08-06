@@ -6,7 +6,7 @@ from django.views import View
 import json
 import uuid
 from .models import AIAssistant
-from .services import ChatService, VoiceService, EmbeddingService, RealtimeVoiceService
+from .services import ChatService, OpenAIService, RealtimeVoiceService
 
 
 def get_assistant_from_api_key(api_key):
@@ -78,21 +78,8 @@ def voice_chat_api(request):
         if not assistant:
             return JsonResponse({'error': 'Invalid API key'}, status=401)
         
-        # Process voice message
-        voice_service = VoiceService(assistant)
-        session_id, audio_response, text_response, transcribed_text = voice_service.process_voice_message(
-            audio_file, session_id
-        )
-        
-        if not session_id:
-            return JsonResponse({'error': 'Error processing voice message'}, status=500)
-        
-        # Return audio response
-        response = HttpResponse(audio_response, content_type='audio/mp3')
-        response['X-Session-ID'] = str(session_id)
-        response['X-Text-Response'] = text_response
-        response['X-Transcribed-Text'] = transcribed_text
-        return response
+        # Legacy voice API is deprecated - redirect to realtime voice API
+        return JsonResponse({'error': 'Legacy voice API deprecated. Please use realtime voice API instead.'}, status=410)
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -118,9 +105,9 @@ def text_to_speech_api(request):
         if not assistant:
             return JsonResponse({'error': 'Invalid API key'}, status=401)
         
-        # Convert text to speech
-        voice_service = VoiceService(assistant)
-        audio_data = voice_service.openai_service.text_to_speech(text)
+        # Convert text to speech using OpenAI service directly
+        openai_service = OpenAIService()
+        audio_data = openai_service.text_to_speech(text)
         
         if not audio_data:
             return JsonResponse({'error': 'Error generating speech'}, status=500)
@@ -154,9 +141,9 @@ def speech_to_text_api(request):
         if not assistant:
             return JsonResponse({'error': 'Invalid API key'}, status=401)
         
-        # Convert speech to text
-        voice_service = VoiceService(assistant)
-        text = voice_service.openai_service.speech_to_text(audio_file)
+        # Convert speech to text using OpenAI service directly  
+        openai_service = OpenAIService()
+        text = openai_service.speech_to_text(audio_file)
         
         if not text:
             return JsonResponse({'error': 'Error processing audio'}, status=500)
@@ -611,84 +598,6 @@ class ChatWidgetView(View):
         return HttpResponse(html_content, content_type='text/html')
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def voice_test_api(request):
-    """Voice test API for internal testing (uses session-based auth)"""
-    try:
-        if not request.user.is_authenticated:
-            return JsonResponse({'error': 'Authentication required'}, status=401)
-        
-        session_id = request.POST.get('session_id')
-        audio_file = request.FILES.get('audio')
-        
-        if not audio_file:
-            return JsonResponse({'error': 'Audio file is required'}, status=400)
-        
-        # Get assistant for current user
-        try:
-            assistant = AIAssistant.objects.get(user=request.user)
-        except AIAssistant.DoesNotExist:
-            return JsonResponse({'error': 'No assistant found for user'}, status=404)
-        
-        # Process voice message
-        voice_service = VoiceService(assistant)
-        session_id, audio_response, text_response, transcribed_text = voice_service.process_voice_message(
-            audio_file, session_id
-        )
-        
-        if not session_id:
-            return JsonResponse({'error': 'Error processing voice message'}, status=500)
-        
-        # Return JSON response with both audio and text
-        import base64
-        audio_b64 = base64.b64encode(audio_response).decode('utf-8') if audio_response else None
-        
-        return JsonResponse({
-            'session_id': str(session_id),
-            'text_response': text_response,
-            'transcribed_text': transcribed_text,
-            'audio_response': audio_b64,
-            'status': 'success'
-        })
-        
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def voice_stt_test_api(request):
-    """STT only test API for internal testing"""
-    try:
-        if not request.user.is_authenticated:
-            return JsonResponse({'error': 'Authentication required'}, status=401)
-        
-        audio_file = request.FILES.get('audio')
-        
-        if not audio_file:
-            return JsonResponse({'error': 'Audio file is required'}, status=400)
-        
-        # Get assistant for current user
-        try:
-            assistant = AIAssistant.objects.get(user=request.user)
-        except AIAssistant.DoesNotExist:
-            return JsonResponse({'error': 'No assistant found for user'}, status=404)
-        
-        # Convert speech to text only
-        voice_service = VoiceService(assistant)
-        text = voice_service.openai_service.speech_to_text(audio_file)
-        
-        if not text:
-            return JsonResponse({'error': 'Error processing audio'}, status=500)
-        
-        return JsonResponse({
-            'transcribed_text': text,
-            'status': 'success'
-        })
-        
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
 
 
 @csrf_exempt
@@ -759,6 +668,30 @@ def realtime_function_call_api(request):
         
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def realtime_websocket_api(request):
+    """Server-side WebSocket realtime voice API"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        
+        # Get assistant for current user
+        try:
+            assistant = AIAssistant.objects.get(user=request.user)
+        except AIAssistant.DoesNotExist:
+            return JsonResponse({'error': 'No assistant found for user'}, status=404)
+        
+        # Create realtime service with server-side WebSocket
+        realtime_service = RealtimeVoiceService(assistant)
+        result = realtime_service.create_server_websocket_connection()
+        
+        return JsonResponse(result)
+        
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

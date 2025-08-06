@@ -14,7 +14,6 @@ urlpatterns = [
     path('qna-customization/', views.qna_customization, name='qna_customization'),
     path('knowledge-base/', views.knowledge_base_setup, name='knowledge_base_setup'),
     path('test-chat/', views.test_chat_view, name='test_chat'),
-    path('test-voice/', views.test_voice_view, name='test_voice'),
     path('test-realtime-voice/', views.test_realtime_voice_view, name='test_realtime_voice'),
     path('edit-qna/', views.edit_qna_view, name='edit_qna'),
     path('edit-knowledge-base/', views.edit_knowledge_base_view, name='edit_knowledge_base'),

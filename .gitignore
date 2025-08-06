@@ -5,7 +5,6 @@ __pycache__
 media/
 ss/
 .env
-memory/
 notes.txt
 logs
 test/

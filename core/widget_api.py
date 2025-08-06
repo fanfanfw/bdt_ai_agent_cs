@@ -6,7 +6,7 @@ from django.views import View
 import json
 import base64
 from .models import AIAssistant
-from .services import ChatService, VoiceService
+from .services import ChatService
 
 
 def add_cors_headers(response):
@@ -155,31 +155,11 @@ class WidgetVoiceAPIView(WidgetAPIView):
                     'error': 'Audio file is required'
                 }, status=400)
             
-            # Process voice message
-            voice_service = VoiceService(assistant)
-            session_id, audio_response, response_text, transcribed_text = voice_service.process_voice_message(
-                audio_file=audio_file,
-                session_id=session_id
-            )
-            
-            if not response_text:
-                return JsonResponse({
-                    'status': 'error',
-                    'error': 'Failed to process voice message'
-                }, status=500)
-            
-            # Encode audio response as base64 for transmission
-            audio_base64 = None
-            if audio_response:
-                audio_base64 = base64.b64encode(audio_response).decode('utf-8')
-            
+            # Legacy voice API deprecated - return error
             return JsonResponse({
-                'status': 'success',
-                'transcribed_text': transcribed_text,
-                'response_text': response_text,
-                'audio_response': audio_base64,
-                'session_id': str(session_id)
-            })
+                'status': 'error',
+                'error': 'Legacy voice API deprecated. Please use realtime voice API instead.'
+            }, status=410)
             
         except Exception as e:
             print(f"Widget voice API error: {e}")

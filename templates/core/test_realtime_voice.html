@@ -28,7 +28,7 @@
                         <strong>Assistant:</strong> {{ assistant.business_type.name }} Customer Service<br>
                         <strong>Knowledge Base Items:</strong> {{ assistant.knowledge_base.count }}<br>
                         <strong>Q&A Items:</strong> {{ assistant.qnas.count }}<br>
-                        <strong>API:</strong> OpenAI Realtime API (WebRTC)
+                        <strong>API:</strong> OpenAI Realtime API (Server-side WebSocket)
                     </div>
 
                     <!-- Connection Status -->
@@ -43,7 +43,7 @@
                                         <i class="fas fa-circle text-muted fa-2x"></i>
                                     </div>
                                     <div id="connection-text" class="fw-bold">Initializing...</div>
-                                    <small class="text-muted">WebRTC Connection</small>
+                                    <small class="text-muted">Server WebSocket</small>
                                 </div>
                             </div>
                         </div>
@@ -110,13 +110,28 @@
                                 </div>
                             </div>
 
+
+                            <!-- Transcription Preview -->
+                            <div id="transcription-preview" class="alert alert-info d-none">
+                                <div class="d-flex align-items-center">
+                                    <span id="preview-icon" class="fs-5 me-2">👤</span>
+                                    <div>
+                                        <small class="text-muted d-block">Live Transcription:</small>
+                                        <span id="preview-text" class="fw-bold"></span>
+                                        <span id="typing-indicator" class="text-muted">▋</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Instructions -->
                             <div class="alert alert-light border">
                                 <h6><i class="fas fa-info-circle me-2"></i>How to use:</h6>
                                 <ul class="list-unstyled mb-0 small">
-                                    <li>• Click the microphone to start conversation</li>
-                                    <li>• Speak naturally - AI responds in real-time</li>
-                                    <li>• Click again to end conversation</li>
+                                    <li>• Click the GREEN microphone button to START conversation</li>
+                                    <li>• Speak naturally after clicking start</li>
+                                    <li>• Your speech is transcribed in REAL-TIME using Whisper-1</li>
+                                    <li>• See live transcription preview above</li>
+                                    <li>• Click the RED stop button to END conversation</li>
                                     <li>• Uses your knowledge base for answers</li>
                                 </ul>
                             </div>
@@ -167,7 +182,7 @@
                             <div id="session-info" class="small">
                                 <div><strong>Session ID:</strong> <span id="session-id-display">Not connected</span></div>
                                 <div><strong>Status:</strong> <span id="session-status-text">Initializing</span></div>
-                                <div><strong>Connection:</strong> <span>WebRTC + Ephemeral Token</span></div>
+                                <div><strong>Connection:</strong> <span>Server-side WebSocket</span></div>
                                 <div><strong>Model:</strong> <span>gpt-4o-realtime-preview</span></div>
                             </div>
                         </div>
@@ -185,6 +200,8 @@
 === Realtime Voice AI Debug Console ===
 🚀 System initializing...
 ⚡ Connecting to OpenAI Realtime API...
+🎤 Transcription: Using Whisper-1 model for real-time speech-to-text
+📝 Live transcript preview enabled
                             </div>
                         </div>
                     </div>
@@ -209,6 +226,39 @@
 
 {% endblock %}
 
+{% block extra_css %}
+<style>
+#transcription-preview {
+    border-left: 4px solid #17a2b8;
+    background: linear-gradient(135deg, #e1f5fe, #f0f9ff);
+    transition: all 0.3s ease;
+}
+
+#transcription-preview.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#typing-indicator {
+    animation: blink 1s infinite;
+    color: #17a2b8;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+.message .badge {
+    font-size: 0.75em;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 // Configuration
@@ -217,8 +267,9 @@ const FUNCTION_CALL_API = '/api/realtime-function-call/';
 
 // Global state
 let currentSessionId = null;
-let pc = null; // WebRTC peer connection
-let dc = null; // Data channel
+let serverWebSocket = null;
+let mediaRecorder = null;
+let audioStream = null;
 let isConnected = false;
 let isListening = false;
 let isInConversation = false; // New state for conversation mode
@@ -232,6 +283,12 @@ const sessionInfo = document.getElementById('session-info');
 const debugInfo = document.getElementById('debug-info');
 const sessionIdDisplay = document.getElementById('session-id-display');
 const sessionStatusText = document.getElementById('session-status-text');
+
+// Transcription preview elements
+const transcriptionPreview = document.getElementById('transcription-preview');
+const previewIcon = document.getElementById('preview-icon');
+const previewText = document.getElementById('preview-text');
+const typingIndicator = document.getElementById('typing-indicator');
 
 // New conversation state elements
 const conversationState = document.getElementById('conversation-state');
@@ -264,32 +321,9 @@ async function initializeRealtimeVoice() {
     updateStatus('session', 'processing');
     
     try {
-        // Step 1: Get ephemeral token from server
-        updateDebugInfo('🔑 Requesting ephemeral token from server...');
-        const tokenResponse = await fetch('/api/realtime-test/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                session_id: currentSessionId || ''
-            })
-        });
-        
-        if (!tokenResponse.ok) {
-            throw new Error(`Token request failed: ${tokenResponse.status}`);
-        }
-        
-        const tokenData = await tokenResponse.json();
-        updateDebugInfo('✅ Ephemeral token received');
-        
-        if (tokenData.status !== 'success') {
-            throw new Error(tokenData.error || 'Failed to get token');
-        }
-        
-        // Step 2: Setup WebRTC connection
-        await setupWebRTC(tokenData.client_secret.value);
+        // Step 1: Connect to Django WebSocket server
+        updateDebugInfo('🔗 Connecting to Django WebSocket server...');
+        await setupServerSideWebSocket();
         
     } catch (error) {
         updateDebugInfo(`❌ Initialization failed: ${error.message}`);
@@ -299,261 +333,169 @@ async function initializeRealtimeVoice() {
     }
 }
 
-// Setup WebRTC connection
-async function setupWebRTC(ephemeralKey) {
-    updateDebugInfo('🌐 Setting up WebRTC connection...');
-    updateConnectionStatus('connecting', 'Establishing WebRTC...');
+
+// Setup server-side WebSocket connection  
+async function setupServerSideWebSocket() {
+    updateDebugInfo('🌐 Setting up server-side WebSocket connection...');
+    updateConnectionStatus('connecting', 'Connecting to server...');
     updateStatus('connection', 'processing');
 
     try {
-        // Create peer connection
-        pc = new RTCPeerConnection();
-        updateDebugInfo('📡 RTCPeerConnection created');
-
-        // Set up audio element for remote audio from model
-        audioEl = document.createElement("audio");
-        audioEl.autoplay = true;
-        updateDebugInfo('🔊 Audio element created');
-
-        // Handle remote audio stream
-        pc.ontrack = (event) => {
-            updateDebugInfo('🎵 Remote audio track received');
-            audioEl.srcObject = event.streams[0];
-        };
-
-        // Add local audio track for microphone input
-        try {
-            const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            pc.addTrack(mediaStream.getTracks()[0]);
-            updateDebugInfo('🎤 Local microphone track added');
-        } catch (error) {
-            throw new Error(`Microphone access denied: ${error.message}`);
-        }
-
-        // Set up data channel for sending and receiving events
-        dc = pc.createDataChannel("oai-events");
-        updateDebugInfo('📡 Data channel created');
+        // Create WebSocket connection to Django server
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/voice/default/`;
         
-        dc.addEventListener("open", () => {
-            updateDebugInfo('✅ Data channel opened');
+        updateDebugInfo(`📡 Connecting to ${wsUrl}`);
+        serverWebSocket = new WebSocket(wsUrl);
+        
+        serverWebSocket.onopen = function(event) {
+            updateDebugInfo('✅ Connected to Django WebSocket server');
             isConnected = true;
             enableVoiceButton();
-        });
-
-        dc.addEventListener("message", (event) => {
-            handleRealtimeEvent(JSON.parse(event.data));
-        });
-
-        dc.addEventListener("error", (error) => {
-            updateDebugInfo(`❌ Data channel error: ${error}`);
-        });
-
-        // Create offer and set local description
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        updateDebugInfo('📋 SDP offer created and set');
-
-        // Send offer to OpenAI Realtime API
-        const baseUrl = "https://api.openai.com/v1/realtime";
-        const model = "gpt-4o-realtime-preview-2024-12-17";
+            updateConnectionStatus('connected', 'Connected to server - Voice INACTIVE');
+            updateStatus('session', 'connected');
+        };
         
-        updateDebugInfo(`🔗 Connecting to ${baseUrl}?model=${model}`);
+        serverWebSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            handleServerMessage(data);
+        };
         
-        const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
-            method: "POST",
-            body: offer.sdp,
-            headers: {
-                Authorization: `Bearer ${ephemeralKey}`,
-                "Content-Type": "application/sdp"
-            }
-        });
-
-        if (!sdpResponse.ok) {
-            throw new Error(`SDP exchange failed: ${sdpResponse.status}`);
-        }
-
-        // Set remote description
-        const answerSdp = await sdpResponse.text();
-        await pc.setRemoteDescription({
-            type: "answer",
-            sdp: answerSdp
-        });
+        serverWebSocket.onclose = function(event) {
+            updateDebugInfo('🔌 WebSocket connection closed');
+            isConnected = false;
+            isInConversation = false;
+            updateConnectionStatus('error', 'Disconnected from server');
+            voiceBtn.disabled = true;
+            voiceBtnText.textContent = 'Disconnected';
+        };
         
-        updateDebugInfo('✅ WebRTC connection established');
-        updateConnectionStatus('connected', 'Connected');
-        updateStatus('connection', 'connected');
+        serverWebSocket.onerror = function(error) {
+            updateDebugInfo(`❌ WebSocket error: ${error}`);
+            updateConnectionStatus('error', 'Connection error');
+        };
+        
+        // Wait for connection
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('WebSocket connection timeout'));
+            }, 10000);
+            
+            serverWebSocket.onopen = function(event) {
+                clearTimeout(timeout);
+                updateDebugInfo('✅ Connected to Django WebSocket server');
+                isConnected = true;
+                enableVoiceButton();
+                updateConnectionStatus('connected', 'Connected to server - Voice INACTIVE');
+                updateStatus('session', 'connected');
+                resolve();
+            };
+        });
         
     } catch (error) {
-        updateDebugInfo(`❌ WebRTC setup failed: ${error.message}`);
-        updateConnectionStatus('error', 'Connection failed');
-        updateStatus('connection', 'error');
+        updateDebugInfo(`❌ Failed to setup WebSocket: ${error.message}`);
+        updateConnectionStatus('error', 'Failed to connect to server');
+        updateStatus('session', 'error');
         throw error;
     }
 }
 
-// Handle realtime events from OpenAI
-function handleRealtimeEvent(event) {
-    updateDebugInfo(`📨 Received event: ${event.type}`);
+// Handle messages from Django WebSocket server
+function handleServerMessage(data) {
+    updateDebugInfo(`📨 Server message: ${data.type}`);
     
-    switch (event.type) {
-        case 'session.created':
-            currentSessionId = event.session.id;
+    switch (data.type) {
+        case 'connection_status':
+            updateDebugInfo(`🔗 ${data.message}`);
+            break;
+            
+        case 'voice_started':
+            updateDebugInfo(`🎤 ${data.message}`);
+            currentSessionId = data.session_id;
             sessionIdDisplay.textContent = currentSessionId;
-            updateDebugInfo(`🆔 Session created: ${currentSessionId}`);
+            sessionStatusText.textContent = 'Server-side Voice Active';
+            // Start audio recording
+            startAudioRecording();
             break;
             
-        case 'input_audio_buffer.speech_started':
-            updateStatus('voice', 'listening');
-            updateConversationState('listening', '👂', 'Listening...');
-            updateDebugInfo('🎤 Speech detected');
+        case 'voice_stopped':
+            updateDebugInfo(`🔇 ${data.message}`);
+            // Stop audio recording and clear audio queue
+            stopAudioRecording();
+            clearAudioQueue();
             break;
             
-        case 'input_audio_buffer.speech_stopped':
-            updateStatus('voice', 'processing');
-            updateConversationState('processing', '⚙️', 'Processing...');
-            updateDebugInfo('🔄 Speech ended, processing...');
-            break;
-            
-        case 'response.function_call_arguments.done':
-            // Handle function call for RAG search
-            handleFunctionCall(event);
-            break;
-            
-        case 'input_audio_buffer.committed':
-            updateDebugInfo('🎤 Audio committed for processing');
-            break;
-            
-        case 'response.audio.delta':
-            updateStatus('ai', 'speaking');
-            updateConversationState('speaking', '🗣️', 'AI Speaking...');
-            updateDebugInfo('🗣️ AI speaking...');
-            break;
-            
-        case 'response.done':
-            updateStatus('ai', 'ready');
-            updateConversationState('listening', '👂', 'Listening...');
-            updateDebugInfo('✅ Response completed');
-            break;
-            
-        case 'conversation.item.created':
-            if (event.item.role === 'user' && event.item.content) {
-                const transcript = event.item.content[0]?.transcript || 'Audio message';
-                addMessageToHistory('user', transcript);
-                updateDebugInfo(`🎤 User said: "${transcript}"`);
-            } else if (event.item.role === 'assistant' && event.item.content) {
-                const transcript = event.item.content[0]?.transcript || 'Audio response';
-                addMessageToHistory('assistant', transcript);
-                updateDebugInfo(`🗣️ Assistant said: "${transcript}"`);
-            }
-            break;
-            
-        case 'response.output_item.added':
-            if (event.item && event.item.content) {
-                for (const content of event.item.content) {
-                    if (content.type === 'audio' && content.transcript) {
-                        updateDebugInfo(`🎵 Audio transcript: "${content.transcript}"`);
-                        addMessageToHistory('assistant', content.transcript);
-                    }
-                }
-            }
-            break;
-            
-        case 'response.audio_transcript.delta':
-            // Handle streaming transcript
-            updateDebugInfo(`📝 Transcript delta: ${event.delta}`);
-            break;
-            
-        case 'response.audio_transcript.done':
-            // Handle complete transcript
-            updateDebugInfo(`✅ Complete transcript: "${event.transcript}"`);
-            addMessageToHistory('assistant', event.transcript);
+        case 'audio_received':
+            updateDebugInfo(`📡 ${data.message}`);
             break;
             
         case 'error':
-            updateDebugInfo(`❌ Error: ${event.error.message}`);
-            showToast('Error: ' + event.error.message, 'error');
+            updateDebugInfo(`❌ Server error: ${data.message}`);
+            showToast(`Server Error: ${data.message}`, 'error');
             break;
-    }
-}
-
-// Handle function calls for RAG integration
-async function handleFunctionCall(event) {
-    try {
-        const functionName = event.name;
-        const args = JSON.parse(event.arguments);
-        
-        updateDebugInfo(`🔍 Function call: ${functionName} with args: ${JSON.stringify(args)}`);
-        
-        if (functionName === 'search_knowledge') {
-            // Call our backend to perform RAG search
-            const response = await fetch('/api/realtime-function-call/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    function_name: functionName,
-                    arguments: args,
-                    session_id: currentSessionId
-                })
-            });
             
-            if (!response.ok) {
-                throw new Error(`Function call failed: ${response.status}`);
+        case 'ai_audio_delta':
+            // Handle audio response from AI
+            updateDebugInfo(`🗣️ AI Audio Delta received`);
+            if (data.audio) {
+                playAudioDelta(data.audio);
             }
+            break;
             
-            const result = await response.json();
-            updateDebugInfo(`📊 RAG search result: ${result.success ? 'Found' : 'Not found'}`);
+        case 'ai_response_text':
+            // Handle text response from AI
+            updateDebugInfo(`📝 AI Response: ${data.text}`);
+            addMessageToHistory('assistant', data.text, true); // Mark as transcription
+            break;
             
-            // Send function result back to OpenAI
-            if (dc && dc.readyState === 'open') {
-                const functionResult = {
-                    type: 'conversation.item.create',
-                    item: {
-                        type: 'function_call_output',
-                        call_id: event.call_id,
-                        output: JSON.stringify(result)
-                    }
-                };
-                
-                dc.send(JSON.stringify(functionResult));
-                updateDebugInfo('📤 Function result sent to OpenAI');
-                
-                // Create response after sending function result
-                const createResponse = {
-                    type: 'response.create'
-                };
-                dc.send(JSON.stringify(createResponse));
-                updateDebugInfo('🔄 Response creation triggered');
+        case 'openai_error':
+            updateDebugInfo(`❌ OpenAI Error: ${data.error}`);
+            showToast(`OpenAI Error: ${data.error}`, 'error');
+            break;
+            
+        case 'audio_buffer_start':
+            // Start buffering audio chunks
+            startAudioBuffer();
+            break;
+            
+        case 'audio_buffer_complete':
+            // Complete buffering and play all chunks
+            completeAudioBuffer();
+            break;
+            
+        case 'user_transcript_delta':
+            // Handle partial user transcription
+            updateDebugInfo(`👤 Transcribing: "${data.delta}"`);
+            updateTranscriptionPreview('user', data.delta, false);
+            updateStatus('ai', 'processing'); // Show processing while transcribing
+            break;
+            
+        case 'user_transcript':
+            // Handle complete user speech transcription
+            updateDebugInfo(`✅ Transcription complete: "${data.transcript}"`);
+            if (data.transcript) {
+                addMessageToHistory('user', data.transcript, true); // Mark as transcription
+                clearTranscriptionPreview();
+                updateStatus('ai', 'ready'); // Reset AI status after transcription
+                showToast(`🎤 Speech transcribed: "${data.transcript.substring(0, 50)}${data.transcript.length > 50 ? '...' : ''}"`, 'success');
             }
-        }
-    } catch (error) {
-        updateDebugInfo(`❌ Function call error: ${error.message}`);
-        
-        // Send error result back to OpenAI
-        if (dc && dc.readyState === 'open') {
-            const errorResult = {
-                type: 'conversation.item.create',
-                item: {
-                    type: 'function_call_output',
-                    call_id: event.call_id,
-                    output: JSON.stringify({
-                        success: false,
-                        error: error.message,
-                        message: 'Sorry, I encountered an error searching the knowledge base. Please try again.'
-                    })
-                }
-            };
+            break;
             
-            dc.send(JSON.stringify(errorResult));
-            updateDebugInfo('📤 Error result sent to OpenAI');
-        }
+        case 'user_transcript_error':
+            // Handle transcription error
+            updateDebugInfo(`❌ User transcription failed: ${JSON.stringify(data.error)}`);
+            showToast(`Transcription Error: Unable to transcribe speech`, 'error');
+            clearTranscriptionPreview();
+            break;
+            
+        default:
+            updateDebugInfo(`📝 Unknown message type: ${data.type}`);
+            break;
     }
 }
 
 // Add message to conversation history
-function addMessageToHistory(role, content) {
+function addMessageToHistory(role, content, isTranscription = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role} mb-3`;
     
@@ -567,11 +509,16 @@ function addMessageToHistory(role, content) {
     // Clean up content
     const cleanContent = content.replace(/^[^:]*:\s*/, '').trim() || content;
     
+    // Add transcription indicator
+    const transcriptionBadge = isTranscription ? 
+        '<span class="badge bg-info me-2"><i class="fas fa-microphone me-1"></i>Transcribed</span>' : '';
+    
     messageDiv.innerHTML = `
         <div class="d-flex ${alignment}">
             ${role === 'assistant' ? `<div class="avatar me-3">${avatar}</div>` : ''}
             <div class="message-content ${bgClass} p-3 rounded shadow-sm" style="max-width: 80%;">
                 ${role === 'assistant' ? '<strong>AI Assistant</strong><br>' : ''}
+                ${transcriptionBadge}
                 ${cleanContent}
                 <div class="small text-muted mt-2">
                     <i class="fas fa-clock me-1"></i>${new Date().toLocaleTimeString()}
@@ -663,11 +610,37 @@ function enableVoiceButton() {
     voiceBtn.disabled = false;
     voiceBtn.onclick = toggleConversation;
     voiceBtnText.textContent = 'Start Conversation';
-    updateConversationState('ready', '🤖', 'Ready to chat');
-    showToast('🎉 Realtime voice connection established! Click to start a natural conversation.', 'success');
+    updateConversationState('ready', '🤖', 'Click the button to start');
+    updateStatus('session', 'ready');
+    updateConnectionStatus('connected', 'Connected - Audio INACTIVE');
+    
+    // Display session info
+    if (currentSessionId) {
+        sessionIdDisplay.textContent = currentSessionId;
+        sessionStatusText.textContent = 'Connected via Server WebSocket (Manual Control)';
+    }
+    
+    showToast('🎉 Connection established! Voice & Real-time Transcription ready.', 'success');
+    updateDebugInfo('✅ Real-time transcription activated with Whisper-1');
 }
 
-function toggleConversation() {
+async function toggleConversation() {
+    // Initialize audio context on user interaction
+    if (!globalAudioContext) {
+        try {
+            globalAudioContext = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 24000
+            });
+            
+            if (globalAudioContext.state === 'suspended') {
+                await globalAudioContext.resume();
+                updateDebugInfo('🔊 Audio context activated by user interaction');
+            }
+        } catch (error) {
+            updateDebugInfo(`❌ Error initializing audio context: ${error.message}`);
+        }
+    }
+    
     if (!isInConversation) {
         startConversation();
     } else {
@@ -676,70 +649,379 @@ function toggleConversation() {
 }
 
 function startConversation() {
-    if (!isConnected) return;
+    if (!isConnected || !serverWebSocket || serverWebSocket.readyState !== WebSocket.OPEN) {
+        showToast('Server connection not ready. Please wait for initialization to complete.', 'error');
+        return;
+    }
     
     isInConversation = true;
     voiceBtn.classList.remove('btn-success');
     voiceBtn.classList.add('btn-danger');
-    voiceBtnText.textContent = 'End Conversation';
-    updateConversationState('listening', '👂', 'Listening...');
-    updateDebugInfo('💬 Started conversation mode');
+    voiceBtn.innerHTML = '<i class="fas fa-stop fa-3x"></i>';
+    voiceBtnText.textContent = 'Stop Conversation';
+    updateConversationState('listening', '👂', 'Starting voice on server...');
+    updateStatus('voice', 'processing');
+    updateDebugInfo('💬 Requesting server to start voice session...');
     
-    // Send session configuration with RAG integration instructions
-    if (dc && dc.readyState === 'open') {
-        const sessionUpdate = {
-            type: 'session.update',
-            session: {
-                instructions: `You are a helpful ${document.querySelector('.alert-info strong').textContent.split(':')[1]} assistant. 
-                
-                Before responding to any question, you should:
-                1. Check if this is a common question that can be answered from predefined Q&A
-                2. Search the knowledge base for relevant information using search_knowledge function
-                3. Provide accurate, helpful responses based on the available information
-                
-                If you need to search the knowledge base, use the search_knowledge function with the user's question.
-                
-                Be conversational, helpful, and natural in your responses. Keep responses concise but informative.`,
-                voice: 'alloy',
-                input_audio_format: 'pcm16',
-                output_audio_format: 'pcm16',
-                input_audio_transcription: {
-                    model: 'whisper-1'
-                },
-                turn_detection: {
-                    type: 'server_vad',
-                    threshold: 0.5,
-                    prefix_padding_ms: 300,
-                    silence_duration_ms: 500
-                },
-                tools: [{
-                    type: 'function',
-                    name: 'search_knowledge',
-                    description: 'Search the knowledge base for relevant information',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            query: {
-                                type: 'string',
-                                description: 'The search query to find relevant information'
-                            }
-                        },
-                        required: ['query']
-                    }
-                }]
-            }
-        };        dc.send(JSON.stringify(sessionUpdate));
-        updateDebugInfo('⚙️ Session configured with RAG capabilities');
-    }
+    // Send message to Django WebSocket to start voice session
+    serverWebSocket.send(JSON.stringify({
+        type: 'start_voice'
+    }));
+    
+    showToast('🎤 Requesting server to activate voice...', 'info');
 }
 
 function endConversation() {
     isInConversation = false;
     voiceBtn.classList.remove('btn-danger');
     voiceBtn.classList.add('btn-success');
+    voiceBtn.innerHTML = '<i class="fas fa-microphone fa-3x"></i>';
     voiceBtnText.textContent = 'Start Conversation';
-    updateConversationState('ready', '🤖', 'Ready to chat');
-    updateDebugInfo('✋ Ended conversation mode');
+    updateConversationState('ready', '🤖', 'Click the button to start');
+    updateStatus('voice', 'ready');
+    updateStatus('ai', 'ready');
+    updateDebugInfo('✋ Requesting server to stop voice session...');
+    
+    // Send message to Django WebSocket to stop voice session
+    if (serverWebSocket && serverWebSocket.readyState === WebSocket.OPEN) {
+        serverWebSocket.send(JSON.stringify({
+            type: 'stop_voice'
+        }));
+        updateDebugInfo('🛑 Voice DEACTIVATION requested from server');
+        showToast('🔇 Requesting server to deactivate voice...', 'info');
+    }
+}
+
+// Audio recording and playback functions
+async function startAudioRecording() {
+    try {
+        updateDebugInfo('🎤 Starting audio recording...');
+        
+        // Get microphone access
+        audioStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                sampleRate: 24000,  // OpenAI prefers 24kHz
+                channelCount: 1,    // Mono
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            }
+        });
+        
+        // Use AudioWorklet for real-time audio processing
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+            sampleRate: 24000  // OpenAI requires 24kHz
+        });
+        
+        // Store reference for cleanup
+        window.currentAudioContext = audioContext;
+        
+        const source = audioContext.createMediaStreamSource(audioStream);
+        
+        // Use AudioWorkletProcessor if available, fallback to ScriptProcessor
+        if (audioContext.audioWorklet) {
+            try {
+                // Create inline AudioWorklet processor
+                const processorCode = `
+                    class AudioProcessor extends AudioWorkletProcessor {
+                        process(inputs, outputs, parameters) {
+                            const input = inputs[0];
+                            if (input.length > 0) {
+                                const channelData = input[0];
+                                
+                                // Convert float32 to int16 PCM
+                                const pcm16 = new Int16Array(channelData.length);
+                                for (let i = 0; i < channelData.length; i++) {
+                                    pcm16[i] = Math.max(-32768, Math.min(32767, channelData[i] * 32768));
+                                }
+                                
+                                // Send PCM data to main thread
+                                this.port.postMessage({
+                                    type: 'audio_data',
+                                    data: pcm16.buffer
+                                });
+                            }
+                            return true;
+                        }
+                    }
+                    registerProcessor('audio-processor', AudioProcessor);
+                `;
+                
+                const blob = new Blob([processorCode], { type: 'application/javascript' });
+                const processorUrl = URL.createObjectURL(blob);
+                
+                await audioContext.audioWorklet.addModule(processorUrl);
+                const processorNode = new AudioWorkletNode(audioContext, 'audio-processor');
+                
+                processorNode.port.onmessage = (event) => {
+                    if (event.data.type === 'audio_data' && serverWebSocket && serverWebSocket.readyState === WebSocket.OPEN) {
+                        // Convert ArrayBuffer to base64
+                        const uint8Array = new Uint8Array(event.data.data);
+                        let binaryString = '';
+                        for (let i = 0; i < uint8Array.byteLength; i++) {
+                            binaryString += String.fromCharCode(uint8Array[i]);
+                        }
+                        const base64Audio = btoa(binaryString);
+                        
+                        serverWebSocket.send(JSON.stringify({
+                            type: 'audio_data',
+                            audio: base64Audio
+                        }));
+                    }
+                };
+                
+                source.connect(processorNode);
+                processorNode.connect(audioContext.destination);
+                
+                updateDebugInfo('✅ Using AudioWorklet for audio processing');
+                
+            } catch (error) {
+                updateDebugInfo(`❌ AudioWorklet failed: ${error.message}, falling back to ScriptProcessor`);
+                useScriptProcessor();
+            }
+        } else {
+            updateDebugInfo('⚠️ AudioWorklet not supported, using ScriptProcessor');
+            useScriptProcessor();
+        }
+        
+        function useScriptProcessor() {
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+            
+            processor.onaudioprocess = function(e) {
+                if (serverWebSocket && serverWebSocket.readyState === WebSocket.OPEN) {
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    
+                    // Convert float32 to int16 PCM
+                    const pcm16 = new Int16Array(inputData.length);
+                    for (let i = 0; i < inputData.length; i++) {
+                        pcm16[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+                    }
+                    
+                    // Convert to base64
+                    const uint8Array = new Uint8Array(pcm16.buffer);
+                    let binaryString = '';
+                    for (let i = 0; i < uint8Array.byteLength; i++) {
+                        binaryString += String.fromCharCode(uint8Array[i]);
+                    }
+                    const base64Audio = btoa(binaryString);
+                    
+                    serverWebSocket.send(JSON.stringify({
+                        type: 'audio_data',
+                        audio: base64Audio
+                    }));
+                }
+            };
+            
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+        }
+        
+        updateDebugInfo('✅ Audio recording started');
+        updateStatus('voice', 'listening');
+        updateConversationState('listening', '👂', 'Listening...');
+        
+    } catch (error) {
+        updateDebugInfo(`❌ Failed to start audio recording: ${error.message}`);
+        showToast(`Microphone Error: ${error.message}`, 'error');
+    }
+}
+
+function stopAudioRecording() {
+    try {
+        updateDebugInfo('🛑 Stopping audio recording...');
+        
+        if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop());
+            audioStream = null;
+        }
+        
+        // Close audio context if it exists
+        if (window.currentAudioContext) {
+            window.currentAudioContext.close();
+            window.currentAudioContext = null;
+        }
+        
+        updateStatus('voice', 'ready');
+        updateConversationState('ready', '🤖', 'Click the button to start');
+        updateDebugInfo('✅ Audio recording stopped');
+        
+    } catch (error) {
+        updateDebugInfo(`❌ Error stopping audio recording: ${error.message}`);
+    }
+}
+
+// Set up audio element for playback
+if (!audioEl) {
+    audioEl = document.createElement("audio");
+    audioEl.autoplay = true;
+    document.body.appendChild(audioEl);
+    updateDebugInfo('🔊 Audio element created for playback');
+}
+
+// Proper audio buffer management
+let globalAudioContext = null;
+let audioChunksBuffer = [];
+let isBuffering = false;
+let nextPlayTime = 0;
+
+// Buffer audio chunks and play sequentially
+async function playAudioDelta(audioData) {
+    try {
+        if (!audioData) return;
+        
+        if (isBuffering) {
+            // Add to buffer during streaming
+            audioChunksBuffer.push(audioData);
+            updateDebugInfo(`📦 Buffering audio chunk (${audioData.length} chars) - Buffer size: ${audioChunksBuffer.length}`);
+        } else {
+            // Play immediately if not buffering (fallback)
+            await playAudioChunk(audioData);
+        }
+        
+    } catch (error) {
+        updateDebugInfo(`❌ Error handling audio: ${error.message}`);
+    }
+}
+
+async function playAudioChunk(audioData) {
+    try {
+        // Initialize audio context once
+        if (!globalAudioContext) {
+            globalAudioContext = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 24000
+            });
+            
+            if (globalAudioContext.state === 'suspended') {
+                await globalAudioContext.resume();
+                updateDebugInfo('🔊 Audio context resumed');
+            }
+            
+            nextPlayTime = globalAudioContext.currentTime;
+        }
+        
+        // Decode base64 to binary
+        const binaryString = atob(audioData);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Convert PCM16 to AudioBuffer
+        const pcm16Array = new Int16Array(bytes.buffer);
+        
+        if (pcm16Array.length > 0) {
+            const audioBuffer = globalAudioContext.createBuffer(1, pcm16Array.length, 24000);
+            const channelData = audioBuffer.getChannelData(0);
+            
+            // Convert int16 to float32
+            for (let i = 0; i < pcm16Array.length; i++) {
+                channelData[i] = pcm16Array[i] / 32768;
+            }
+            
+            // Create and schedule audio source
+            const source = globalAudioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(globalAudioContext.destination);
+            
+            // Schedule at next available time
+            const startTime = Math.max(nextPlayTime, globalAudioContext.currentTime);
+            source.start(startTime);
+            
+            // Update next play time
+            nextPlayTime = startTime + audioBuffer.duration;
+            
+            updateDebugInfo(`▶️ Audio chunk scheduled (${pcm16Array.length} samples) at ${startTime.toFixed(3)}s`);
+        }
+        
+    } catch (error) {
+        updateDebugInfo(`❌ Error playing audio chunk: ${error.message}`);
+    }
+}
+
+async function startAudioBuffer() {
+    updateDebugInfo('🎬 Starting audio buffer collection');
+    audioChunksBuffer = [];
+    isBuffering = true;
+    updateStatus('ai', 'speaking');
+    updateConversationState('speaking', '🗣️', 'AI Speaking...');
+}
+
+async function completeAudioBuffer() {
+    updateDebugInfo(`🎯 Completing audio buffer - Playing ${audioChunksBuffer.length} chunks sequentially`);
+    isBuffering = false;
+    
+    // Play all buffered chunks in sequence
+    for (const chunk of audioChunksBuffer) {
+        await playAudioChunk(chunk);
+    }
+    
+    // Clear buffer
+    audioChunksBuffer = [];
+    
+    updateDebugInfo('✅ Audio buffer playback completed');
+    updateStatus('ai', 'ready');
+    updateConversationState('listening', '👂', 'Listening...');
+}
+
+// Clear audio context when conversation stops
+function clearAudioQueue() {
+    audioChunksBuffer = [];
+    isBuffering = false;
+    nextPlayTime = 0;
+    
+    if (globalAudioContext) {
+        try {
+            globalAudioContext.close();
+            globalAudioContext = null;
+            updateDebugInfo('🔇 Audio context closed');
+        } catch (error) {
+            updateDebugInfo(`⚠️ Error closing audio context: ${error.message}`);
+        }
+    }
+    updateStatus('ai', 'ready');
+    updateConversationState('listening', '👂', 'Listening...');
+}
+
+// OpenAI events are now handled server-side via Django WebSocket
+
+function updateTranscriptionPreview(speaker, text, isComplete = false) {
+    if (!text) return;
+    
+    transcriptionPreview.classList.remove('d-none');
+    transcriptionPreview.classList.add('fade-in');
+    previewIcon.textContent = speaker === 'user' ? '👤' : '🤖';
+    previewText.textContent = text;
+    
+    if (isComplete) {
+        typingIndicator.style.display = 'none';
+        setTimeout(clearTranscriptionPreview, 2000); // Clear after 2 seconds
+    } else {
+        typingIndicator.style.display = 'inline';
+        // Animate typing indicator
+        animateTypingIndicator();
+    }
+}
+
+function clearTranscriptionPreview() {
+    transcriptionPreview.classList.add('d-none');
+    transcriptionPreview.classList.remove('fade-in');
+    previewText.textContent = '';
+    typingIndicator.style.display = 'none';
+}
+
+function animateTypingIndicator() {
+    const chars = ['▋', '▊', '▉', '█', '▉', '▊'];
+    let index = 0;
+    
+    const animate = () => {
+        if (transcriptionPreview.classList.contains('d-none')) return;
+        
+        typingIndicator.textContent = chars[index];
+        index = (index + 1) % chars.length;
+        setTimeout(animate, 300);
+    };
+    
+    animate();
 }
 
 function updateConversationState(state, icon, text) {
@@ -779,6 +1061,7 @@ function showToast(message, type = 'info') {
 }
 
 // Utility function to get CSRF token
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
