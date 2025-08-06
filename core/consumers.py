@@ -16,6 +16,7 @@ class VoiceConsumer(AsyncWebsocketConsumer):
         self.session_id = None
         self.websocket_thread = None
         self.message_queue = asyncio.Queue()
+        self.is_disconnected = False
         
     async def connect(self):
         # Check authentication
@@ -47,9 +48,16 @@ class VoiceConsumer(AsyncWebsocketConsumer):
         }))
 
     async def disconnect(self, close_code):
+        # Set flag to indicate disconnection
+        self.is_disconnected = True
+        
         # Close OpenAI WebSocket connection
         if self.openai_websocket:
             self.openai_websocket.close()
+            
+        # Stop voice service
+        if self.voice_service:
+            self.voice_service.django_consumer = None  # Clear reference to prevent further message sends
 
     async def receive(self, text_data=None, bytes_data=None):
         try:
@@ -58,7 +66,8 @@ class VoiceConsumer(AsyncWebsocketConsumer):
                 message_type = data.get('type')
                 
                 if message_type == 'start_voice':
-                    await self.start_voice_session()
+                    language = data.get('language', 'en')  # Default to English
+                    await self.start_voice_session(language)
                 elif message_type == 'stop_voice':
                     await self.stop_voice_session()
                 elif message_type == 'audio_data':
@@ -74,7 +83,7 @@ class VoiceConsumer(AsyncWebsocketConsumer):
                 'message': f'Error processing message: {str(e)}'
             }))
 
-    async def start_voice_session(self):
+    async def start_voice_session(self, language='en'):
         """Start voice session - connect to OpenAI WebSocket"""
         try:
             # Only start if not already active
@@ -86,10 +95,13 @@ class VoiceConsumer(AsyncWebsocketConsumer):
                 from .services import RealtimeVoiceService
                 self.voice_service = RealtimeVoiceService(self.assistant)
             
+            # Set language preference in voice service
+            self.voice_service.selected_language = language
+            
             # Create WebSocket connection to OpenAI with consumer reference
             result = await database_sync_to_async(
                 self.voice_service.create_server_websocket_connection
-            )(django_consumer=self)
+            )(django_consumer=self, language=language)
             
             if result.get('status') == 'success':
                 self.is_voice_active = True

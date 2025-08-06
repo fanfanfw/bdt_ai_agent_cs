@@ -87,46 +87,46 @@ class OpenAIService:
             print(f"Error getting response: {e}")
             return None
 
-    def text_to_speech(self, text):
-        """Convert text to speech using OpenAI TTS"""
-        try:
-            response = self.client.audio.speech.create(
-                model="tts-1",
-                voice="alloy",  # Good English voice
-                input=text,
-                speed=1.0  # Normal speed for clarity
-            )
-            return response.content
-        except Exception as e:
-            print(f"Error with TTS: {e}")
-            return None
+    # def text_to_speech(self, text):
+    #     """Convert text to speech using OpenAI TTS"""
+    #     try:
+    #         response = self.client.audio.speech.create(
+    #             model="tts-1",
+    #             voice="alloy",  # Good English voice
+    #             input=text,
+    #             speed=1.0  # Normal speed for clarity
+    #         )
+    #         return response.content
+    #     except Exception as e:
+    #         print(f"Error with TTS: {e}")
+    #         return None
 
-    def speech_to_text(self, audio_file):
-        """Convert speech to text using OpenAI Whisper"""
-        try:
-            # Handle Django InMemoryUploadedFile
-            if hasattr(audio_file, 'read'):
-                # Reset file pointer to beginning
-                audio_file.seek(0)
-                # Create a tuple with file content and name for OpenAI
-                file_tuple = (audio_file.name or 'audio.webm', audio_file.read(), 'audio/webm')
+    # def speech_to_text(self, audio_file):
+    #     """Convert speech to text using OpenAI Whisper"""
+    #     try:
+    #         # Handle Django InMemoryUploadedFile
+    #         if hasattr(audio_file, 'read'):
+    #             # Reset file pointer to beginning
+    #             audio_file.seek(0)
+    #             # Create a tuple with file content and name for OpenAI
+    #             file_tuple = (audio_file.name or 'audio.webm', audio_file.read(), 'audio/webm')
                 
-                transcript = self.client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=file_tuple,
-                    language="en"  # Force English for transcription
-                )
-            else:
-                # Handle regular file objects
-                transcript = self.client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file,
-                    language="en"  # Force English for transcription
-                )
-            return transcript.text
-        except Exception as e:
-            print(f"Error with STT: {e}")
-            return None
+    #             transcript = self.client.audio.transcriptions.create(
+    #                 model="whisper-1",
+    #                 file=file_tuple,
+    #                 language="en"  # Force English for transcription
+    #             )
+    #         else:
+    #             # Handle regular file objects
+    #             transcript = self.client.audio.transcriptions.create(
+    #                 model="whisper-1",
+    #                 file=audio_file,
+    #                 language="en"  # Force English for transcription
+    #             )
+    #         return transcript.text
+    #     except Exception as e:
+    #         print(f"Error with STT: {e}")
+    #         return None
 
 
 class EmbeddingService:
@@ -727,12 +727,63 @@ class RealtimeVoiceService:
         self.websocket = None
         self.session_id = None
 
+    def safe_send_to_consumer(self, message):
+        """Safely send message to Django consumer with error handling"""
+        if not self.django_consumer:
+            return
+            
+        # Check if consumer is disconnected
+        if hasattr(self.django_consumer, 'is_disconnected') and self.django_consumer.is_disconnected:
+            print("Django consumer is disconnected, skipping message")
+            return
+            
+        try:
+            import asyncio
+            import threading
+            
+            def send_message():
+                try:
+                    # Double check consumer status before sending
+                    if hasattr(self.django_consumer, 'is_disconnected') and self.django_consumer.is_disconnected:
+                        print("Django consumer disconnected during send, aborting")
+                        return
+                        
+                    # Check if consumer is still connected
+                    if not hasattr(self.django_consumer, 'channel_layer') or not self.django_consumer.channel_layer:
+                        print("Django consumer channel layer is missing, skipping message")
+                        return
+                        
+                    # Check if the consumer's scope is still active
+                    if hasattr(self.django_consumer, 'scope') and self.django_consumer.scope.get('client') is None:
+                        print("Django consumer scope is closed, skipping message")
+                        return
+                    
+                    new_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(new_loop)
+                    try:
+                        new_loop.run_until_complete(
+                            self.django_consumer.send(text_data=json.dumps(message))
+                        )
+                    finally:
+                        new_loop.close()
+                        
+                except Exception as e:
+                    print(f"Failed to send message through consumer: {e}")
+                    # Don't re-raise the exception to avoid crashing the thread
+            
+            thread = threading.Thread(target=send_message)
+            thread.daemon = True
+            thread.start()
+            
+        except Exception as e:
+            print(f"Error in safe_send_to_consumer: {e}")
+
     def get_voice_for_language(self, language_hint="auto"):
         """Get appropriate voice based on language preference"""
-        # Use assistant's preferred language first
-        preferred_lang = getattr(self.assistant, 'preferred_language', 'en')
+        # Use selected language first
+        preferred_lang = getattr(self, 'selected_language', 'en')
         
-        # Override with hint if provided
+        # Override with hint if provided and not auto
         if language_hint != "auto":
             preferred_lang = language_hint
         
@@ -744,7 +795,7 @@ class RealtimeVoiceService:
         
         return voice_mapping.get(preferred_lang, 'alloy')
     
-    def create_server_websocket_connection(self, django_consumer=None):
+    def create_server_websocket_connection(self, django_consumer=None, language='en'):
         """Create server-side WebSocket connection to OpenAI Realtime API"""
         try:
             import websocket
@@ -756,7 +807,19 @@ class RealtimeVoiceService:
             self.session_id = f"ws_session_{uuid.uuid4().hex[:8]}"
             self.connection_ready = False
             self.connection_error = None
-            self.django_consumer = django_consumer
+            self.selected_language = language  # Store language preference
+            
+            # Validate and set django_consumer
+            if django_consumer:
+                # Check if consumer is already disconnected
+                if hasattr(django_consumer, 'is_disconnected') and django_consumer.is_disconnected:
+                    return {
+                        "status": "error",
+                        "error": "Django consumer is already disconnected"
+                    }
+                self.django_consumer = django_consumer
+            else:
+                self.django_consumer = None
             
             # WebSocket URL for server-to-server connection  
             url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17"
@@ -770,16 +833,25 @@ class RealtimeVoiceService:
             def on_open(ws):
                 print("✅ Connected to OpenAI Realtime API via WebSocket")
                 
+                # Get transcription language
+                transcription_lang = "ms" if getattr(self, 'selected_language', 'en') == 'ms' else "en"
+                voice_for_response = self.get_voice_for_language()
+                
+                print(f"🌐 Session Language: {getattr(self, 'selected_language', 'en')}")
+                print(f"🎤 Transcription Language: {transcription_lang}")
+                print(f"🗣️ Voice Model: {voice_for_response}")
+                
                 # Send session configuration
                 session_update = {
                     "type": "session.update", 
                     "session": {
                         "instructions": self.get_realtime_instructions(),
-                        "voice": self.get_voice_for_language(),
+                        "voice": voice_for_response,
                         "input_audio_format": "pcm16",
                         "output_audio_format": "pcm16", 
                         "input_audio_transcription": {
-                            "model": "whisper-1"
+                            "model": "whisper-1",
+                            "language": transcription_lang
                         },
                         "turn_detection": {
                             "type": "server_vad",
@@ -872,84 +944,33 @@ class RealtimeVoiceService:
                         print("🔊 Output audio buffer started")
                         # Signal to start collecting audio chunks
                         if self.django_consumer:
-                            try:
-                                import asyncio
-                                import threading
-                                message = {
-                                    'type': 'audio_buffer_start',
-                                    'response_id': event.get('response_id', ''),
-                                    'event_type': event_type
-                                }
-                                def send_message():
-                                    new_loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(new_loop)
-                                    new_loop.run_until_complete(
-                                        self.django_consumer.send(text_data=json_lib.dumps(message))
-                                    )
-                                    new_loop.close()
-                                
-                                thread = threading.Thread(target=send_message)
-                                thread.daemon = True
-                                thread.start()
-                            except Exception as e:
-                                print(f"Error forwarding audio buffer start: {e}")
+                            message = {
+                                'type': 'audio_buffer_start',
+                                'response_id': event.get('response_id', ''),
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                     elif event_type == 'response.audio.done':
                         print("🔇 Response audio completed")
                         # Signal to stop collecting and start playing
                         if self.django_consumer:
-                            try:
-                                import asyncio
-                                import threading
-                                message = {
-                                    'type': 'audio_buffer_complete',
-                                    'response_id': event.get('response_id', ''),
-                                    'event_type': event_type
-                                }
-                                def send_message():
-                                    new_loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(new_loop)
-                                    new_loop.run_until_complete(
-                                        self.django_consumer.send(text_data=json_lib.dumps(message))
-                                    )
-                                    new_loop.close()
-                                
-                                thread = threading.Thread(target=send_message)
-                                thread.daemon = True
-                                thread.start()
-                            except Exception as e:
-                                print(f"Error forwarding audio buffer complete: {e}")
+                            message = {
+                                'type': 'audio_buffer_complete',
+                                'response_id': event.get('response_id', ''),
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                     elif event_type == 'response.audio.delta':
                         print("🔊 Audio delta received")
                         # Forward audio response to Django consumer
                         if self.django_consumer:
-                            try:
-                                import asyncio
-                                audio_data = event.get('delta', '')
-                                message = {
-                                    'type': 'ai_audio_delta',
-                                    'audio': audio_data,
-                                    'event_type': event_type
-                                }
-                                # Send to Django consumer (simplified)
-                                try:
-                                    import asyncio
-                                    import threading
-                                    
-                                    def send_message():
-                                        new_loop = asyncio.new_event_loop()
-                                        asyncio.set_event_loop(new_loop)
-                                        new_loop.run_until_complete(
-                                            self.django_consumer.send(text_data=json_lib.dumps(message))
-                                        )
-                                        new_loop.close()
-                                    
-                                    thread = threading.Thread(target=send_message)
-                                    thread.daemon = True
-                                    thread.start()
-                                except Exception as send_error:
-                                    print(f"Failed to send audio delta: {send_error}")
-                            except Exception as e:
-                                print(f"Error forwarding audio delta: {e}")
+                            audio_data = event.get('delta', '')
+                            message = {
+                                'type': 'ai_audio_delta',
+                                'audio': audio_data,
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                     elif event_type == 'response.audio_transcript.delta':
                         print(f"📝 Transcript delta: {event.get('delta', '')}")
                     elif event_type == 'response.audio_transcript.done':
@@ -957,27 +978,12 @@ class RealtimeVoiceService:
                         print(f"✅ Complete transcript: {transcript}")
                         # Forward complete transcript to Django consumer
                         if self.django_consumer and transcript:
-                            try:
-                                import asyncio
-                                import threading
-                                message = {
-                                    'type': 'ai_response_text',
-                                    'text': transcript,
-                                    'event_type': event_type
-                                }
-                                def send_message():
-                                    new_loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(new_loop)
-                                    new_loop.run_until_complete(
-                                        self.django_consumer.send(text_data=json_lib.dumps(message))
-                                    )
-                                    new_loop.close()
-                                
-                                thread = threading.Thread(target=send_message)
-                                thread.daemon = True
-                                thread.start()
-                            except Exception as e:
-                                print(f"Error forwarding transcript: {e}")
+                            message = {
+                                'type': 'ai_response_text',
+                                'text': transcript,
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                     elif event_type == 'response.done':
                         print("✅ Response completed")
                     elif event_type == 'conversation.item.input_audio_transcription.delta':
@@ -986,153 +992,68 @@ class RealtimeVoiceService:
                         print(f"👤 User transcription delta: {delta}")
                         
                         if self.django_consumer and delta:
-                            try:
-                                import asyncio
-                                import threading
-                                message = {
-                                    'type': 'user_transcript_delta',
-                                    'delta': delta,
-                                    'item_id': event.get('item_id', ''),
-                                    'event_type': event_type
-                                }
-                                def send_message():
-                                    new_loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(new_loop)
-                                    new_loop.run_until_complete(
-                                        self.django_consumer.send(text_data=json_lib.dumps(message))
-                                    )
-                                    new_loop.close()
-                                
-                                thread = threading.Thread(target=send_message)
-                                thread.daemon = True
-                                thread.start()
-                            except Exception as e:
-                                print(f"Error forwarding user transcript delta: {e}")
+                            message = {
+                                'type': 'user_transcript_delta',
+                                'delta': delta,
+                                'item_id': event.get('item_id', ''),
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                     elif event_type == 'conversation.item.input_audio_transcription.completed':
                         # Handle user input transcription completion
                         transcript = event.get('transcript', '')
                         print(f"👤 User input transcribed (complete): {transcript}")
                         
                         if self.django_consumer and transcript:
-                            try:
-                                import asyncio
-                                import threading
-                                message = {
-                                    'type': 'user_transcript',
-                                    'transcript': transcript,
-                                    'item_id': event.get('item_id', ''),
-                                    'event_type': event_type
-                                }
-                                def send_message():
-                                    new_loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(new_loop)
-                                    new_loop.run_until_complete(
-                                        self.django_consumer.send(text_data=json_lib.dumps(message))
-                                    )
-                                    new_loop.close()
-                                
-                                thread = threading.Thread(target=send_message)
-                                thread.daemon = True
-                                thread.start()
-                            except Exception as e:
-                                print(f"Error forwarding user transcript: {e}")
+                            message = {
+                                'type': 'user_transcript',
+                                'transcript': transcript,
+                                'item_id': event.get('item_id', ''),
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                     elif event_type == 'conversation.item.input_audio_transcription.failed':
                         # Handle user input transcription failure
                         error = event.get('error', {})
                         print(f"❌ User transcription failed: {error}")
                         
                         if self.django_consumer:
-                            try:
-                                import asyncio
-                                import threading
-                                message = {
-                                    'type': 'user_transcript_error',
-                                    'error': error,
-                                    'item_id': event.get('item_id', ''),
-                                    'event_type': event_type
-                                }
-                                def send_message():
-                                    new_loop = asyncio.new_event_loop()
-                                    asyncio.set_event_loop(new_loop)
-                                    new_loop.run_until_complete(
-                                        self.django_consumer.send(text_data=json_lib.dumps(message))
-                                    )
-                                    new_loop.close()
-                                
-                                thread = threading.Thread(target=send_message)
-                                thread.daemon = True
-                                thread.start()
-                            except Exception as e:
-                                print(f"Error forwarding transcript error: {e}")
+                            message = {
+                                'type': 'user_transcript_error',
+                                'error': error,
+                                'item_id': event.get('item_id', ''),
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                     elif event_type == 'conversation.item.created':
                         # Forward conversation events to Django consumer
                         if self.django_consumer and event.get('item'):
-                            try:
-                                import asyncio
-                                item = event['item']
-                                if item.get('role') == 'assistant' and item.get('content'):
-                                    content_text = ""
-                                    for content in item['content']:
-                                        if content.get('transcript'):
-                                            content_text = content['transcript']
-                                            break
-                                    
-                                    if content_text:
-                                        message = {
-                                            'type': 'ai_response_text',
-                                            'text': content_text,
-                                            'event_type': event_type
-                                        }
-                                        try:
-                                            import asyncio
-                                            import threading
-                                            
-                                            def send_message():
-                                                new_loop = asyncio.new_event_loop()
-                                                asyncio.set_event_loop(new_loop)
-                                                new_loop.run_until_complete(
-                                                    self.django_consumer.send(text_data=json_lib.dumps(message))
-                                                )
-                                                new_loop.close()
-                                            
-                                            thread = threading.Thread(target=send_message)
-                                            thread.daemon = True
-                                            thread.start()
-                                        except Exception as send_error:
-                                            print(f"Failed to send text response: {send_error}")
-                            except Exception as e:
-                                print(f"Error forwarding conversation item: {e}")
+                            item = event['item']
+                            if item.get('role') == 'assistant' and item.get('content'):
+                                content_text = ""
+                                for content in item['content']:
+                                    if content.get('transcript'):
+                                        content_text = content['transcript']
+                                        break
+                                
+                                if content_text:
+                                    message = {
+                                        'type': 'ai_response_text',
+                                        'text': content_text,
+                                        'event_type': event_type
+                                    }
+                                    self.safe_send_to_consumer(message)
                     elif event_type == 'error':
                         print(f"❌ Error from OpenAI: {event}")
                         self.connection_error = event.get('message', 'Unknown error')
                         # Forward error to Django consumer
                         if self.django_consumer:
-                            try:
-                                import asyncio
-                                message = {
-                                    'type': 'openai_error',
-                                    'error': self.connection_error,
-                                    'event_type': event_type
-                                }
-                                try:
-                                    import asyncio
-                                    import threading
-                                    
-                                    def send_message():
-                                        new_loop = asyncio.new_event_loop()
-                                        asyncio.set_event_loop(new_loop)
-                                        new_loop.run_until_complete(
-                                            self.django_consumer.send(text_data=json_lib.dumps(message))
-                                        )
-                                        new_loop.close()
-                                    
-                                    thread = threading.Thread(target=send_message)
-                                    thread.daemon = True
-                                    thread.start()
-                                except Exception as send_error:
-                                    print(f"Failed to send error message: {send_error}")
-                            except Exception as e:
-                                print(f"Error forwarding OpenAI error: {e}")
+                            message = {
+                                'type': 'openai_error',
+                                'error': self.connection_error,
+                                'event_type': event_type
+                            }
+                            self.safe_send_to_consumer(message)
                         
                 except Exception as e:
                     print(f"Error handling message: {e}")
@@ -1146,6 +1067,10 @@ class RealtimeVoiceService:
                 self.websocket = None
                 self.session_id = None
                 self.connection_ready = False
+                
+                # Clear django_consumer reference to prevent further message sends
+                if hasattr(self, 'django_consumer'):
+                    self.django_consumer = None
             
             # Create WebSocket connection
             self.websocket = websocket.WebSocketApp(
@@ -1253,8 +1178,8 @@ class RealtimeVoiceService:
 
     def get_realtime_instructions(self):
         """Get system instructions for realtime voice agent with embedded Q&A and Knowledge Base"""
-        # Get language preference
-        preferred_lang = getattr(self.assistant, 'preferred_language', 'en')
+        # Get language preference from selected language or assistant preference
+        preferred_lang = getattr(self, 'selected_language', getattr(self.assistant, 'preferred_language', 'en'))
         
         # Get Q&As from database (same as test_chat)
         qnas = self.assistant.qnas.all()

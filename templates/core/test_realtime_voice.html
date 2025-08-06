@@ -17,9 +17,19 @@
                             </h4>
                             <small>Speech-to-Speech with OpenAI Realtime API + RAG</small>
                         </div>
-                        <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
-                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                        </a>
+                        <div class="d-flex align-items-center">
+                            <!-- Language Selector -->
+                            <div class="me-3">
+                                <label class="form-label text-white mb-0 me-2">Language:</label>
+                                <select id="language-selector" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                                    <option value="en">English</option>
+                                    <option value="ms">Bahasa Malaysia</option>
+                                </select>
+                            </div>
+                            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -28,7 +38,8 @@
                         <strong>Assistant:</strong> {{ assistant.business_type.name }} Customer Service<br>
                         <strong>Knowledge Base Items:</strong> {{ assistant.knowledge_base.count }}<br>
                         <strong>Q&A Items:</strong> {{ assistant.qnas.count }}<br>
-                        <strong>API:</strong> OpenAI Realtime API (Server-side WebSocket)
+                        <strong>API:</strong> OpenAI Realtime API (Server-side WebSocket)<br>
+                        <strong>Current Language:</strong> <span id="current-language-display">English</span> (Voice + Transcription)
                     </div>
 
                     <!-- Connection Status -->
@@ -274,6 +285,7 @@ let isConnected = false;
 let isListening = false;
 let isInConversation = false; // New state for conversation mode
 let audioEl = null;
+let selectedLanguage = 'en'; // Default language
 
 // DOM elements
 const voiceBtn = document.getElementById('voice-btn');
@@ -283,6 +295,8 @@ const sessionInfo = document.getElementById('session-info');
 const debugInfo = document.getElementById('debug-info');
 const sessionIdDisplay = document.getElementById('session-id-display');
 const sessionStatusText = document.getElementById('session-status-text');
+const languageSelector = document.getElementById('language-selector');
+const currentLanguageDisplay = document.getElementById('current-language-display');
 
 // Transcription preview elements
 const transcriptionPreview = document.getElementById('transcription-preview');
@@ -308,11 +322,76 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDebugInfo('🎬 Realtime Voice AI initializing...');
     updateDebugInfo('⚡ Powered by OpenAI Realtime API');
     
+    // Setup language selector
+    setupLanguageSelector();
+    
     // Start initialization
     setTimeout(() => {
         initializeRealtimeVoice();
     }, 1000);
 });
+
+// Setup language selector event listener
+function setupLanguageSelector() {
+    if (languageSelector) {
+        // Set default language
+        selectedLanguage = languageSelector.value;
+        
+        languageSelector.addEventListener('change', function() {
+            selectedLanguage = this.value;
+            const langName = selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia';
+            updateDebugInfo(`🌐 Language switched to: ${langName}`);
+            
+            // Update UI text based on language
+            updateUILanguage(selectedLanguage);
+            
+            // Update current language display
+            if (currentLanguageDisplay) {
+                currentLanguageDisplay.textContent = langName;
+            }
+            
+            // If already connected, restart session with new language
+            if (isConnected && isInConversation) {
+                updateDebugInfo('🔄 Restarting session with new language settings...');
+                endConversation();
+                setTimeout(() => {
+                    startConversation();
+                }, 1000);
+            }
+        });
+        
+        updateDebugInfo(`🌐 Language initialized: ${selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia'}`);
+    }
+}
+
+// Update UI text based on selected language
+function updateUILanguage(lang) {
+    const texts = {
+        'en': {
+            listening: 'Listening...',
+            speaking: 'AI Speaking...',
+            ready: 'Click the button to start',
+            startConversation: 'Start Conversation',
+            stopConversation: 'Stop Conversation',
+            connected: 'Connected - Audio INACTIVE',
+            disconnected: 'Disconnected from server'
+        },
+        'ms': {
+            listening: 'Mendengar...',
+            speaking: 'AI Bercakap...',
+            ready: 'Klik butang untuk mula',
+            startConversation: 'Mula Perbualan',
+            stopConversation: 'Henti Perbualan',
+            connected: 'Disambung - Audio TIDAK AKTIF',
+            disconnected: 'Terputus dari pelayan'
+        }
+    };
+    
+    // Update button text if not in conversation
+    if (!isInConversation && voiceBtnText) {
+        voiceBtnText.textContent = texts[lang].startConversation;
+    }
+}
 
 // Initialize realtime voice connection
 async function initializeRealtimeVoice() {
@@ -609,19 +688,27 @@ function updateDebugInfo(message) {
 function enableVoiceButton() {
     voiceBtn.disabled = false;
     voiceBtn.onclick = toggleConversation;
-    voiceBtnText.textContent = 'Start Conversation';
+    
+    // Update button text based on language
+    const texts = {
+        'en': 'Start Conversation',
+        'ms': 'Mula Perbualan'
+    };
+    voiceBtnText.textContent = texts[selectedLanguage] || texts['en'];
+    
     updateConversationState('ready', '🤖', 'Click the button to start');
     updateStatus('session', 'ready');
     updateConnectionStatus('connected', 'Connected - Audio INACTIVE');
     
-    // Display session info
+    // Display session info with language
     if (currentSessionId) {
         sessionIdDisplay.textContent = currentSessionId;
-        sessionStatusText.textContent = 'Connected via Server WebSocket (Manual Control)';
+        sessionStatusText.textContent = `Connected via Server WebSocket (Language: ${selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia'})`;
     }
     
-    showToast('🎉 Connection established! Voice & Real-time Transcription ready.', 'success');
-    updateDebugInfo('✅ Real-time transcription activated with Whisper-1');
+    const langName = selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia';
+    showToast(`🎉 Connection established! Voice & Real-time Transcription ready (${langName}).`, 'success');
+    updateDebugInfo(`✅ Real-time transcription activated with Whisper-1 (${langName})`);
 }
 
 async function toggleConversation() {
@@ -650,7 +737,10 @@ async function toggleConversation() {
 
 function startConversation() {
     if (!isConnected || !serverWebSocket || serverWebSocket.readyState !== WebSocket.OPEN) {
-        showToast('Server connection not ready. Please wait for initialization to complete.', 'error');
+        const errorText = selectedLanguage === 'ms' ? 
+            'Sambungan pelayan tidak sedia. Sila tunggu proses permulaan selesai.' :
+            'Server connection not ready. Please wait for initialization to complete.';
+        showToast(errorText, 'error');
         return;
     }
     
@@ -658,17 +748,35 @@ function startConversation() {
     voiceBtn.classList.remove('btn-success');
     voiceBtn.classList.add('btn-danger');
     voiceBtn.innerHTML = '<i class="fas fa-stop fa-3x"></i>';
-    voiceBtnText.textContent = 'Stop Conversation';
-    updateConversationState('listening', '👂', 'Starting voice on server...');
-    updateStatus('voice', 'processing');
-    updateDebugInfo('💬 Requesting server to start voice session...');
     
-    // Send message to Django WebSocket to start voice session
+    const texts = {
+        'en': {
+            stop: 'Stop Conversation',
+            starting: 'Starting voice on server...',
+            requesting: 'Requesting server to start voice session...',
+            toast: '🎤 Requesting server to activate voice...'
+        },
+        'ms': {
+            stop: 'Henti Perbualan',
+            starting: 'Memulakan suara di pelayan...',
+            requesting: 'Meminta pelayan untuk memulakan sesi suara...',
+            toast: '🎤 Meminta pelayan untuk mengaktifkan suara...'
+        }
+    };
+    
+    const text = texts[selectedLanguage] || texts['en'];
+    voiceBtnText.textContent = text.stop;
+    updateConversationState('listening', '👂', text.starting);
+    updateStatus('voice', 'processing');
+    updateDebugInfo(text.requesting);
+    
+    // Send message to Django WebSocket to start voice session with language preference
     serverWebSocket.send(JSON.stringify({
-        type: 'start_voice'
+        type: 'start_voice',
+        language: selectedLanguage
     }));
     
-    showToast('🎤 Requesting server to activate voice...', 'info');
+    showToast(text.toast, 'info');
 }
 
 function endConversation() {
@@ -676,19 +784,38 @@ function endConversation() {
     voiceBtn.classList.remove('btn-danger');
     voiceBtn.classList.add('btn-success');
     voiceBtn.innerHTML = '<i class="fas fa-microphone fa-3x"></i>';
-    voiceBtnText.textContent = 'Start Conversation';
-    updateConversationState('ready', '🤖', 'Click the button to start');
+    
+    const texts = {
+        'en': {
+            start: 'Start Conversation',
+            ready: 'Click the button to start',
+            requesting: '✋ Requesting server to stop voice session...',
+            requested: '🛑 Voice DEACTIVATION requested from server',
+            toast: '🔇 Requesting server to deactivate voice...'
+        },
+        'ms': {
+            start: 'Mula Perbualan',
+            ready: 'Klik butang untuk mula',
+            requesting: '✋ Meminta pelayan untuk hentikan sesi suara...',
+            requested: '🛑 Penonaktifan suara diminta dari pelayan',
+            toast: '🔇 Meminta pelayan untuk menyahaktifkan suara...'
+        }
+    };
+    
+    const text = texts[selectedLanguage] || texts['en'];
+    voiceBtnText.textContent = text.start;
+    updateConversationState('ready', '🤖', text.ready);
     updateStatus('voice', 'ready');
     updateStatus('ai', 'ready');
-    updateDebugInfo('✋ Requesting server to stop voice session...');
+    updateDebugInfo(text.requesting);
     
     // Send message to Django WebSocket to stop voice session
     if (serverWebSocket && serverWebSocket.readyState === WebSocket.OPEN) {
         serverWebSocket.send(JSON.stringify({
             type: 'stop_voice'
         }));
-        updateDebugInfo('🛑 Voice DEACTIVATION requested from server');
-        showToast('🔇 Requesting server to deactivate voice...', 'info');
+        updateDebugInfo(text.requested);
+        showToast(text.toast, 'info');
     }
 }
 

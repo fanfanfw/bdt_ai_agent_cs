@@ -85,76 +85,76 @@ def voice_chat_api(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def text_to_speech_api(request):
-    """Text to Speech API endpoint"""
-    try:
-        data = json.loads(request.body)
-        text = data.get('text', '').strip()
-        api_key = data.get('api_key') or request.headers.get('Authorization', '').replace('Bearer ', '')
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def text_to_speech_api(request):
+#     """Text to Speech API endpoint"""
+#     try:
+#         data = json.loads(request.body)
+#         text = data.get('text', '').strip()
+#         api_key = data.get('api_key') or request.headers.get('Authorization', '').replace('Bearer ', '')
         
-        if not text:
-            return JsonResponse({'error': 'Text is required'}, status=400)
+#         if not text:
+#             return JsonResponse({'error': 'Text is required'}, status=400)
         
-        if not api_key:
-            return JsonResponse({'error': 'API key is required'}, status=401)
+#         if not api_key:
+#             return JsonResponse({'error': 'API key is required'}, status=401)
         
-        # Get assistant
-        assistant = get_assistant_from_api_key(api_key)
-        if not assistant:
-            return JsonResponse({'error': 'Invalid API key'}, status=401)
+#         # Get assistant
+#         assistant = get_assistant_from_api_key(api_key)
+#         if not assistant:
+#             return JsonResponse({'error': 'Invalid API key'}, status=401)
         
-        # Convert text to speech using OpenAI service directly
-        openai_service = OpenAIService()
-        audio_data = openai_service.text_to_speech(text)
+#         # Convert text to speech using OpenAI service directly
+#         openai_service = OpenAIService()
+#         audio_data = openai_service.text_to_speech(text)
         
-        if not audio_data:
-            return JsonResponse({'error': 'Error generating speech'}, status=500)
+#         if not audio_data:
+#             return JsonResponse({'error': 'Error generating speech'}, status=500)
         
-        response = HttpResponse(audio_data, content_type='audio/mp3')
-        response['Content-Disposition'] = 'attachment; filename="speech.mp3"'
-        return response
+#         response = HttpResponse(audio_data, content_type='audio/mp3')
+#         response['Content-Disposition'] = 'attachment; filename="speech.mp3"'
+#         return response
         
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def speech_to_text_api(request):
-    """Speech to Text API endpoint"""
-    try:
-        api_key = request.POST.get('api_key') or request.headers.get('Authorization', '').replace('Bearer ', '')
-        audio_file = request.FILES.get('audio')
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def speech_to_text_api(request):
+#     """Speech to Text API endpoint"""
+#     try:
+#         api_key = request.POST.get('api_key') or request.headers.get('Authorization', '').replace('Bearer ', '')
+#         audio_file = request.FILES.get('audio')
         
-        if not api_key:
-            return JsonResponse({'error': 'API key is required'}, status=401)
+#         if not api_key:
+#             return JsonResponse({'error': 'API key is required'}, status=401)
         
-        if not audio_file:
-            return JsonResponse({'error': 'Audio file is required'}, status=400)
+#         if not audio_file:
+#             return JsonResponse({'error': 'Audio file is required'}, status=400)
         
-        # Get assistant
-        assistant = get_assistant_from_api_key(api_key)
-        if not assistant:
-            return JsonResponse({'error': 'Invalid API key'}, status=401)
+#         # Get assistant
+#         assistant = get_assistant_from_api_key(api_key)
+#         if not assistant:
+#             return JsonResponse({'error': 'Invalid API key'}, status=401)
         
-        # Convert speech to text using OpenAI service directly  
-        openai_service = OpenAIService()
-        text = openai_service.speech_to_text(audio_file)
+#         # Convert speech to text using OpenAI service directly  
+#         openai_service = OpenAIService()
+#         text = openai_service.speech_to_text(audio_file)
         
-        if not text:
-            return JsonResponse({'error': 'Error processing audio'}, status=500)
+#         if not text:
+#             return JsonResponse({'error': 'Error processing audio'}, status=500)
         
-        return JsonResponse({
-            'text': text,
-            'status': 'success'
-        })
+#         return JsonResponse({
+#             'text': text,
+#             'status': 'success'
+#         })
         
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
 
 
 @csrf_exempt
