@@ -3,10 +3,11 @@ from django.contrib.auth import views as auth_views
 from . import views
 from .widget_api import widget_chat_api, widget_voice_api, widget_status_api
 from .language_views import switch_language, get_current_language
+from .admin_urls import admin_urlpatterns
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
+    path('login/', views.custom_login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
     path('dashboard/', views.dashboard, name='dashboard'),
@@ -28,4 +29,4 @@ urlpatterns = [
     path('api/widget/chat/', widget_chat_api, name='widget_chat_api'),
     path('api/widget/voice/', widget_voice_api, name='widget_voice_api'),
     path('api/widget/status/', widget_status_api, name='widget_status_api'),
-]
+] + admin_urlpatterns

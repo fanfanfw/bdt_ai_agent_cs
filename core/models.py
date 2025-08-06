@@ -2,9 +2,16 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 import uuid
 import json
 import os
+
+
+class RegularUserManager(models.Manager):
+    """Manager to get only regular users (exclude admins)"""
+    def get_queryset(self):
+        return super().get_queryset().filter(profile__user_type='user')
 
 
 class BusinessType(models.Model):
@@ -14,6 +21,152 @@ class BusinessType(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class UserProfile(models.Model):
+    USER_TYPE_CHOICES = [
+        ('admin', 'Admin'),
+        ('user', 'Regular User'),
+    ]
+    
+    SUBSCRIPTION_CHOICES = [
+        ('free', 'Free'),
+        ('pro', 'Pro'),
+        ('pro_plus', 'Pro+'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('suspended', 'Suspended'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='user')
+    subscription_plan = models.CharField(max_length=20, choices=SUBSCRIPTION_CHOICES, default='free')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Usage tracking
+    api_requests_count = models.IntegerField(default=0)
+    tokens_used = models.IntegerField(default=0)
+    chat_messages_count = models.IntegerField(default=0)
+    voice_messages_count = models.IntegerField(default=0)
+    
+    # Monthly limits (0 means unlimited)
+    monthly_api_limit = models.IntegerField(default=1000)  # Free: 1000, Pro: 10000, Pro+: 0
+    monthly_token_limit = models.IntegerField(default=50000)  # Free: 50k, Pro: 500k, Pro+: 0
+    
+    # Monthly usage reset
+    current_month_api_requests = models.IntegerField(default=0)
+    current_month_tokens = models.IntegerField(default=0)
+    last_reset_date = models.DateField(auto_now_add=True)
+    
+    # Timestamps
+    approved_at = models.DateTimeField(null=True, blank=True)
+    suspended_at = models.DateTimeField(null=True, blank=True)
+    last_activity = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.user_type} - {self.subscription_plan} ({self.status})"
+    
+    def is_regular_user(self):
+        return self.user_type == 'user'
+    
+    def is_admin_user(self):
+        return self.user_type == 'admin'
+    
+    def is_approved(self):
+        return self.status == 'approved'
+    
+    def is_suspended(self):
+        return self.status == 'suspended'
+    
+    def can_make_api_request(self):
+        if self.status != 'approved':
+            return False
+        if self.monthly_api_limit == 0:  # Unlimited
+            return True
+        return self.current_month_api_requests < self.monthly_api_limit
+    
+    def can_use_tokens(self, token_count):
+        if self.status != 'approved':
+            return False
+        if self.monthly_token_limit == 0:  # Unlimited
+            return True
+        return (self.current_month_tokens + token_count) <= self.monthly_token_limit
+    
+    def update_activity(self):
+        self.last_activity = timezone.now()
+        self.save(update_fields=['last_activity'])
+    
+    def reset_monthly_usage_if_needed(self):
+        today = timezone.now().date()
+        if today.month != self.last_reset_date.month or today.year != self.last_reset_date.year:
+            self.current_month_api_requests = 0
+            self.current_month_tokens = 0
+            self.last_reset_date = today
+            self.save(update_fields=['current_month_api_requests', 'current_month_tokens', 'last_reset_date'])
+    
+    def record_api_usage(self, token_count=0):
+        self.reset_monthly_usage_if_needed()
+        self.api_requests_count += 1
+        self.current_month_api_requests += 1
+        self.tokens_used += token_count
+        self.current_month_tokens += token_count
+        self.update_activity()
+        self.save(update_fields=['api_requests_count', 'current_month_api_requests', 
+                               'tokens_used', 'current_month_tokens', 'last_activity'])
+    
+    def approve(self):
+        self.status = 'approved'
+        self.approved_at = timezone.now()
+        self.save()
+    
+    def suspend(self):
+        self.status = 'suspended'
+        self.suspended_at = timezone.now()
+        self.save()
+    
+    def reject(self):
+        self.status = 'rejected'
+        self.save()
+    
+    def set_subscription_limits(self):
+        if self.subscription_plan == 'free':
+            self.monthly_api_limit = 1000
+            self.monthly_token_limit = 50000
+        elif self.subscription_plan == 'pro':
+            self.monthly_api_limit = 10000
+            self.monthly_token_limit = 500000
+        elif self.subscription_plan == 'pro_plus':
+            self.monthly_api_limit = 0  # Unlimited
+            self.monthly_token_limit = 0  # Unlimited
+        self.save(update_fields=['monthly_api_limit', 'monthly_token_limit'])
+
+
+class ApiUsageLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_usage_logs')
+    endpoint = models.CharField(max_length=100)
+    method = models.CharField(max_length=10)
+    tokens_used = models.IntegerField(default=0)
+    response_time_ms = models.IntegerField(null=True, blank=True)
+    status_code = models.IntegerField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.endpoint} ({self.created_at})"
 
 
 class AIAssistant(models.Model):
@@ -207,6 +360,29 @@ def knowledge_base_post_delete(sender, instance, **kwargs):
                 print(f"Deleted uploaded file: {instance.file_path.path}")
         except Exception as e:
             print(f"Error deleting uploaded file: {e}")
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Create UserProfile when User is created"""
+    if created:
+        # Determine user type based on staff/superuser status
+        user_type = 'admin' if (instance.is_staff or instance.is_superuser) else 'user'
+        status = 'approved' if user_type == 'admin' else 'pending'
+        
+        UserProfile.objects.create(
+            user=instance,
+            user_type=user_type,
+            status=status
+        )
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Save UserProfile when User is saved"""
+    if not hasattr(instance, 'profile'):
+        UserProfile.objects.create(user=instance)
+    instance.profile.save()
 
 
 def _generate_embeddings_async(knowledge_base_id):

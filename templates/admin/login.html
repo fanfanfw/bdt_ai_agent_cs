@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - AI Agent CS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --admin-primary: #1f2937;
+            --admin-secondary: #374151;
+            --admin-accent: #3b82f6;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .admin-login-container {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .admin-login-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        
+        .admin-login-header {
+            background: linear-gradient(135deg, var(--admin-accent), #60a5fa);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .admin-login-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-login-header p {
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .admin-login-body {
+            padding: 2rem;
+        }
+        
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-group-text {
+            background: var(--admin-accent);
+            color: white;
+            border: none;
+            border-radius: 8px 0 0 8px;
+        }
+        
+        .btn-admin-primary {
+            background: var(--admin-accent);
+            border: none;
+            color: white;
+            padding: 0.75rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn-admin-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .back-to-site {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .back-to-site a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+        
+        .back-to-site a:hover {
+            opacity: 1;
+        }
+        
+        .security-notice {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <div class="admin-login-card">
+            <div class="admin-login-header">
+                <i class="fas fa-shield-alt fa-2x mb-3"></i>
+                <h1>Admin Panel</h1>
+                <p>AI Agent Customer Service</p>
+            </div>
+            
+            <div class="admin-login-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} mb-3" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <input type="text" class="form-control" name="username" 
+                               placeholder="Admin Username" required autofocus>
+                    </div>
+                    
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input type="password" class="form-control" name="password" 
+                               placeholder="Admin Password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login to Admin Panel
+                    </button>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Admin access only. Regular users cannot login here.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="back-to-site">
+            <a href="{% url 'home' %}">
+                <i class="fas fa-arrow-left me-2"></i>Back to Main Site
+            </a>
+        </div>
+        
+        <div class="security-notice">
+            <i class="fas fa-lock me-2"></i>
+            This is a secure admin area. All login attempts are logged.
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

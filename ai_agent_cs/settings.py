@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-n!xa&ia!v3t6*+h2k*!h$$a*p8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
 
 # Application definition
@@ -53,6 +53,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.admin_middleware.AdminUserSeparationMiddleware',
+    'core.middleware.SubscriptionEnforcementMiddleware',
+    'core.middleware.ApiUsageTrackingMiddleware',
+]
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'core.backends.ApprovalRequiredBackend',
+    # ModelBackend removed to prevent bypassing approval check
 ]
 
 ROOT_URLCONF = 'ai_agent_cs.urls'
@@ -67,6 +76,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.admin_context.admin_context',
             ],
         },
     },
