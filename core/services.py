@@ -781,7 +781,7 @@ class RealtimeVoiceService:
     def get_voice_for_language(self, language_hint="auto"):
         """Get appropriate voice based on language preference"""
         # Use selected language first
-        preferred_lang = getattr(self, 'selected_language', 'en')
+        preferred_lang = getattr(self, 'selected_language', 'auto')
         
         # Override with hint if provided and not auto
         if language_hint != "auto":
@@ -791,6 +791,7 @@ class RealtimeVoiceService:
         voice_mapping = {
             'ms': 'shimmer',  # Better for Malaysian/Malay pronunciation 
             'en': 'alloy',    # Good for English
+            'auto': 'alloy',  # Default to alloy for auto-detect
         }
         
         return voice_mapping.get(preferred_lang, 'alloy')
@@ -833,13 +834,26 @@ class RealtimeVoiceService:
             def on_open(ws):
                 print("✅ Connected to OpenAI Realtime API via WebSocket")
                 
-                # Get transcription language
-                transcription_lang = "ms" if getattr(self, 'selected_language', 'en') == 'ms' else "en"
-                voice_for_response = self.get_voice_for_language()
+                # Get transcription language - use null for auto-detect
+                transcription_lang = None  # Let Whisper auto-detect
+                if getattr(self, 'selected_language', 'auto') == 'en':
+                    transcription_lang = "en"
+                elif getattr(self, 'selected_language', 'auto') == 'ms':
+                    transcription_lang = "ms"
+                # For 'auto' or any other value, we leave it as None for auto-detection
                 
-                print(f"🌐 Session Language: {getattr(self, 'selected_language', 'en')}")
-                print(f"🎤 Transcription Language: {transcription_lang}")
+                voice_for_response = self.get_voice_for_language(getattr(self, 'selected_language', 'auto'))
+                
+                print(f"🌐 Session Language: {getattr(self, 'selected_language', 'auto')}")
+                print(f"🎤 Transcription Language: {transcription_lang or 'auto-detect'}")
                 print(f"🗣️ Voice Model: {voice_for_response}")
+                
+                # Build transcription config using OpenAI Realtime API transcription model
+                transcription_config = {
+                    "model": "gpt-4o-transcribe"  # Use Realtime API's transcription model, not external Whisper
+                }
+                if transcription_lang:
+                    transcription_config["language"] = transcription_lang
                 
                 # Send session configuration
                 session_update = {
@@ -849,10 +863,7 @@ class RealtimeVoiceService:
                         "voice": voice_for_response,
                         "input_audio_format": "pcm16",
                         "output_audio_format": "pcm16", 
-                        "input_audio_transcription": {
-                            "model": "whisper-1",
-                            "language": transcription_lang
-                        },
+                        "input_audio_transcription": transcription_config,
                         "turn_detection": {
                             "type": "server_vad",
                             "threshold": 0.5,
@@ -1179,7 +1190,7 @@ class RealtimeVoiceService:
     def get_realtime_instructions(self):
         """Get system instructions for realtime voice agent with embedded Q&A and Knowledge Base"""
         # Get language preference from selected language or assistant preference
-        preferred_lang = getattr(self, 'selected_language', getattr(self.assistant, 'preferred_language', 'en'))
+        preferred_lang = getattr(self, 'selected_language', getattr(self.assistant, 'preferred_language', 'auto'))
         
         # Get Q&As from database (same as test_chat)
         qnas = self.assistant.qnas.all()
@@ -1237,6 +1248,43 @@ CONTOH RESPONS BAHASA MALAYSIA:
 - "Adakah ada lagi yang saya boleh bantu?"
 
 Ingat: Anda sedang bercakap secara semula jadi, jadi bercakap seperti anda bercakap dengan seseorang yang berdiri di sebelah anda, dalam BAHASA MALAYSIA sahaja.
+"""
+        elif preferred_lang == 'auto':
+            return f"""You are a {self.assistant.business_type.name} customer service assistant with multi-language capabilities.
+
+PERSONALITY & VOICE:
+- Speak naturally and conversationally  
+- Detect the customer's language and respond in the SAME language they use
+- Use a warm, helpful tone with appropriate cultural context
+- Pace your speech naturally with brief pauses
+- Acknowledge customer emotions and respond empathetically
+- Be professional yet friendly in your communication style
+
+LANGUAGE GUIDELINES:
+- AUTO-DETECT the language the customer is speaking
+- If customer speaks English → Respond in ENGLISH
+- If customer speaks Bahasa Malaysia/Malay → Respond in BAHASA MALAYSIA
+- If mixed languages are used, use the primary language of the conversation
+- Adapt your cultural expressions to the detected language
+
+RESPONSE STRATEGY:
+1. FIRST: Detect the customer's language from their speech
+2. SECOND: Check if the question matches any of the Q&As below - these are high priority
+3. THIRD: Search through the Knowledge Base information for relevant details
+4. FOURTH: Use general knowledge but mention they should verify with the business
+5. Always respond in the SAME language as the customer
+
+CONVERSATION GUIDELINES:
+- Keep responses concise but complete (voice conversation)
+- Reference previous conversation naturally
+- Ask clarifying questions when needed in the customer's language
+- Acknowledge emotions and respond empathetically{qna_text}{knowledge_context}
+
+EXAMPLE RESPONSES:
+English: "Thank you for asking!", "How can I help you today?"
+Bahasa Malaysia: "Terima kasih kerana bertanya!", "Apa yang boleh saya bantu hari ini?"
+
+Remember: You're having a natural voice conversation, so speak as you would to a person standing next to you, matching their language preference.
 """
         else:  # English
             return f"""You are a {self.assistant.business_type.name} customer service assistant speaking in a conversational, natural voice.

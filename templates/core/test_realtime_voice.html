@@ -22,6 +22,7 @@
                             <div class="me-3">
                                 <label class="form-label text-white mb-0 me-2">Language:</label>
                                 <select id="language-selector" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                                    <option value="auto">Auto-detect</option>
                                     <option value="en">English</option>
                                     <option value="ms">Bahasa Malaysia</option>
                                 </select>
@@ -285,7 +286,7 @@ let isConnected = false;
 let isListening = false;
 let isInConversation = false; // New state for conversation mode
 let audioEl = null;
-let selectedLanguage = 'en'; // Default language
+let selectedLanguage = 'auto'; // Default to auto-detect
 
 // DOM elements
 const voiceBtn = document.getElementById('voice-btn');
@@ -339,7 +340,12 @@ function setupLanguageSelector() {
         
         languageSelector.addEventListener('change', function() {
             selectedLanguage = this.value;
-            const langName = selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia';
+            const langNames = {
+                'auto': 'Auto-detect',
+                'en': 'English',
+                'ms': 'Bahasa Malaysia'
+            };
+            const langName = langNames[selectedLanguage] || 'Auto-detect';
             updateDebugInfo(`🌐 Language switched to: ${langName}`);
             
             // Update UI text based on language
@@ -360,7 +366,7 @@ function setupLanguageSelector() {
             }
         });
         
-        updateDebugInfo(`🌐 Language initialized: ${selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia'}`);
+        updateDebugInfo(`🌐 Language initialized: ${selectedLanguage === 'en' ? 'English' : selectedLanguage === 'ms' ? 'Bahasa Malaysia' : 'Auto-detect'}`);
     }
 }
 
@@ -384,12 +390,21 @@ function updateUILanguage(lang) {
             stopConversation: 'Henti Perbualan',
             connected: 'Disambung - Audio TIDAK AKTIF',
             disconnected: 'Terputus dari pelayan'
+        },
+        'auto': {
+            listening: 'Listening...',
+            speaking: 'AI Speaking...',
+            ready: 'Click the button to start',
+            startConversation: 'Start Conversation',
+            stopConversation: 'Stop Conversation',
+            connected: 'Connected - Audio INACTIVE',
+            disconnected: 'Disconnected from server'
         }
     };
     
     // Update button text if not in conversation
     if (!isInConversation && voiceBtnText) {
-        voiceBtnText.textContent = texts[lang].startConversation;
+        voiceBtnText.textContent = texts[lang]?.startConversation || texts['auto'].startConversation;
     }
 }
 
