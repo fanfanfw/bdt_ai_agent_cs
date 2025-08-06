@@ -1,0 +1,338 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="h2 mb-0">
+        <i class="fas fa-users me-3"></i>User Management
+    </h1>
+    <p class="text-muted mt-2">Manage regular users, subscriptions, and approvals</p>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                                {% for choice in status_choices %}
+                                <option value="{{ choice.0 }}" {% if status_filter == choice.0 %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label">Subscription</label>
+                            <select name="subscription" class="form-select">
+                                <option value="all" {% if subscription_filter == 'all' %}selected{% endif %}>All Plans</option>
+                                {% for choice in subscription_choices %}
+                                <option value="{{ choice.0 }}" {% if subscription_filter == choice.0 %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Username, email, or name..." value="{{ search_query }}">
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-admin-primary d-block w-100">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Bulk Actions for Pending Users -->
+{% with pending_users=users|dictsort:"profile.status" %}
+{% if pending_users %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Bulk Actions for Pending Users
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" formaction="{% url 'admin_bulk_approve' %}" 
+                                    class="btn btn-success me-2" id="bulk-approve-btn" disabled>
+                                <i class="fas fa-check"></i> Approve Selected
+                            </button>
+                            <button type="submit" formaction="{% url 'admin_bulk_reject' %}" 
+                                    class="btn btn-danger" id="bulk-reject-btn" disabled>
+                                <i class="fas fa-times"></i> Reject Selected
+                            </button>
+                        </div>
+                        <div>
+                            <label class="form-check-label">
+                                <input type="checkbox" id="select-all-pending" class="form-check-input">
+                                Select All Pending
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- User List -->
+<div class="row">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="admin-card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Users (Regular Users Only)</h5>
+                <div>
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table admin-table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="50">
+                                        <input type="checkbox" id="select-all-table" class="form-check-input">
+                                    </th>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Subscription</th>
+                                    <th>Usage</th>
+                                    <th>Last Activity</th>
+                                    <th>Registered</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>
+                                        {% if user.profile.status == 'pending' %}
+                                        <input type="checkbox" name="user_ids" value="{{ user.id }}" 
+                                               class="form-check-input user-checkbox">
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ user.username }}</strong>
+                                            {% if user.first_name or user.last_name %}
+                                            <br><small class="text-muted">{{ user.first_name }} {{ user.last_name }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.profile.status == 'pending' %}
+                                            <span class="admin-badge pending">Pending</span>
+                                        {% elif user.profile.status == 'approved' %}
+                                            <span class="admin-badge approved">Approved</span>
+                                        {% elif user.profile.status == 'suspended' %}
+                                            <span class="admin-badge suspended">Suspended</span>
+                                        {% elif user.profile.status == 'rejected' %}
+                                            <span class="badge bg-secondary">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info text-capitalize">{{ user.profile.subscription_plan }}</span>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            API: {{ user.profile.current_month_api_requests }}/{{ user.profile.monthly_api_limit|default:"∞" }}<br>
+                                            Tokens: {{ user.profile.current_month_tokens|floatformat:0 }}/{{ user.profile.monthly_token_limit|default:"∞" }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if user.profile.last_activity %}
+                                            {{ user.profile.last_activity|timesince }} ago
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'admin_user_detail' user.id %}" 
+                                               class="btn btn-outline-primary btn-sm" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            {% if user.profile.status == 'pending' %}
+                                                <a href="{% url 'admin_approve_user' user.id %}" 
+                                                   class="btn btn-outline-success btn-sm" title="Approve">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                <a href="{% url 'admin_reject_user' user.id %}" 
+                                                   class="btn btn-outline-danger btn-sm" title="Reject">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            {% elif user.profile.status == 'approved' %}
+                                                <a href="{% url 'admin_suspend_user' user.id %}" 
+                                                   class="btn btn-outline-warning btn-sm" title="Suspend">
+                                                    <i class="fas fa-ban"></i>
+                                                </a>
+                                            {% elif user.profile.status == 'suspended' %}
+                                                <a href="{% url 'admin_reactivate_user' user.id %}" 
+                                                   class="btn btn-outline-success btn-sm" title="Reactivate">
+                                                    <i class="fas fa-undo"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">
+                                        No users found matching the current filters.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #5a6c7d;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.4rem;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
+    border: none;
+}
+
+.form-check-input:indeterminate {
+    background-color: #007bff;
+    border-color: #007bff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllPending = document.getElementById('select-all-pending');
+    const selectAllTable = document.getElementById('select-all-table');
+    const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    const bulkApproveBtn = document.getElementById('bulk-approve-btn');
+    const bulkRejectBtn = document.getElementById('bulk-reject-btn');
+
+    // Sync select all checkboxes
+    if (selectAllPending && selectAllTable) {
+        selectAllPending.addEventListener('change', function() {
+            selectAllTable.checked = this.checked;
+            toggleAllCheckboxes(this.checked);
+        });
+
+        selectAllTable.addEventListener('change', function() {
+            selectAllPending.checked = this.checked;
+            toggleAllCheckboxes(this.checked);
+        });
+    }
+
+    // Update bulk action button states
+    function updateBulkButtons() {
+        const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+        const hasSelection = checkedBoxes.length > 0;
+        
+        if (bulkApproveBtn) bulkApproveBtn.disabled = !hasSelection;
+        if (bulkRejectBtn) bulkRejectBtn.disabled = !hasSelection;
+    }
+
+    // Toggle all checkboxes
+    function toggleAllCheckboxes(checked) {
+        userCheckboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+        updateBulkButtons();
+    }
+
+    // Listen to individual checkbox changes
+    userCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateBulkButtons();
+            
+            // Update select all checkbox state
+            const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(userCheckboxes).some(cb => cb.checked);
+            
+            if (selectAllPending) {
+                selectAllPending.checked = allChecked;
+                selectAllPending.indeterminate = someChecked && !allChecked;
+            }
+            
+            if (selectAllTable) {
+                selectAllTable.checked = allChecked;
+                selectAllTable.indeterminate = someChecked && !allChecked;
+            }
+        });
+    });
+
+    // Confirm bulk actions
+    if (bulkApproveBtn) {
+        bulkApproveBtn.addEventListener('click', function(e) {
+            const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
+            if (!confirm(`Approve ${checkedCount} user(s)?`)) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    if (bulkRejectBtn) {
+        bulkRejectBtn.addEventListener('click', function(e) {
+            const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
+            if (!confirm(`Reject ${checkedCount} user(s)? This action cannot be undone.`)) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    // Initial state
+    updateBulkButtons();
+});
+</script>
+{% endblock %}

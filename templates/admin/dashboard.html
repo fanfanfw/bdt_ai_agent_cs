@@ -1,0 +1,248 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Dashboard - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="h2 mb-0">
+        <i class="fas fa-tachometer-alt me-3"></i>Admin Dashboard
+    </h1>
+    <p class="text-muted mt-2">System overview and user management</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_users }}</h3>
+                    <p class="mb-0 opacity-75">Total Users</p>
+                </div>
+                <div>
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ pending_users }}</h3>
+                    <p class="mb-0 opacity-75">Pending Approval</p>
+                </div>
+                <div>
+                    <i class="fas fa-clock fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ approved_users }}</h3>
+                    <p class="mb-0 opacity-75">Approved Users</p>
+                </div>
+                <div>
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ active_users_30d }}</h3>
+                    <p class="mb-0 opacity-75">Active (30d)</p>
+                </div>
+                <div>
+                    <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- API Usage Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">API Requests</h5>
+                    <p class="text-muted">Total: {{ total_api_requests }}</p>
+                    <p class="text-muted">Last 30 days: {{ api_requests_30d }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Usage</h5>
+                    <p class="text-muted">Tokens: {{ monthly_tokens|floatformat:0 }}</p>
+                    <p class="text-muted">Requests: {{ monthly_requests }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Suspended Users</h5>
+                    <p class="text-danger h4">{{ suspended_users }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Distribution -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Subscription Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% for stat in subscription_stats %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-capitalize">{{ stat.subscription_plan }}</span>
+                        <span class="badge bg-primary">{{ stat.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'admin_pending_approvals' %}" class="btn btn-warning w-100 mb-2">
+                        <i class="fas fa-clock"></i> Review Pending Users ({{ pending_users }})
+                    </a>
+                    <a href="{% url 'admin_user_management' %}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-users"></i> Manage All Users
+                    </a>
+                    <a href="{% url 'admin_user_management' %}?status=suspended" class="btn btn-danger w-100">
+                        <i class="fas fa-ban"></i> View Suspended Users
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Users -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Registrations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Status</th>
+                                    <th>Registered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in recent_users %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'admin_user_detail' user.id %}">{{ user.username }}</a>
+                                    </td>
+                                    <td>
+                                        {% if user.profile.status == 'pending' %}
+                                            <span class="badge badge-warning">Pending</span>
+                                        {% elif user.profile.status == 'approved' %}
+                                            <span class="badge badge-success">Approved</span>
+                                        {% elif user.profile.status == 'suspended' %}
+                                            <span class="badge badge-danger">Suspended</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ user.profile.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No recent registrations</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Users by API Usage</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Requests</th>
+                                    <th>Tokens</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for profile in top_users_by_requests %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'admin_user_detail' profile.user.id %}">{{ profile.user.username }}</a>
+                                    </td>
+                                    <td>{{ profile.api_requests_count }}</td>
+                                    <td>{{ profile.tokens_used|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No usage data yet</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
+    border: none;
+}
+
+.bg-primary { background-color: #4e73df !important; }
+.bg-success { background-color: #1cc88a !important; }
+.bg-info { background-color: #36b9cc !important; }
+.bg-warning { background-color: #f6c23e !important; }
+
+.fas {
+    opacity: 0.8;
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}

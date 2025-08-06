@@ -1,0 +1,332 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}User Details - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2 mb-0">
+                <i class="fas fa-user me-3"></i>{{ user.username }}
+            </h1>
+            <p class="text-muted mt-2">User details and analytics</p>
+        </div>
+        <a href="{% url 'admin_user_management' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Users
+        </a>
+    </div>
+</div>
+
+<!-- User Info Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h5 class="mb-0">User Information</h5>
+            </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td><strong>Username:</strong></td>
+                            <td>{{ user.username }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Name:</strong></td>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Registered:</strong></td>
+                            <td>{{ user.date_joined|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Last Login:</strong></td>
+                            <td>
+                                {% if user.last_login %}
+                                    {{ user.last_login|date:"M d, Y H:i" }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Last Activity:</strong></td>
+                            <td>
+                                {% if profile.last_activity %}
+                                    {{ profile.last_activity|date:"M d, Y H:i" }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Status & Subscription</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                {% if profile.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif profile.status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif profile.status == 'suspended' %}
+                                    <span class="badge bg-danger">Suspended</span>
+                                {% elif profile.status == 'rejected' %}
+                                    <span class="badge bg-secondary">Rejected</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Subscription:</strong></td>
+                            <td><span class="badge bg-info text-capitalize">{{ profile.subscription_plan }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>API Limit:</strong></td>
+                            <td>{{ profile.monthly_api_limit|default:"Unlimited" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Token Limit:</strong></td>
+                            <td>{{ profile.monthly_token_limit|default:"Unlimited" }}</td>
+                        </tr>
+                        {% if profile.approved_at %}
+                        <tr>
+                            <td><strong>Approved:</strong></td>
+                            <td>{{ profile.approved_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if profile.suspended_at %}
+                        <tr>
+                            <td><strong>Suspended:</strong></td>
+                            <td>{{ profile.suspended_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Usage Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <td><strong>Total API Requests:</strong></td>
+                            <td>{{ profile.api_requests_count }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Tokens:</strong></td>
+                            <td>{{ profile.tokens_used|floatformat:0 }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>This Month API:</strong></td>
+                            <td>{{ profile.current_month_api_requests }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>This Month Tokens:</strong></td>
+                            <td>{{ profile.current_month_tokens|floatformat:0 }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Chat Sessions:</strong></td>
+                            <td>{{ total_chat_sessions }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Messages:</strong></td>
+                            <td>{{ total_messages }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Knowledge Items:</strong></td>
+                            <td>{{ total_knowledge_items }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Status Actions</h6>
+                            {% if profile.status == 'pending' %}
+                                <a href="{% url 'admin_approve_user' user.id %}" class="btn btn-success me-2"
+                                   onclick="return confirm('Approve {{ user.username }}?')">
+                                    <i class="fas fa-check"></i> Approve User
+                                </a>
+                                <a href="{% url 'admin_reject_user' user.id %}" class="btn btn-danger"
+                                   onclick="return confirm('Reject {{ user.username }}?')">
+                                    <i class="fas fa-times"></i> Reject User
+                                </a>
+                            {% elif profile.status == 'approved' %}
+                                <a href="{% url 'admin_suspend_user' user.id %}" class="btn btn-warning"
+                                   onclick="return confirm('Suspend {{ user.username }}?')">
+                                    <i class="fas fa-ban"></i> Suspend User
+                                </a>
+                            {% elif profile.status == 'suspended' %}
+                                <a href="{% url 'admin_reactivate_user' user.id %}" class="btn btn-success"
+                                   onclick="return confirm('Reactivate {{ user.username }}?')">
+                                    <i class="fas fa-undo"></i> Reactivate User
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6>Subscription Management</h6>
+                            <form method="post" action="{% url 'admin_update_subscription' user.id %}" class="d-flex gap-2">
+                                {% csrf_token %}
+                                <select name="subscription_plan" class="form-select">
+                                    <option value="free" {% if profile.subscription_plan == 'free' %}selected{% endif %}>Free</option>
+                                    <option value="pro" {% if profile.subscription_plan == 'pro' %}selected{% endif %}>Pro</option>
+                                    <option value="pro_plus" {% if profile.subscription_plan == 'pro_plus' %}selected{% endif %}>Pro+</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Update subscription for {{ user.username }}?')">
+                                    <i class="fas fa-save"></i> Update
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Info -->
+    {% if assistant %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">AI Assistant</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Business Type:</strong> {{ assistant.business_type.name }}</p>
+                            <p><strong>Language:</strong> {{ assistant.get_preferred_language_display }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if assistant.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Created:</strong> {{ assistant.created_at|date:"M d, Y H:i" }}</p>
+                            <p><strong>Last Updated:</strong> {{ assistant.updated_at|date:"M d, Y H:i" }}</p>
+                            <p><strong>OpenAI ID:</strong> {{ assistant.openai_assistant_id|default:"Not set" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent API Usage -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent API Usage</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_api_usage %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Endpoint</th>
+                                    <th>Method</th>
+                                    <th>Tokens</th>
+                                    <th>Status</th>
+                                    <th>Response Time</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_api_usage %}
+                                <tr>
+                                    <td><code>{{ log.endpoint }}</code></td>
+                                    <td><span class="badge bg-info">{{ log.method }}</span></td>
+                                    <td>{{ log.tokens_used }}</td>
+                                    <td>
+                                        {% if log.status_code %}
+                                            {% if log.status_code < 300 %}
+                                                <span class="badge bg-success">{{ log.status_code }}</span>
+                                            {% elif log.status_code < 400 %}
+                                                <span class="badge bg-warning">{{ log.status_code }}</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">{{ log.status_code }}</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.response_time_ms %}
+                                            {{ log.response_time_ms }}ms
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.created_at|date:"M d H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No API usage recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
+    border: none;
+}
+
+.table-borderless td {
+    padding: 0.5rem 0.75rem;
+    border: none;
+}
+
+.table-sm th, .table-sm td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %}
