@@ -3,6 +3,46 @@ from django.contrib import messages
 from django.urls import reverse
 
 
+class AdminRedirectMiddleware:
+    """
+    Middleware untuk mengarahkan /admin/ ke dashboard admin kustom
+    dan menghilangkan akses ke Django admin bawaan
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Jika user mengakses /admin/ atau /admin (tanpa trailing slash)
+        if request.path == '/admin/' or request.path == '/admin':
+            if request.user.is_authenticated:
+                # Cek apakah user adalah admin
+                if request.user.is_staff or request.user.is_superuser:
+                    # Redirect ke dashboard admin kustom
+                    return redirect('admin_dashboard')
+                else:
+                    # User biasa, redirect ke dashboard user
+                    messages.info(request, 'You do not have admin privileges. Redirected to user dashboard.')
+                    return redirect('dashboard')
+            else:
+                # User belum login, redirect ke halaman login
+                messages.info(request, 'Please login to access the system.')
+                return redirect('login')
+        
+        # Blokir semua akses ke Django admin lainnya
+        if request.path.startswith('/admin/') and request.path != '/admin/':
+            # Jika ada path seperti /admin/login/, /admin/logout/, dll
+            if request.user.is_authenticated:
+                if request.user.is_staff or request.user.is_superuser:
+                    return redirect('admin_dashboard')
+                else:
+                    return redirect('dashboard')
+            else:
+                return redirect('login')
+        
+        return self.get_response(request)
+
+
 class AdminUserSeparationMiddleware:
     """
     Middleware to enforce separation between admin and user interfaces

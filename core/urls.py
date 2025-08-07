@@ -21,6 +21,9 @@ urlpatterns = [
     path('edit-business-type/', views.edit_business_type_view, name='edit_business_type'),
     path('widget-generator/', views.widget_generator_view, name='widget_generator'),
     
+    # Custom admin route - akan ditangani oleh middleware
+    path('admin/', views.admin_redirect_view, name='admin_redirect'),
+    
     # Language switching
     path('api/switch-language/', switch_language, name='switch_language'),
     path('api/current-language/', get_current_language, name='get_current_language'),

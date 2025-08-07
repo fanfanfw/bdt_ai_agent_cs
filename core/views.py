@@ -26,6 +26,25 @@ def home(request):
     return render(request, 'core/home.html')
 
 
+def admin_redirect_view(request):
+    """
+    View untuk menangani redirect dari /admin/ ke dashboard yang sesuai
+    """
+    if request.user.is_authenticated:
+        # Cek apakah user adalah admin
+        if request.user.is_staff or request.user.is_superuser:
+            # Redirect ke dashboard admin kustom
+            return redirect('admin_dashboard')
+        else:
+            # User biasa, redirect ke dashboard user
+            messages.info(request, 'You do not have admin privileges. Redirected to user dashboard.')
+            return redirect('dashboard')
+    else:
+        # User belum login, redirect ke halaman login
+        messages.info(request, 'Please login to access the system.')
+        return redirect('login')
+
+
 def custom_login_view(request):
     """
     Custom login view that shows approval messages for pending users
