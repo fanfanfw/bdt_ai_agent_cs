@@ -7,7 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 
-from .models import UserProfile, AIAssistant, ApiUsageLog, ChatSession, ChatMessage, KnowledgeBase
+from .models import UserProfile, AIAssistant, ApiUsageLog, ChatSession, ChatMessage, KnowledgeBase, SubscriptionPlan
 from .admin_auth import admin_required
 from .user_utils import RegularUserQuerySet
 
@@ -150,6 +150,9 @@ def user_detail(request, user_id):
     
     daily_usage.reverse()  # Show oldest to newest
     
+    # Get available subscription plans for dropdown
+    available_plans = SubscriptionPlan.objects.filter(is_active=True).order_by('order')
+    
     context = {
         'user': user,
         'profile': profile,
@@ -159,6 +162,7 @@ def user_detail(request, user_id):
         'total_knowledge_items': total_knowledge_items,
         'recent_api_usage': recent_api_usage,
         'daily_usage_json': json.dumps(daily_usage),
+        'available_plans': available_plans,
     }
     
     return render(request, 'admin/user_detail.html', context)
@@ -232,14 +236,36 @@ def update_subscription(request, user_id):
     
     if request.method == 'POST':
         new_plan = request.POST.get('subscription_plan')
-        if new_plan in [choice[0] for choice in UserProfile.SUBSCRIPTION_CHOICES]:
-            old_plan = profile.subscription_plan
-            profile.subscription_plan = new_plan
-            profile.set_subscription_limits()  # This will save the profile
-            
-            messages.success(request, f'User {user.username} subscription updated from {old_plan} to {new_plan}.')
-        else:
-            messages.error(request, 'Invalid subscription plan.')
+        
+        # Validate plan exists in SubscriptionPlan model
+        try:
+            plan_obj = SubscriptionPlan.objects.get(name=new_plan, is_active=True)
+        except SubscriptionPlan.DoesNotExist:
+            messages.error(request, f'Invalid or inactive subscription plan: {new_plan}')
+            return redirect('admin_user_detail', user_id=user_id)
+        
+        old_plan = profile.subscription_plan
+        
+        # Update subscription plan
+        profile.subscription_plan = new_plan
+        
+        # Apply subscription limits and save
+        profile.set_subscription_limits()
+        profile.save()  # Save changes to database
+        
+        # Force refresh from database to ensure we have the saved data
+        profile.refresh_from_db()
+        
+        # Log the change for audit
+        print(f"[ADMIN] User {user.username} subscription updated: {old_plan} -> {new_plan}")
+        print(f"[ADMIN] Current plan in DB: {profile.subscription_plan}")
+        print(f"[ADMIN] New limits - API: {profile.monthly_api_limit}, Tokens: {profile.monthly_token_limit}")
+        
+        messages.success(
+            request, 
+            f'User {user.username} subscription updated from {old_plan} to {new_plan}. '
+            f'New limits: {profile.monthly_api_limit:,} API requests, {profile.monthly_token_limit:,} tokens per month.'
+        )
     
     return redirect('admin_user_detail', user_id=user_id)
 
@@ -356,3 +382,207 @@ def bulk_reject_users(request):
             messages.warning(request, 'No users selected.')
     
     return redirect('admin_pending_approvals')
+
+
+# Subscription Plan Management Views
+
+@admin_required
+def subscription_plans(request):
+    """List all subscription plans"""
+    plans = SubscriptionPlan.objects.all().order_by('order')
+    return render(request, 'admin/subscription_plans.html', {
+        'plans': plans
+    })
+
+
+@admin_required
+def create_plan(request):
+    """Create a new subscription plan"""
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name', '').strip()
+            description = request.POST.get('description', '').strip()
+            price = float(request.POST.get('price', 0))
+            monthly_api_limit = int(request.POST.get('monthly_api_limit', 0))
+            monthly_token_limit = int(request.POST.get('monthly_token_limit', 0))
+            max_assistants = int(request.POST.get('max_assistants', 1))
+            max_knowledge_bases = int(request.POST.get('max_knowledge_bases', 1))
+            order = int(request.POST.get('order', 0))
+            is_active = request.POST.get('is_active') == 'on'
+            
+            # Parse features from JSON or text
+            features_text = request.POST.get('features', '[]')
+            try:
+                if features_text.startswith('['):
+                    features = json.loads(features_text)
+                else:
+                    # Convert text lines to JSON array
+                    features = [line.strip() for line in features_text.split('\n') if line.strip()]
+            except json.JSONDecodeError:
+                features = []
+            
+            # Validate required fields
+            if not name:
+                messages.error(request, 'Plan name is required.')
+                return render(request, 'admin/create_plan.html')
+            
+            # Create plan
+            plan = SubscriptionPlan.objects.create(
+                name=name,
+                description=description,
+                price=price,
+                monthly_api_limit=monthly_api_limit,
+                monthly_token_limit=monthly_token_limit,
+                max_assistants=max_assistants,
+                max_knowledge_bases=max_knowledge_bases,
+                features=features,
+                order=order,
+                is_active=is_active
+            )
+            
+            messages.success(request, f'Subscription plan "{plan.name}" created successfully.')
+            return redirect('subscription_plans')
+            
+        except ValueError as e:
+            messages.error(request, f'Invalid input: {str(e)}')
+        except Exception as e:
+            messages.error(request, f'Error creating plan: {str(e)}')
+    
+    return render(request, 'admin/create_plan.html')
+
+
+@admin_required
+def edit_plan(request, plan_id):
+    """Edit an existing subscription plan"""
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    
+    if request.method == 'POST':
+        try:
+            plan.name = request.POST.get('name', '').strip()
+            plan.description = request.POST.get('description', '').strip()
+            plan.price = float(request.POST.get('price', 0))
+            plan.monthly_api_limit = int(request.POST.get('monthly_api_limit', 0))
+            plan.monthly_token_limit = int(request.POST.get('monthly_token_limit', 0))
+            plan.max_assistants = int(request.POST.get('max_assistants', 1))
+            plan.max_knowledge_bases = int(request.POST.get('max_knowledge_bases', 1))
+            plan.order = int(request.POST.get('order', 0))
+            plan.is_active = request.POST.get('is_active') == 'on'
+            
+            # Parse features
+            features_text = request.POST.get('features', '[]')
+            try:
+                if features_text.startswith('['):
+                    plan.features = json.loads(features_text)
+                else:
+                    plan.features = [line.strip() for line in features_text.split('\n') if line.strip()]
+            except json.JSONDecodeError:
+                plan.features = []
+            
+            # Validate required fields
+            if not plan.name:
+                messages.error(request, 'Plan name is required.')
+                return render(request, 'admin/edit_plan.html', {'plan': plan})
+            
+            plan.save()
+            messages.success(request, f'Subscription plan "{plan.name}" updated successfully.')
+            return redirect('subscription_plans')
+            
+        except ValueError as e:
+            messages.error(request, f'Invalid input: {str(e)}')
+        except Exception as e:
+            messages.error(request, f'Error updating plan: {str(e)}')
+    
+    # Convert features list to text for editing
+    features_text = '\n'.join(plan.features) if plan.features else ''
+    
+    return render(request, 'admin/edit_plan.html', {
+        'plan': plan,
+        'features_text': features_text
+    })
+
+
+@admin_required
+def delete_plan(request, plan_id):
+    """Delete a subscription plan"""
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    
+    if request.method == 'POST':
+        # Check if any regular users are using this plan (exclude admins)
+        users_count = UserProfile.objects.filter(
+            subscription_plan=plan.name,
+            user_type='user'  # Only count regular users
+        ).count()
+        
+        if users_count > 0:
+            messages.error(request, f'Cannot delete plan "{plan.name}". It is currently used by {users_count} user(s).')
+        else:
+            plan_name = plan.name
+            plan.delete()
+            messages.success(request, f'Subscription plan "{plan_name}" deleted successfully.')
+        
+        return redirect('subscription_plans')
+    
+    # Count regular users using this plan (exclude admins)
+    users_count = UserProfile.objects.filter(
+        subscription_plan=plan.name,
+        user_type='user'  # Only count regular users
+    ).count()
+    
+    return render(request, 'admin/confirm_delete_plan.html', {
+        'plan': plan,
+        'users_count': users_count
+    })
+
+
+@admin_required
+def toggle_plan_status(request, plan_id):
+    """Toggle plan active status via AJAX"""
+    if request.method == 'POST':
+        plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+        plan.is_active = not plan.is_active
+        plan.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_active': plan.is_active,
+            'message': f'Plan "{plan.name}" {"activated" if plan.is_active else "deactivated"}.'
+        })
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request.'})
+
+
+@admin_required
+def plan_usage_stats(request, plan_id):
+    """Show usage statistics for a specific plan"""
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    
+    # Get regular users on this plan (exclude admins)
+    users_on_plan = UserProfile.objects.filter(
+        subscription_plan=plan.name,
+        user_type='user'  # Only regular users
+    )
+    total_users = users_on_plan.count()
+    
+    # Usage statistics
+    total_api_requests = sum(user.current_month_api_requests for user in users_on_plan)
+    total_tokens = sum(user.current_month_tokens for user in users_on_plan)
+    
+    # Average usage per user
+    avg_api_requests = total_api_requests / total_users if total_users > 0 else 0
+    avg_tokens = total_tokens / total_users if total_users > 0 else 0
+    
+    # Usage percentages
+    api_usage_percent = (total_api_requests / (plan.monthly_api_limit * total_users) * 100) if total_users > 0 and plan.monthly_api_limit > 0 else 0
+    token_usage_percent = (total_tokens / (plan.monthly_token_limit * total_users) * 100) if total_users > 0 and plan.monthly_token_limit > 0 else 0
+    
+    return render(request, 'admin/plan_usage_stats.html', {
+        'plan': plan,
+        'total_users': total_users,
+        'total_api_requests': total_api_requests,
+        'total_tokens': total_tokens,
+        'avg_api_requests': avg_api_requests,
+        'avg_tokens': avg_tokens,
+        'api_usage_percent': api_usage_percent,
+        'token_usage_percent': token_usage_percent,
+        'users_on_plan': users_on_plan[:10]  # Show first 10 users
+    })

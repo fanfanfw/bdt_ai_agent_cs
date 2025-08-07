@@ -159,6 +159,9 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-info text-capitalize">{{ user.profile.subscription_plan }}</span>
+                                        {% if not user.profile.validate_subscription_consistency %}
+                                            <br><small class="text-danger">⚠️ Inconsistent limits</small>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <small>

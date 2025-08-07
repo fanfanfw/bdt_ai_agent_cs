@@ -53,9 +53,9 @@ class UserProfile(models.Model):
     chat_messages_count = models.IntegerField(default=0)
     voice_messages_count = models.IntegerField(default=0)
     
-    # Monthly limits (0 means unlimited)
-    monthly_api_limit = models.IntegerField(default=1000)  # Free: 1000, Pro: 10000, Pro+: 0
-    monthly_token_limit = models.IntegerField(default=50000)  # Free: 50k, Pro: 500k, Pro+: 0
+    # Monthly limits (0 means unlimited) - will be set from SubscriptionPlan
+    monthly_api_limit = models.IntegerField(default=1000)
+    monthly_token_limit = models.IntegerField(default=50000)
     
     # Monthly usage reset
     current_month_api_requests = models.IntegerField(default=0)
@@ -68,6 +68,30 @@ class UserProfile(models.Model):
     last_activity = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Set default subscription plan for new regular users only (not admins)
+        if not self.pk and self.subscription_plan == 'free' and self.user_type == 'user':
+            try:
+                # Try to get default plan from SubscriptionPlan model
+                default_plan = SubscriptionPlan.objects.filter(is_default=True, is_active=True).first()
+                if default_plan:
+                    self.subscription_plan = default_plan.name
+                else:
+                    # Fallback to any active plan named 'free'
+                    free_plan = SubscriptionPlan.objects.filter(name='free', is_active=True).first()
+                    if free_plan:
+                        self.subscription_plan = 'free'
+            except:
+                # If SubscriptionPlan table doesn't exist yet (during migration), use default
+                pass
+        
+        super().save(*args, **kwargs)
+        
+        # Update limits after saving if needed
+        if hasattr(self, '_update_limits_after_save'):
+            self.sync_limits_with_plan(save=False)
+            super().save(update_fields=['monthly_api_limit', 'monthly_token_limit'])
 
     def __str__(self):
         return f"{self.user.username} - {self.user_type} - {self.subscription_plan} ({self.status})"
@@ -87,16 +111,26 @@ class UserProfile(models.Model):
     def can_make_api_request(self):
         if self.status != 'approved':
             return False
-        if self.monthly_api_limit == 0:  # Unlimited
+        
+        # Get current limits from subscription plan
+        current_limits = self.get_current_limits()
+        monthly_api_limit = current_limits['monthly_api_limit']
+        
+        if monthly_api_limit == 0:  # Unlimited
             return True
-        return self.current_month_api_requests < self.monthly_api_limit
+        return self.current_month_api_requests < monthly_api_limit
     
     def can_use_tokens(self, token_count):
         if self.status != 'approved':
             return False
-        if self.monthly_token_limit == 0:  # Unlimited
+        
+        # Get current limits from subscription plan
+        current_limits = self.get_current_limits()
+        monthly_token_limit = current_limits['monthly_token_limit']
+        
+        if monthly_token_limit == 0:  # Unlimited
             return True
-        return (self.current_month_tokens + token_count) <= self.monthly_token_limit
+        return (self.current_month_tokens + token_count) <= monthly_token_limit
     
     def update_activity(self):
         self.last_activity = timezone.now()
@@ -135,16 +169,202 @@ class UserProfile(models.Model):
         self.save()
     
     def set_subscription_limits(self):
-        if self.subscription_plan == 'free':
-            self.monthly_api_limit = 1000
-            self.monthly_token_limit = 50000
-        elif self.subscription_plan == 'pro':
-            self.monthly_api_limit = 10000
-            self.monthly_token_limit = 500000
-        elif self.subscription_plan == 'pro_plus':
-            self.monthly_api_limit = 0  # Unlimited
-            self.monthly_token_limit = 0  # Unlimited
+        """Set monthly limits based on subscription plan using SubscriptionPlan model"""
+        try:
+            # Try to get plan from SubscriptionPlan model
+            plan = SubscriptionPlan.objects.get(name=self.subscription_plan, is_active=True)
+            self.monthly_api_limit = plan.monthly_api_limit
+            self.monthly_token_limit = plan.monthly_token_limit
+        except SubscriptionPlan.DoesNotExist:
+            # Fallback to hardcoded values for backward compatibility
+            if self.subscription_plan == 'free':
+                self.monthly_api_limit = 1000
+                self.monthly_token_limit = 50000
+            elif self.subscription_plan == 'pro':
+                self.monthly_api_limit = 10000
+                self.monthly_token_limit = 500000
+            elif self.subscription_plan == 'pro_plus':
+                self.monthly_api_limit = 0  # Unlimited
+                self.monthly_token_limit = 0  # Unlimited
+            else:
+                # Default to free plan if unknown subscription
+                self.subscription_plan = 'free'
+                self.monthly_api_limit = 1000
+                self.monthly_token_limit = 50000
+    
+    def get_current_limits(self):
+        """Get current limits from SubscriptionPlan model (real-time)"""
+        try:
+            plan = SubscriptionPlan.objects.get(name=self.subscription_plan, is_active=True)
+            return {
+                'monthly_api_limit': plan.monthly_api_limit,
+                'monthly_token_limit': plan.monthly_token_limit,
+                'max_assistants': plan.max_assistants,
+                'max_knowledge_bases': plan.max_knowledge_bases,
+                'features': plan.features
+            }
+        except SubscriptionPlan.DoesNotExist:
+            # Fallback to current saved limits
+            return {
+                'monthly_api_limit': self.monthly_api_limit,
+                'monthly_token_limit': self.monthly_token_limit,
+                'max_assistants': 1,
+                'max_knowledge_bases': 1,
+                'features': []
+            }
+    
+    def sync_with_subscription_plan(self):
+        """Synchronize user limits with current subscription plan settings"""
+        current_limits = self.get_current_limits()
+        self.monthly_api_limit = current_limits['monthly_api_limit']
+        self.monthly_token_limit = current_limits['monthly_token_limit']
         self.save(update_fields=['monthly_api_limit', 'monthly_token_limit'])
+        
+        self.save(update_fields=['subscription_plan', 'monthly_api_limit', 'monthly_token_limit'])
+    
+    def validate_subscription_consistency(self):
+        """Validate that subscription plan matches the limits"""
+        try:
+            # Check against SubscriptionPlan model
+            plan = SubscriptionPlan.objects.get(name=self.subscription_plan, is_active=True)
+            expected_api = plan.monthly_api_limit
+            expected_token = plan.monthly_token_limit
+        except SubscriptionPlan.DoesNotExist:
+            # Fallback to hardcoded values
+            expected_limits = {
+                'free': (1000, 50000),
+                'pro': (10000, 500000),
+                'pro_plus': (0, 0)
+            }
+            
+            if self.subscription_plan in expected_limits:
+                expected_api, expected_token = expected_limits[self.subscription_plan]
+            else:
+                return False
+        
+        return (self.monthly_api_limit == expected_api and 
+                self.monthly_token_limit == expected_token)
+    
+    def get_subscription_plan_object(self):
+        """Get the SubscriptionPlan object for this user"""
+        try:
+            return SubscriptionPlan.objects.get(name=self.subscription_plan, is_active=True)
+        except SubscriptionPlan.DoesNotExist:
+            return None
+    
+    def fix_subscription_consistency(self):
+        """Fix subscription consistency if needed"""
+        if not self.validate_subscription_consistency():
+            print(f"[WARNING] Fixing inconsistent subscription for user {self.user.username}")
+            self.set_subscription_limits()
+            return True
+        return False
+
+
+class SubscriptionPlan(models.Model):
+    """Model to manage subscription plans dynamically"""
+    name = models.CharField(max_length=50, unique=True, help_text="Plan name (e.g., 'free', 'pro', 'enterprise')")
+    description = models.TextField(blank=True, help_text="Plan description")
+    
+    # Limits
+    monthly_api_limit = models.IntegerField(
+        default=1000, 
+        help_text="Monthly API request limit (0 = unlimited)"
+    )
+    monthly_token_limit = models.IntegerField(
+        default=50000,
+        help_text="Monthly token limit (0 = unlimited)"
+    )
+    max_assistants = models.IntegerField(default=1, help_text="Maximum AI assistants allowed")
+    max_knowledge_bases = models.IntegerField(default=1, help_text="Maximum knowledge bases allowed")
+    
+    # Pricing
+    price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="Monthly price in USD"
+    )
+    
+    # Features
+    features = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of plan features"
+    )
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(default=False, help_text="Default plan for new users")
+    
+    # Order for display
+    order = models.IntegerField(default=0, help_text="Order for displaying plans")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name = "Subscription Plan"
+        verbose_name_plural = "Subscription Plans"
+    
+    def __str__(self):
+        return f"{self.name} (${self.price}/month)"
+    
+    @property
+    def user_count(self):
+        """Return number of regular users currently on this plan (exclude admins)"""
+        return UserProfile.objects.filter(
+            subscription_plan=self.name,
+            user_type='user'  # Only count regular users, not admins
+        ).count()
+    
+    def get_limits(self):
+        """Return plan limits as dictionary"""
+        return {
+            'monthly_api_limit': self.monthly_api_limit,
+            'monthly_token_limit': self.monthly_token_limit,
+            'max_assistants': self.max_assistants,
+            'max_knowledge_bases': self.max_knowledge_bases,
+        }
+    
+    @classmethod
+    def get_plan_limits(cls, plan_name):
+        """Get limits for a specific plan"""
+        try:
+            plan = cls.objects.get(name=plan_name, is_active=True)
+            return plan.get_limits()
+        except cls.DoesNotExist:
+            # Fallback to default limits if plan not found
+            return {
+                'monthly_api_limit': 1000,
+                'monthly_token_limit': 50000,
+                'max_assistants': 1,
+                'max_knowledge_bases': 1,
+            }
+    
+    def save(self, *args, **kwargs):
+        # Ensure only one default plan
+        if self.is_default:
+            SubscriptionPlan.objects.filter(is_default=True).update(is_default=False)
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def get_default_plan(cls):
+        """Get the default plan for new users"""
+        return cls.objects.filter(is_default=True, is_active=True).first()
+    
+    @classmethod
+    def get_active_plans(cls):
+        """Get all active plans"""
+        return cls.objects.filter(is_active=True).order_by('sort_order', 'price')
+    
+    def get_limits_display(self):
+        """Get human-readable limits"""
+        api_limit = "Unlimited" if self.monthly_api_limit == 0 else f"{self.monthly_api_limit:,}"
+        token_limit = "Unlimited" if self.monthly_token_limit == 0 else f"{self.monthly_token_limit:,}"
+        return f"{api_limit} API calls, {token_limit} tokens"
 
 
 class ApiUsageLog(models.Model):
@@ -383,6 +603,24 @@ def save_user_profile(sender, instance, **kwargs):
     if not hasattr(instance, 'profile'):
         UserProfile.objects.create(user=instance)
     instance.profile.save()
+
+
+@receiver(post_save, sender='core.SubscriptionPlan')
+def update_user_limits_on_plan_change(sender, instance, **kwargs):
+    """Update user limits when subscription plan is modified"""
+    from django.db import transaction
+    
+    # Update all users who have this subscription plan
+    users_to_update = UserProfile.objects.filter(subscription_plan=instance.name)
+    
+    if users_to_update.exists():
+        with transaction.atomic():
+            for user_profile in users_to_update:
+                user_profile.monthly_api_limit = instance.monthly_api_limit
+                user_profile.monthly_token_limit = instance.monthly_token_limit
+                user_profile.save(update_fields=['monthly_api_limit', 'monthly_token_limit'])
+        
+        print(f"Updated limits for {users_to_update.count()} users on plan '{instance.name}'")
 
 
 def _generate_embeddings_async(knowledge_base_id):

@@ -710,6 +710,23 @@ class ChatService:
                 max_tokens=500
             )
             
+            # Track token usage
+            tokens_used = response.usage.total_tokens if hasattr(response, 'usage') and response.usage else 0
+            if tokens_used > 0:
+                # Update user profile with token usage
+                profile = self.assistant.user.profile
+                profile.record_api_usage(token_count=tokens_used)
+                
+                # Log detailed API usage
+                from .models import ApiUsageLog
+                ApiUsageLog.objects.create(
+                    user=self.assistant.user,
+                    endpoint='/api/chat/',
+                    method='POST',
+                    tokens_used=tokens_used,
+                    status_code=200
+                )
+            
             return response.choices[0].message.content
         except Exception as e:
             print(f"Error generating AI response: {e}")

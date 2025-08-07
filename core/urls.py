@@ -32,4 +32,7 @@ urlpatterns = [
     path('api/widget/chat/', widget_chat_api, name='widget_chat_api'),
     path('api/widget/voice/', widget_voice_api, name='widget_voice_api'),
     path('api/widget/status/', widget_status_api, name='widget_status_api'),
+    
+    # Usage Statistics API
+    path('api/usage-stats/', views.usage_stats_api, name='usage_stats_api'),
 ] + admin_urlpatterns

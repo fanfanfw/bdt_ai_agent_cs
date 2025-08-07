@@ -27,4 +27,12 @@ admin_urlpatterns = [
     
     # Analytics API
     path('admin-panel/api/analytics/', admin_views.analytics_api, name='admin_analytics_api'),
+    
+    # Subscription Plan Management
+    path('admin-panel/plans/', admin_views.subscription_plans, name='subscription_plans'),
+    path('admin-panel/plans/create/', admin_views.create_plan, name='create_plan'),
+    path('admin-panel/plans/<int:plan_id>/edit/', admin_views.edit_plan, name='edit_plan'),
+    path('admin-panel/plans/<int:plan_id>/delete/', admin_views.delete_plan, name='delete_plan'),
+    path('admin-panel/plans/<int:plan_id>/toggle/', admin_views.toggle_plan_status, name='toggle_plan_status'),
+    path('admin-panel/plans/<int:plan_id>/stats/', admin_views.plan_usage_stats, name='plan_usage_stats'),
 ]

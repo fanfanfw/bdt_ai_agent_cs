@@ -56,7 +56,7 @@ class ApiUsageTrackingMiddleware:
 
 class SubscriptionEnforcementMiddleware:
     """
-    Middleware to enforce subscription limits
+    Middleware to enforce subscription limits and auto-fix consistency
     """
     
     def __init__(self, get_response):
@@ -75,6 +75,10 @@ class SubscriptionEnforcementMiddleware:
             any(request.path.startswith(endpoint) for endpoint in self.tracked_endpoints)):
             
             profile = request.user.profile
+            
+            # Auto-fix subscription consistency if needed
+            if not profile.validate_subscription_consistency():
+                profile.fix_subscription_consistency()
             
             # Check if user can make API requests
             if not profile.can_make_api_request():

@@ -84,6 +84,163 @@
         </div>
     </div>
     
+    <!-- Usage Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Monthly Usage Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted">Subscription Plan</h6>
+                            <span class="badge bg-{% if profile.subscription_plan == 'free' %}secondary{% elif profile.subscription_plan == 'pro' %}primary{% else %}success{% endif %} fs-6 text-capitalize">
+                                {{ profile.subscription_plan }}{% if profile.subscription_plan == 'pro_plus' %} (Unlimited){% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- API Requests Usage -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">API Requests</h6>
+                            <span class="text-muted api-limit-text">
+                                {{ profile.current_month_api_requests }}{% if current_limits.monthly_api_limit > 0 %}/{{ current_limits.monthly_api_limit }}{% else %} (Unlimited){% endif %}
+                            </span>
+                        </div>
+                        {% if current_limits.monthly_api_limit > 0 %}
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar api-usage-progress {% if api_usage_percentage > 90 %}bg-danger{% elif api_usage_percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ api_usage_percentage|floatformat:1 }}%"
+                                 aria-valuenow="{{ api_usage_percentage|floatformat:1 }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                        <small class="text-muted api-usage-text">{{ api_usage_percentage|floatformat:1 }}% used</small>
+                        {% else %}
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar api-usage-progress bg-success" role="progressbar" style="width: 100%"></div>
+                        </div>
+                        <small class="text-muted api-usage-text">Unlimited plan</small>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Token Usage -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Token Usage</h6>
+                            <span class="text-muted token-limit-text">
+                                {{ profile.current_month_tokens|floatformat:0 }}{% if current_limits.monthly_token_limit > 0 %}/{{ current_limits.monthly_token_limit|floatformat:0 }}{% else %} (Unlimited){% endif %}
+                            </span>
+                        </div>
+                        {% if current_limits.monthly_token_limit > 0 %}
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar token-usage-progress {% if token_usage_percentage > 90 %}bg-danger{% elif token_usage_percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ token_usage_percentage|floatformat:1 }}%"
+                                 aria-valuenow="{{ token_usage_percentage|floatformat:1 }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                        <small class="text-muted token-usage-text">{{ token_usage_percentage|floatformat:1 }}% used</small>
+                        {% else %}
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar token-usage-progress bg-success" role="progressbar" style="width: 100%"></div>
+                        </div>
+                        <small class="text-muted token-usage-text">Unlimited plan</small>
+                        {% endif %}
+                    </div>
+                    
+                    {% if api_usage_percentage > 90 or token_usage_percentage > 90 %}
+                    <div class="alert alert-warning alert-sm mb-2" id="usage-alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Usage Alert:</strong> You're approaching your monthly limit. Consider upgrading your plan.
+                    </div>
+                    {% elif api_usage_percentage > 75 or token_usage_percentage > 75 %}
+                    <div class="alert alert-info alert-sm mb-2" id="usage-alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Usage Notice:</strong> You've used over 75% of your monthly limit.
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Total Requests</small>
+                            <strong class="total-requests">{{ profile.api_requests_count }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Total Tokens</small>
+                            <strong class="total-tokens">{{ profile.tokens_used|floatformat:0 }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Subscription Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="subscription-info">
+                        <h6 class="mb-3">Current Plan: <span class="text-capitalize">{{ profile.subscription_plan }}</span></h6>
+                        
+                        <div class="plan-limits mb-3">
+                            {% if current_limits.monthly_api_limit > 0 %}
+                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.monthly_api_limit|floatformat:0 }} API requests/month</p>
+                            {% else %}
+                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>Unlimited API requests</p>
+                            {% endif %}
+                            
+                            {% if current_limits.monthly_token_limit > 0 %}
+                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.monthly_token_limit|floatformat:0 }} tokens/month</p>
+                            {% else %}
+                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>Unlimited tokens</p>
+                            {% endif %}
+                            
+                            <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.max_assistants }} AI Assistant{{ current_limits.max_assistants|pluralize }}</p>
+                            <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.max_knowledge_bases }} Knowledge Base{{ current_limits.max_knowledge_bases|pluralize }}</p>
+                            
+                            {% if current_limits.features %}
+                                {% for feature in current_limits.features %}
+                                    <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ feature }}</p>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        {% if profile.subscription_plan == 'free' %}
+                        <button class="btn btn-primary btn-sm w-100 mb-2">
+                            <i class="fas fa-arrow-up me-2"></i>Upgrade to Pro
+                        </button>
+                        {% elif profile.subscription_plan == 'pro' %}
+                        <button class="btn btn-primary btn-sm w-100 mb-2">
+                            <i class="fas fa-arrow-up me-2"></i>Upgrade to Pro+
+                        </button>
+                        {% elif current_limits.monthly_api_limit == 0 and current_limits.monthly_token_limit == 0 %}
+                        <div class="alert alert-success alert-sm">
+                            <i class="fas fa-crown me-2"></i>You have unlimited access!
+                        </div>
+                        {% endif %}
+                        
+                        <small class="text-muted d-block">
+                            Usage resets on the 1st of each month.
+                            <br>Last reset: {{ profile.last_reset_date|date:"M d, Y" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Quick Actions -->
     <div class="row mb-4">
         <div class="col-12">
@@ -96,14 +253,28 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <a href="{% url 'test_chat' %}" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-comments me-2"></i>Test Chat
-                            </a>
+                            {% if profile.can_make_api_request %}
+                                <a href="{% url 'test_chat' %}" class="btn btn-outline-primary w-100 test-chat-btn">
+                                    <i class="fas fa-comments me-2"></i>Test Chat
+                                </a>
+                            {% else %}
+                                <button class="btn btn-outline-secondary w-100 test-chat-btn" disabled title="API limit reached">
+                                    <i class="fas fa-comments me-2"></i>Test Chat
+                                    <i class="fas fa-lock ms-1"></i>
+                                </button>
+                            {% endif %}
                         </div>
                         <div class="col-md-3">
-                            <a href="{% url 'test_realtime_voice' %}" class="btn btn-outline-warning w-100">
-                                <i class="fas fa-microphone me-2"></i>Test Voice AI (Server-Side)
-                            </a>
+                            {% if profile.can_make_api_request %}
+                                <a href="{% url 'test_realtime_voice' %}" class="btn btn-outline-warning w-100 test-voice-btn">
+                                    <i class="fas fa-microphone me-2"></i>Test Voice AI (Server-Side)
+                                </a>
+                            {% else %}
+                                <button class="btn btn-outline-secondary w-100 test-voice-btn" disabled title="API limit reached">
+                                    <i class="fas fa-microphone me-2"></i>Test Voice AI (Server-Side)
+                                    <i class="fas fa-lock ms-1"></i>
+                                </button>
+                            {% endif %}
                         </div>
                         <div class="col-md-3">
                             <a href="{% url 'edit_qna' %}" class="btn btn-outline-info w-100">
@@ -311,8 +482,139 @@ function sendTestMessage() {
         
         // Scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Refresh usage stats after test message (for demo purposes)
+        // Note: In actual implementation, stats would update after real API call
+        refreshUsageStats();
     }, 1500);
 }
+
+function refreshUsageStats() {
+    fetch('/api/usage-stats/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateUsageDisplay(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing usage stats:', error);
+        });
+}
+
+function updateUsageDisplay(data) {
+    // Update API requests usage
+    const apiProgressBar = document.querySelector('.api-usage-progress');
+    const apiUsageText = document.querySelector('.api-usage-text');
+    const apiLimitText = document.querySelector('.api-limit-text');
+    
+    if (apiProgressBar && apiUsageText && apiLimitText) {
+        // Update progress bar
+        apiProgressBar.style.width = data.api_usage_percentage + '%';
+        
+        // Update color based on usage
+        apiProgressBar.className = 'progress-bar';
+        if (data.api_usage_percentage > 90) {
+            apiProgressBar.classList.add('bg-danger');
+        } else if (data.api_usage_percentage > 75) {
+            apiProgressBar.classList.add('bg-warning');
+        } else {
+            apiProgressBar.classList.add('bg-success');
+        }
+        
+        // Update text
+        if (data.monthly_api_limit > 0) {
+            apiLimitText.textContent = `${data.current_month_api_requests}/${data.monthly_api_limit}`;
+            apiUsageText.textContent = `${data.api_usage_percentage}% used`;
+        } else {
+            apiLimitText.textContent = `${data.current_month_api_requests} (Unlimited)`;
+            apiUsageText.textContent = 'Unlimited plan';
+        }
+    }
+    
+    // Update token usage
+    const tokenProgressBar = document.querySelector('.token-usage-progress');
+    const tokenUsageText = document.querySelector('.token-usage-text');
+    const tokenLimitText = document.querySelector('.token-limit-text');
+    
+    if (tokenProgressBar && tokenUsageText && tokenLimitText) {
+        // Update progress bar
+        tokenProgressBar.style.width = data.token_usage_percentage + '%';
+        
+        // Update color based on usage
+        tokenProgressBar.className = 'progress-bar';
+        if (data.token_usage_percentage > 90) {
+            tokenProgressBar.classList.add('bg-danger');
+        } else if (data.token_usage_percentage > 75) {
+            tokenProgressBar.classList.add('bg-warning');
+        } else {
+            tokenProgressBar.classList.add('bg-success');
+        }
+        
+        // Update text
+        if (data.monthly_token_limit > 0) {
+            tokenLimitText.textContent = `${Math.round(data.current_month_tokens)}/${Math.round(data.monthly_token_limit)}`;
+            tokenUsageText.textContent = `${data.token_usage_percentage}% used`;
+        } else {
+            tokenLimitText.textContent = `${Math.round(data.current_month_tokens)} (Unlimited)`;
+            tokenUsageText.textContent = 'Unlimited plan';
+        }
+    }
+    
+    // Update total stats
+    const totalRequestsElement = document.querySelector('.total-requests');
+    const totalTokensElement = document.querySelector('.total-tokens');
+    
+    if (totalRequestsElement) {
+        totalRequestsElement.textContent = data.total_api_requests;
+    }
+    
+    if (totalTokensElement) {
+        totalTokensElement.textContent = Math.round(data.total_tokens);
+    }
+    
+    // Update usage alert
+    const usageAlert = document.getElementById('usage-alert');
+    const highUsage = data.api_usage_percentage > 90 || data.token_usage_percentage > 90;
+    const moderateUsage = data.api_usage_percentage > 75 || data.token_usage_percentage > 75;
+    
+    if (highUsage) {
+        if (usageAlert) {
+            usageAlert.className = 'alert alert-warning alert-sm mb-2';
+            usageAlert.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i><strong>Usage Alert:</strong> You\'re approaching your monthly limit. Consider upgrading your plan.';
+        }
+    } else if (moderateUsage) {
+        if (usageAlert) {
+            usageAlert.className = 'alert alert-info alert-sm mb-2';
+            usageAlert.innerHTML = '<i class="fas fa-info-circle me-2"></i><strong>Usage Notice:</strong> You\'ve used over 75% of your monthly limit.';
+        }
+    } else if (usageAlert) {
+        usageAlert.style.display = 'none';
+    }
+    
+    // Update buttons based on limits
+    const testChatBtn = document.querySelector('.test-chat-btn');
+    const testVoiceBtn = document.querySelector('.test-voice-btn');
+    
+    if (!data.can_make_api_request) {
+        if (testChatBtn && !testChatBtn.disabled) {
+            testChatBtn.disabled = true;
+            testChatBtn.innerHTML = '<i class="fas fa-comments me-2"></i>Test Chat <i class="fas fa-lock ms-1"></i>';
+            testChatBtn.className = 'btn btn-outline-secondary w-100';
+            testChatBtn.title = 'API limit reached';
+        }
+        
+        if (testVoiceBtn && !testVoiceBtn.disabled) {
+            testVoiceBtn.disabled = true;
+            testVoiceBtn.innerHTML = '<i class="fas fa-microphone me-2"></i>Test Voice AI (Server-Side) <i class="fas fa-lock ms-1"></i>';
+            testVoiceBtn.className = 'btn btn-outline-secondary w-100';
+            testVoiceBtn.title = 'API limit reached';
+        }
+    }
+}
+
+// Auto-refresh usage stats every 30 seconds
+setInterval(refreshUsageStats, 30000);
 
 // Enter key to send message
 document.getElementById('chatInput').addEventListener('keypress', function(e) {

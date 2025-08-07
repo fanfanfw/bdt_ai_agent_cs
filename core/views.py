@@ -114,7 +114,35 @@ def register_view(request):
 def dashboard(request):
     try:
         assistant = AIAssistant.objects.get(user=request.user)
-        return render(request, 'core/dashboard.html', {'assistant': assistant})
+        
+        # Get user profile for usage statistics
+        profile = request.user.profile
+        profile.reset_monthly_usage_if_needed()  # Ensure current month data is accurate
+        
+        # Get current limits from subscription plan (real-time)
+        current_limits = profile.get_current_limits()
+        monthly_api_limit = current_limits['monthly_api_limit']
+        monthly_token_limit = current_limits['monthly_token_limit']
+        
+        # Calculate usage percentages using real-time limits
+        api_usage_percentage = 0
+        token_usage_percentage = 0
+        
+        if monthly_api_limit > 0:  # Not unlimited
+            api_usage_percentage = (profile.current_month_api_requests / monthly_api_limit) * 100
+        
+        if monthly_token_limit > 0:  # Not unlimited
+            token_usage_percentage = (profile.current_month_tokens / monthly_token_limit) * 100
+        
+        context = {
+            'assistant': assistant,
+            'profile': profile,
+            'current_limits': current_limits,  # Add current limits to context
+            'api_usage_percentage': api_usage_percentage,
+            'token_usage_percentage': token_usage_percentage,
+        }
+        
+        return render(request, 'core/dashboard.html', context)
     except AIAssistant.DoesNotExist:
         return redirect('business_type_selection')
 
@@ -333,6 +361,14 @@ def test_chat_view(request):
     try:
         assistant = AIAssistant.objects.get(user=request.user)
         
+        # Check subscription limits
+        profile = request.user.profile
+        profile.reset_monthly_usage_if_needed()
+        
+        if not profile.can_make_api_request():
+            messages.error(request, f'You have reached your monthly API request limit ({profile.monthly_api_limit}). Please upgrade your subscription to continue using this feature.')
+            return redirect('dashboard')
+        
         if request.method == 'POST':
             from .services import ChatService
             import json
@@ -340,6 +376,14 @@ def test_chat_view(request):
             data = json.loads(request.body)
             message = data.get('message', '')
             session_id = data.get('session_id')
+            
+            # Double-check limits before processing
+            if not profile.can_make_api_request():
+                return JsonResponse({
+                    'error': 'API limit exceeded',
+                    'message': f'You have reached your monthly API request limit ({profile.monthly_api_limit}). Please upgrade your subscription.',
+                    'status': 'error'
+                }, status=429)
             
             chat_service = ChatService(assistant)
             session_id, response = chat_service.process_message(message, session_id)
@@ -364,10 +408,60 @@ def test_realtime_voice_view(request):
     """Test realtime voice functionality with OpenAI Realtime API"""
     try:
         assistant = AIAssistant.objects.get(user=request.user)
+        
+        # Check subscription limits
+        profile = request.user.profile
+        profile.reset_monthly_usage_if_needed()
+        
+        if not profile.can_make_api_request():
+            messages.error(request, f'You have reached your monthly API request limit ({profile.monthly_api_limit}). Please upgrade your subscription to continue using this feature.')
+            return redirect('dashboard')
+        
         return render(request, 'core/test_realtime_voice.html', {'assistant': assistant})
         
     except AIAssistant.DoesNotExist:
         return redirect('business_type_selection')
+
+
+@login_required
+def usage_stats_api(request):
+    """API endpoint to get real-time usage statistics"""
+    try:
+        profile = request.user.profile
+        profile.reset_monthly_usage_if_needed()
+        
+        # Get current limits from subscription plan (real-time)
+        current_limits = profile.get_current_limits()
+        monthly_api_limit = current_limits['monthly_api_limit']
+        monthly_token_limit = current_limits['monthly_token_limit']
+        
+        # Calculate usage percentages using real-time limits
+        api_usage_percentage = 0
+        token_usage_percentage = 0
+        
+        if monthly_api_limit > 0:  # Not unlimited
+            api_usage_percentage = (profile.current_month_api_requests / monthly_api_limit) * 100
+        
+        if monthly_token_limit > 0:  # Not unlimited
+            token_usage_percentage = (profile.current_month_tokens / monthly_token_limit) * 100
+        
+        return JsonResponse({
+            'subscription_plan': profile.subscription_plan,
+            'current_month_api_requests': profile.current_month_api_requests,
+            'monthly_api_limit': monthly_api_limit,  # Use real-time limit
+            'current_month_tokens': profile.current_month_tokens,
+            'monthly_token_limit': monthly_token_limit,  # Use real-time limit
+            'api_usage_percentage': round(api_usage_percentage, 1),
+            'token_usage_percentage': round(token_usage_percentage, 1),
+            'total_api_requests': profile.api_requests_count,
+            'total_tokens': profile.tokens_used,
+            'can_make_api_request': profile.can_make_api_request(),
+            'last_reset_date': profile.last_reset_date.strftime('%Y-%m-%d'),
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e), 'status': 'error'}, status=500)
 
 
 @login_required

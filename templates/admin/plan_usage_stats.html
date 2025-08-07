@@ -1,0 +1,283 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Plan Usage Statistics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-bar"></i> Usage Statistics: {{ plan.name }}</h2>
+                <div>
+                    <a href="{% url 'edit_plan' plan.id %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-edit"></i> Edit Plan
+                    </a>
+                    <a href="{% url 'subscription_plans' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Plans
+                    </a>
+                </div>
+            </div>
+
+            <!-- Plan Overview -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Plan Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <h5>{{ plan.name }}</h5>
+                            {% if plan.description %}
+                                <p class="text-muted">{{ plan.description }}</p>
+                            {% endif %}
+                            
+                            <ul class="list-unstyled">
+                                <li><strong>Price:</strong> 
+                                    {% if plan.price > 0 %}
+                                        ${{ plan.price }}/month
+                                    {% else %}
+                                        Free
+                                    {% endif %}
+                                </li>
+                                <li><strong>API Limit:</strong> 
+                                    {% if plan.monthly_api_limit > 0 %}
+                                        {{ plan.monthly_api_limit|floatformat:0 }}/month
+                                    {% else %}
+                                        Unlimited
+                                    {% endif %}
+                                </li>
+                                <li><strong>Token Limit:</strong> 
+                                    {% if plan.monthly_token_limit > 0 %}
+                                        {{ plan.monthly_token_limit|floatformat:0 }}/month
+                                    {% else %}
+                                        Unlimited
+                                    {% endif %}
+                                </li>
+                                <li><strong>Status:</strong> 
+                                    {% if plan.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="row">
+                        <!-- Total Users -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="mb-0">{{ total_users }}</h4>
+                                            <p class="mb-0">Total Users</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-users fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total API Requests -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="mb-0">{{ total_api_requests|floatformat:0 }}</h4>
+                                            <p class="mb-0">Total API Requests</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-api fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Tokens -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="mb-0">{{ total_tokens|floatformat:0 }}</h4>
+                                            <p class="mb-0">Total Tokens Used</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-coins fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Average Usage -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="mb-0">{{ avg_api_requests|floatformat:0 }}</h4>
+                                            <p class="mb-0">Avg API/User</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-chart-line fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Progress Bars -->
+            {% if plan.monthly_api_limit > 0 or plan.monthly_token_limit > 0 %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Overall Usage vs Plan Limits</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if plan.monthly_api_limit > 0 %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>API Requests Usage</span>
+                                    <span>{{ api_usage_percent|floatformat:1 }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar {% if api_usage_percent > 90 %}bg-danger{% elif api_usage_percent > 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ api_usage_percent|floatformat:1 }}%"
+                                         aria-valuenow="{{ api_usage_percent|floatformat:1 }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ total_api_requests|floatformat:0 }} of {{ plan.monthly_api_limit|mul:total_users|floatformat:0 }} total limit</small>
+                            </div>
+                        {% endif %}
+
+                        {% if plan.monthly_token_limit > 0 %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Token Usage</span>
+                                    <span>{{ token_usage_percent|floatformat:1 }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar {% if token_usage_percent > 90 %}bg-danger{% elif token_usage_percent > 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ token_usage_percent|floatformat:1 }}%"
+                                         aria-valuenow="{{ token_usage_percent|floatformat:1 }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ total_tokens|floatformat:0 }} of {{ plan.monthly_token_limit|mul:total_users|floatformat:0 }} total limit</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Users List -->
+            {% if users_on_plan %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Users on This Plan (Showing first 10)</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>This Month API</th>
+                                        <th>This Month Tokens</th>
+                                        <th>API Usage %</th>
+                                        <th>Token Usage %</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_profile in users_on_plan %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ user_profile.user.first_name }} {{ user_profile.user.last_name }}</strong>
+                                                <br><small class="text-muted">{{ user_profile.user.username }}</small>
+                                            </td>
+                                            <td>{{ user_profile.user.email }}</td>
+                                            <td>
+                                                {% if user_profile.status == 'approved' %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% elif user_profile.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% elif user_profile.status == 'suspended' %}
+                                                    <span class="badge bg-danger">Suspended</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ user_profile.status|title }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user_profile.current_month_api_requests|floatformat:0 }}</td>
+                                            <td>{{ user_profile.current_month_tokens|floatformat:0 }}</td>
+                                            <td>
+                                                {% if plan.monthly_api_limit > 0 %}
+                                                    {% widthratio user_profile.current_month_api_requests plan.monthly_api_limit 100 as api_percent %}
+                                                    <span class="badge {% if api_percent > 90 %}bg-danger{% elif api_percent > 70 %}bg-warning{% else %}bg-success{% endif %}">
+                                                        {{ api_percent }}%
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">∞</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if plan.monthly_token_limit > 0 %}
+                                                    {% widthratio user_profile.current_month_tokens plan.monthly_token_limit 100 as token_percent %}
+                                                    <span class="badge {% if token_percent > 90 %}bg-danger{% elif token_percent > 70 %}bg-warning{% else %}bg-success{% endif %}">
+                                                        {{ token_percent }}%
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-muted">∞</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'admin_user_detail' user_profile.user.id %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if total_users > 10 %}
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Showing 10 of {{ total_users }} users. 
+                                <a href="{% url 'admin_user_management' %}?subscription_plan={{ plan.name }}">View all users on this plan</a></small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Users on This Plan</h5>
+                        <p class="text-muted">This plan is not currently being used by any users.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

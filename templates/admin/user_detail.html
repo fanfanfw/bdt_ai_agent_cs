@@ -90,7 +90,15 @@
                         </tr>
                         <tr>
                             <td><strong>Subscription:</strong></td>
-                            <td><span class="badge bg-info text-capitalize">{{ profile.subscription_plan }}</span></td>
+                            <td>
+                                <span class="badge bg-info text-capitalize">{{ profile.subscription_plan }}</span>
+                                {% if not profile.validate_subscription_consistency %}
+                                    <br><small class="text-danger mt-1 d-block">
+                                        <i class="fas fa-exclamation-triangle"></i> 
+                                        Inconsistent limits detected! Please update subscription to fix.
+                                    </small>
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <td><strong>API Limit:</strong></td>
@@ -196,15 +204,29 @@
                             <form method="post" action="{% url 'admin_update_subscription' user.id %}" class="d-flex gap-2">
                                 {% csrf_token %}
                                 <select name="subscription_plan" class="form-select">
-                                    <option value="free" {% if profile.subscription_plan == 'free' %}selected{% endif %}>Free</option>
-                                    <option value="pro" {% if profile.subscription_plan == 'pro' %}selected{% endif %}>Pro</option>
-                                    <option value="pro_plus" {% if profile.subscription_plan == 'pro_plus' %}selected{% endif %}>Pro+</option>
+                                    {% for plan in available_plans %}
+                                        <option value="{{ plan.name }}" 
+                                                {% if profile.subscription_plan == plan.name %}selected{% endif %}>
+                                            {{ plan.name|title }}{% if plan.price > 0 %} - ${{ plan.price }}/month{% else %} - Free{% endif %}
+                                        </option>
+                                    {% empty %}
+                                        <option value="free" {% if profile.subscription_plan == 'free' %}selected{% endif %}>Free (Fallback)</option>
+                                    {% endfor %}
                                 </select>
                                 <button type="submit" class="btn btn-primary"
                                         onclick="return confirm('Update subscription for {{ user.username }}?')">
                                     <i class="fas fa-save"></i> Update
                                 </button>
                             </form>
+                            
+                            {% if available_plans %}
+                                <small class="text-muted mt-2 d-block">
+                                    Available plans: 
+                                    {% for plan in available_plans %}
+                                        <span class="badge bg-light text-dark">{{ plan.name }}</span>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </small>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
