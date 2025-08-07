@@ -87,48 +87,6 @@ class OpenAIService:
             print(f"Error getting response: {e}")
             return None
 
-    # def text_to_speech(self, text):
-    #     """Convert text to speech using OpenAI TTS"""
-    #     try:
-    #         response = self.client.audio.speech.create(
-    #             model="tts-1",
-    #             voice="alloy",  # Good English voice
-    #             input=text,
-    #             speed=1.0  # Normal speed for clarity
-    #         )
-    #         return response.content
-    #     except Exception as e:
-    #         print(f"Error with TTS: {e}")
-    #         return None
-
-    # def speech_to_text(self, audio_file):
-    #     """Convert speech to text using OpenAI Whisper"""
-    #     try:
-    #         # Handle Django InMemoryUploadedFile
-    #         if hasattr(audio_file, 'read'):
-    #             # Reset file pointer to beginning
-    #             audio_file.seek(0)
-    #             # Create a tuple with file content and name for OpenAI
-    #             file_tuple = (audio_file.name or 'audio.webm', audio_file.read(), 'audio/webm')
-                
-    #             transcript = self.client.audio.transcriptions.create(
-    #                 model="whisper-1",
-    #                 file=file_tuple,
-    #                 language="en"  # Force English for transcription
-    #             )
-    #         else:
-    #             # Handle regular file objects
-    #             transcript = self.client.audio.transcriptions.create(
-    #                 model="whisper-1",
-    #                 file=audio_file,
-    #                 language="en"  # Force English for transcription
-    #             )
-    #         return transcript.text
-    #     except Exception as e:
-    #         print(f"Error with STT: {e}")
-    #         return None
-
-
 class EmbeddingService:
     def __init__(self):
         self.openai_service = OpenAIService()
@@ -633,6 +591,178 @@ class ChatService:
         
         return best_match
 
+    def get_chat_instructions(self, user_message=""):
+        """Get adaptive system instructions for chat based on message language"""
+        # Check if we have a preferred language set (from UI selection)
+        preferred_lang = getattr(self, 'preferred_language', 'auto')
+        
+        # If auto-detect, use language detection
+        if preferred_lang == 'auto':
+            detected_lang = self.detect_language(user_message)
+        else:
+            detected_lang = preferred_lang
+        
+        # Debug logging (can be enabled for troubleshooting)
+        # print(f"🌐 Chat Language Settings:")
+        # print(f"   Preferred Language: {preferred_lang}")
+        # print(f"   Final Language: {detected_lang}")
+        
+        # Get Q&As from database
+        qnas = self.assistant.qnas.all()
+        qna_text = ""
+        if qnas:
+            qna_text = "\n\nHere are the specific Q&As for this business:\n\n"
+            for qna in qnas:
+                qna_text += f"Q: {qna.question}\nA: {qna.answer}\n\n"
+            qna_text += "Always prioritize these Q&As when answering similar questions."
+        
+        # Get knowledge base context
+        knowledge_context = ""
+        kb_items = self.assistant.knowledge_base.filter(status='completed')
+        if kb_items:
+            knowledge_context = "\n\nKnowledge Base Information:\n\n"
+            for kb in kb_items:
+                content = kb.content[:2000] if len(kb.content) > 2000 else kb.content
+                knowledge_context += f"=== {kb.title} ===\n{content}\n\n"
+            knowledge_context += "Use this knowledge base information when customers ask about business-specific details, services, policies, etc."
+
+        # Return language-specific instructions like voice realtime
+        if detected_lang == 'ms':
+            return f"""Anda adalah pembantu perkhidmatan pelanggan {self.assistant.business_type.name} secara bertulis.
+
+PANDUAN BAHASA:
+- SENTIASA balas dalam BAHASA MALAYSIA sahaja
+- Gunakan ungkapan Malaysia yang sesuai seperti "Terima kasih", "Maaf", "Baiklah", "Bagaimana"
+- Bercakap seperti orang Malaysia yang membantu pelanggan
+
+STRATEGI JAWAPAN:
+1. PERTAMA: Periksa sama ada soalan sepadan dengan Q&A di bawah - ini adalah keutamaan tinggi
+2. KEDUA: Cari melalui maklumat Knowledge Base untuk butiran yang berkaitan  
+3. KETIGA: Gunakan pengetahuan umum tetapi sebut mereka harus sahkan dengan perniagaan
+4. Sentiasa membantu dan berusaha untuk memajukan perbualan
+
+PANDUAN PERBUALAN:
+- Beri jawapan yang lengkap dan terperinci
+- Rujuk perbualan terdahulu secara semula jadi
+- Tanya soalan pengklarifikasian apabila diperlukan
+- Gunakan nada yang mesra dan membantu{qna_text}{knowledge_context}
+
+CONTOH RESPONS BAHASA MALAYSIA:
+- "Terima kasih kerana bertanya!"
+- "Maaf, saya tak faham. Boleh awak jelaskan lagi?"
+- "Baiklah, saya akan bantu awak dengan perkara ini."
+- "Adakah ada lagi yang saya boleh bantu?"
+
+Ingat: Balas dalam BAHASA MALAYSIA sahaja, tidak kira bahasa soalan pelanggan."""
+        else:
+            return f"""You are a {self.assistant.business_type.name} customer service assistant with multi-language capabilities.
+
+LANGUAGE GUIDELINES:
+- AUTO-DETECT the language the customer is using
+- If customer writes in English → Respond in ENGLISH
+- If customer writes in Bahasa Malaysia/Malay → Respond in BAHASA MALAYSIA  
+- If mixed languages are used, use the primary language of the conversation
+- Adapt your cultural expressions to the detected language
+
+RESPONSE STRATEGY:
+1. FIRST: Detect the customer's language from their message
+2. SECOND: Check if the question matches any of the Q&As below - these are high priority
+3. THIRD: Search through the Knowledge Base information for relevant details
+4. FOURTH: Use general knowledge but mention they should verify with the business
+5. Always respond in the SAME language as the customer
+
+CONVERSATION GUIDELINES:
+- Keep responses complete and detailed
+- Reference previous conversation naturally
+- Ask clarifying questions when needed in the customer's language
+- Use a warm, helpful tone with appropriate cultural context{qna_text}{knowledge_context}
+
+EXAMPLE RESPONSES:
+English: "Thank you for asking!", "How can I help you today?"
+Bahasa Malaysia: "Terima kasih kerana bertanya!", "Apa yang boleh saya bantu hari ini?"
+
+Remember: Always respond in the SAME language as the customer's message."""
+
+    def detect_language(self, message):
+        """Improved language detection for Malaysian and English"""
+        if not message:
+            return 'en'
+            
+        message_lower = message.lower().strip()
+        
+        # First check for strong English indicators
+        english_indicators = {
+            'what', 'how', 'when', 'where', 'why', 'who', 'which', 'whose',
+            'the', 'and', 'or', 'but', 'with', 'for', 'from', 'to', 'at', 'by',
+            'are', 'is', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
+            'do', 'does', 'did', 'will', 'would', 'should', 'could', 'can', 'may', 'might',
+            'your', 'you', 'i', 'we', 'they', 'he', 'she', 'it', 'my', 'our', 'their',
+            'business', 'service', 'services', 'hours', 'contact', 'many', 'much', 'some',
+            'about', 'company', 'property', 'properties', 'agent', 'agents', 'luxury'
+        }
+        
+        # Common Malaysian/Malay words (more specific and exclusive)
+        malay_words = {
+            'apa', 'yang', 'ini', 'itu', 'saya', 'awak', 'kamu', 'dengan', 'untuk', 'dari', 'dalam',
+            'boleh', 'tidak', 'tak', 'ada', 'tiada', 'macam', 'mana', 'bagaimana', 'kenapa', 'bila',
+            'kami', 'mereka', 'dia', 'terima', 'kasih', 'maaf', 'tolong', 'pun', 'lagi', 'juga',
+            'sudah', 'belum', 'akan', 'sedang', 'buat', 'kerja', 'rumah', 'sekolah', 'universiti',
+            'malaysia', 'melayu', 'ringgit', 'sen', 'berapa', 'banyak', 'sikit', 'ramai',
+            'ejen', 'hartanah', 'mewah', 'perkhidmatan', 'waktu', 'operasi', 'perniagaan',
+            'masa', 'hari', 'minggu', 'bulan', 'tahun', 'pagi', 'tengah', 'petang', 'malam'
+        }
+        
+        # Remove punctuation for better word matching
+        import re
+        cleaned_message = re.sub(r'[^\w\s]', ' ', message_lower)
+        words = cleaned_message.split()
+        
+        if not words:
+            return 'en'
+        
+        malay_count = sum(1 for word in words if word in malay_words)
+        english_count = sum(1 for word in words if word in english_indicators)
+        
+        # Debug logging (uncomment for troubleshooting)
+        # print(f"🔍 Language Detection Debug:")
+        # print(f"   Original message: '{message}'")
+        # print(f"   Cleaned words: {words}")
+        # print(f"   Malay words found: {[word for word in words if word in malay_words]}")
+        # print(f"   English words found: {[word for word in words if word in english_indicators]}")
+        # print(f"   Malay count: {malay_count}/{len(words)} = {(malay_count/len(words)*100):.1f}%")
+        # print(f"   English count: {english_count}/{len(words)} = {(english_count/len(words)*100):.1f}%")
+        
+        # Strong Malay phrases always return Malay
+        malay_phrases = [
+            'terima kasih', 'boleh tak', 'macam mana', 'tak ada', 'ada tak',
+            'apa khabar', 'berapa ramai', 'boleh tolong', 'saya nak', 'awak ada',
+            'berapa harga', 'bagaimana nak', 'apa waktu', 'waktu operasi'
+        ]
+        for phrase in malay_phrases:
+            if phrase in message_lower:
+                return 'ms'
+        
+        # If we have strong English indicators and no/few Malay words, it's English
+        if english_count > 0 and malay_count == 0:
+            return 'en'
+        
+        # Compare ratios - if English ratio is higher, it's English
+        if len(words) > 2:  # Only for longer messages
+            malay_ratio = malay_count / len(words)
+            english_ratio = english_count / len(words)
+            
+            if english_ratio > malay_ratio and english_ratio >= 0.3:
+                return 'en'
+            elif malay_ratio >= 0.2:  # Lower threshold for Malay
+                return 'ms'
+        
+        # For short messages, be more conservative - default to English unless clear Malay
+        if len(words) <= 2 and malay_count == 0:
+            return 'en'
+        elif malay_count > 0:
+            return 'ms'        
+        return 'en'
+
     def generate_ai_response(self, message, relevant_knowledge, session=None):
         """Generate AI response using OpenAI with improved RAG context handling"""
         # Get conversation history for context
@@ -664,7 +794,7 @@ class ChatService:
             context = "\n\nRelevant information from knowledge base (sorted by relevance):\n" + "\n\n---\n\n".join(context_parts)
             
             prompt = f"""
-            You are a {self.assistant.business_type.name} customer service assistant. Answer the customer's question using the provided knowledge base information and conversation history for context.
+            Answer the customer's question using the provided knowledge base information and conversation history for context.
 
             Customer Question: {message}
             {context}
@@ -686,7 +816,7 @@ class ChatService:
         else:
             # No knowledge base context, use general response
             prompt = f"""
-            Please answer the following customer question based on your general knowledge and the system instructions. Since no specific business information was found, provide a helpful general response and suggest the customer contact the business directly for specific details.
+            Please answer the following customer question based on your general knowledge. Since no specific business information was found, provide a helpful general response and suggest the customer contact the business directly for specific details.
 
             Customer Question: {message}
             {conversation_context}
@@ -703,7 +833,7 @@ class ChatService:
             response = self.openai_service.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": self.assistant.system_instructions},
+                    {"role": "system", "content": self.get_chat_instructions(message)},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,

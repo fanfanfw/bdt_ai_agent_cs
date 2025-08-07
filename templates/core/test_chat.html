@@ -33,6 +33,16 @@
                     
                     <!-- Chat Input -->
                     <div class="border-top p-3 bg-white">
+                        <!-- Language Selection -->
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">Language / Bahasa:</label>
+                            <select class="form-select form-select-sm" id="languageSelect" onchange="updateLanguagePlaceholder()">
+                                <option value="auto">Auto-Detect / Kesan Automatik</option>
+                                <option value="en">English Only / Bahasa Inggeris</option>
+                                <option value="ms">Bahasa Malaysia Sahaja</option>
+                            </select>
+                        </div>
+                        
                         <div class="input-group">
                             <input 
                                 type="text" 
@@ -54,18 +64,21 @@
                                     <i class="fas fa-trash me-1"></i>Clear Chat
                                 </button>
                             </div>
-                            <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What are your business hours?')">
-                                Business Hours
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What services do you offer?')">
-                                Services
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('How can I contact you?')">
-                                Contact Info
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Do you offer delivery?')">
-                                Delivery
-                            </button>
+                            <div id="quickButtons">
+                                <!-- English quick buttons (default) -->
+                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What are your business hours?')">
+                                    Business Hours
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What services do you offer?')">
+                                    Services
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('How can I contact you?')">
+                                    Contact Info
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Do you offer delivery?')">
+                                    Delivery
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -110,6 +123,68 @@ function sendQuickMessage(message) {
     sendMessage();
 }
 
+function updateLanguagePlaceholder() {
+    const languageSelect = document.getElementById('languageSelect');
+    const messageInput = document.getElementById('messageInput');
+    const quickButtons = document.getElementById('quickButtons');
+    const selectedLang = languageSelect.value;
+    
+    switch(selectedLang) {
+        case 'ms':
+            messageInput.placeholder = 'Taip mesej anda di sini...';
+            quickButtons.innerHTML = `
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
+                    Waktu Operasi
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Apa perkhidmatan yang anda tawarkan?')">
+                    Perkhidmatan
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
+                    Maklumat Hubungan
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Adakah anda menawarkan penghantaran?')">
+                    Penghantaran
+                </button>
+            `;
+            break;
+        case 'en':
+            messageInput.placeholder = 'Type your message here...';
+            quickButtons.innerHTML = `
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What are your business hours?')">
+                    Business Hours
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What services do you offer?')">
+                    Services
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('How can I contact you?')">
+                    Contact Info
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Do you offer delivery?')">
+                    Delivery
+                </button>
+            `;
+            break;
+        case 'auto':
+        default:
+            messageInput.placeholder = 'Type your message here / Taip mesej anda di sini...';
+            quickButtons.innerHTML = `
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What are your business hours?')">
+                    Business Hours
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What services do you offer?')">
+                    Services
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
+                    Waktu Operasi
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
+                    Maklumat Hubungan
+                </button>
+            `;
+            break;
+    }
+}
+
 function clearConversation() {
     const messagesContainer = document.getElementById('chatMessages');
     messagesContainer.innerHTML = `
@@ -130,7 +205,9 @@ function clearConversation() {
 
 async function sendMessage() {
     const input = document.getElementById('messageInput');
+    const languageSelect = document.getElementById('languageSelect');
     const message = input.value.trim();
+    const selectedLanguage = languageSelect.value;
     
     if (!message) return;
     
@@ -154,7 +231,8 @@ async function sendMessage() {
             },
             body: JSON.stringify({
                 message: message,
-                session_id: sessionId
+                session_id: sessionId,
+                language: selectedLanguage
             })
         });
         

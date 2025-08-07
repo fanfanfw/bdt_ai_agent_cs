@@ -376,6 +376,7 @@ def test_chat_view(request):
             data = json.loads(request.body)
             message = data.get('message', '')
             session_id = data.get('session_id')
+            language = data.get('language', 'auto')  # Get language preference
             
             # Double-check limits before processing
             if not profile.can_make_api_request():
@@ -386,6 +387,8 @@ def test_chat_view(request):
                 }, status=429)
             
             chat_service = ChatService(assistant)
+            # Set language preference on chat service
+            chat_service.preferred_language = language
             session_id, response = chat_service.process_message(message, session_id)
             
             return JsonResponse({
