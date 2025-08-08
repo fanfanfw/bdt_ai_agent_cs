@@ -66,6 +66,8 @@ class SubscriptionEnforcementMiddleware:
             '/api/widget/chat/',
             '/api/widget/voice/',
             '/test-chat/',
+            '/test-realtime-voice/',
+            '/api/chat/',
         ]
 
     def __call__(self, request):
@@ -80,6 +82,9 @@ class SubscriptionEnforcementMiddleware:
             if not profile.validate_subscription_consistency():
                 profile.fix_subscription_consistency()
             
+            # Reset monthly usage if needed
+            profile.reset_monthly_usage_if_needed()
+            
             # Check if user can make API requests
             if not profile.can_make_api_request():
                 from django.http import JsonResponse
@@ -88,6 +93,16 @@ class SubscriptionEnforcementMiddleware:
                     'message': 'You have reached your monthly API request limit. Please upgrade your subscription.',
                     'current_usage': profile.current_month_api_requests,
                     'limit': profile.monthly_api_limit
+                }, status=429)  # Too Many Requests
+            
+            # Check if user has exceeded token limit
+            if profile.has_token_limit_exceeded():
+                from django.http import JsonResponse
+                return JsonResponse({
+                    'error': 'Token limit exceeded',
+                    'message': 'You have reached your monthly token limit. Please upgrade your subscription.',
+                    'current_usage': profile.current_month_tokens,
+                    'limit': profile.monthly_token_limit
                 }, status=429)  # Too Many Requests
 
         response = self.get_response(request)

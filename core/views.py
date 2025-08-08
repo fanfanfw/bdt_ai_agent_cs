@@ -369,6 +369,10 @@ def test_chat_view(request):
             messages.error(request, f'You have reached your monthly API request limit ({profile.monthly_api_limit}). Please upgrade your subscription to continue using this feature.')
             return redirect('dashboard')
         
+        if profile.has_token_limit_exceeded():
+            messages.error(request, f'You have reached your monthly token limit ({profile.monthly_token_limit}). Please upgrade your subscription to continue using this feature.')
+            return redirect('dashboard')
+        
         if request.method == 'POST':
             from .services import ChatService
             import json
@@ -418,6 +422,10 @@ def test_realtime_voice_view(request):
         
         if not profile.can_make_api_request():
             messages.error(request, f'You have reached your monthly API request limit ({profile.monthly_api_limit}). Please upgrade your subscription to continue using this feature.')
+            return redirect('dashboard')
+        
+        if profile.has_token_limit_exceeded():
+            messages.error(request, f'You have reached your monthly token limit ({profile.monthly_token_limit}). Please upgrade your subscription to continue using this feature.')
             return redirect('dashboard')
         
         return render(request, 'core/test_realtime_voice.html', {'assistant': assistant})

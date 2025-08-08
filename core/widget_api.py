@@ -36,6 +36,33 @@ class WidgetAPIView(View):
             return assistant, None
         except AIAssistant.DoesNotExist:
             return None, "Invalid API key or assistant ID"
+    
+    def check_user_quota(self, assistant):
+        """Check if user has exceeded their quota"""
+        profile = assistant.user.profile
+        profile.reset_monthly_usage_if_needed()
+        
+        # Check API request limit
+        if not profile.can_make_api_request():
+            return False, {
+                'error': 'API limit exceeded',
+                'message': f'Your monthly API request limit ({profile.monthly_api_limit}) has been reached. Please upgrade your subscription.',
+                'current_usage': profile.current_month_api_requests,
+                'limit': profile.monthly_api_limit,
+                'type': 'api_limit'
+            }
+        
+        # Check token limit
+        if profile.has_token_limit_exceeded():
+            return False, {
+                'error': 'Token limit exceeded', 
+                'message': f'Your monthly token limit ({profile.monthly_token_limit}) has been reached. Please upgrade your subscription.',
+                'current_usage': profile.current_month_tokens,
+                'limit': profile.monthly_token_limit,
+                'type': 'token_limit'
+            }
+        
+        return True, None
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -65,6 +92,22 @@ class WidgetChatAPIView(WidgetAPIView):
                     'status': 'error',
                     'error': error
                 }, status=401)
+                return add_cors_headers(response_data)
+            
+            # Check user quota
+            quota_ok, quota_error = self.check_user_quota(assistant)
+            if not quota_ok:
+                print(f"Widget Chat API - Quota exceeded: {quota_error}")
+                response_data = JsonResponse({
+                    'status': 'error',
+                    'error': quota_error['error'],
+                    'message': quota_error['message'],
+                    'quota_info': {
+                        'current_usage': quota_error['current_usage'],
+                        'limit': quota_error['limit'],
+                        'type': quota_error['type']
+                    }
+                }, status=429)  # Too Many Requests
                 return add_cors_headers(response_data)
             
             # Get message and session
@@ -128,45 +171,69 @@ class WidgetChatAPIView(WidgetAPIView):
 
 @method_decorator(csrf_exempt, name='dispatch') 
 class WidgetVoiceAPIView(WidgetAPIView):
-    """Public API endpoint for widget voice functionality"""
+    """Public API endpoint for widget voice functionality info"""
     
     def options(self, request):
         """Handle CORS preflight"""
         response = JsonResponse({})
         return add_cors_headers(response)
     
-    def post(self, request):
+    def get(self, request):
+        """Get widget voice connection info"""
         try:
+            api_key = request.GET.get('api_key')
+            assistant_id = request.GET.get('assistant_id')
+            
             # Authenticate request
-            assistant, error = self.authenticate_request(request.POST)
+            assistant, error = self.authenticate_request({
+                'api_key': api_key,
+                'assistant_id': assistant_id
+            })
             if error:
-                return JsonResponse({
+                response_data = JsonResponse({
                     'status': 'error',
                     'error': error
                 }, status=401)
+                return add_cors_headers(response_data)
             
-            # Get audio file and session
-            audio_file = request.FILES.get('audio')
-            session_id = request.POST.get('session_id')
-            
-            if not audio_file:
-                return JsonResponse({
+            # Check quota
+            quota_ok, quota_error = self.check_user_quota(assistant)
+            if not quota_ok:
+                response_data = JsonResponse({
                     'status': 'error',
-                    'error': 'Audio file is required'
-                }, status=400)
+                    'error': quota_error['error'],
+                    'message': quota_error['message'],
+                    'quota_info': {
+                        'current_usage': quota_error['current_usage'],
+                        'limit': quota_error['limit'],
+                        'type': quota_error['type']
+                    }
+                }, status=429)
+                return add_cors_headers(response_data)
             
-            # Legacy voice API deprecated - return error
-            return JsonResponse({
-                'status': 'error',
-                'error': 'Legacy voice API deprecated. Please use realtime voice API instead.'
-            }, status=410)
+            # Return WebSocket connection info
+            protocol = 'wss' if request.is_secure() else 'ws'
+            host = request.get_host()
+            websocket_url = f"{protocol}://{host}/ws/widget/voice/?api_key={api_key}&assistant_id={assistant_id}"
+            
+            response_data = JsonResponse({
+                'status': 'success',
+                'websocket_url': websocket_url,
+                'assistant': {
+                    'id': str(assistant.id),
+                    'business_type': assistant.business_type.name,
+                    'title': f"{assistant.business_type.name} Voice Assistant"
+                }
+            })
+            return add_cors_headers(response_data)
             
         except Exception as e:
             print(f"Widget voice API error: {e}")
-            return JsonResponse({
+            response_data = JsonResponse({
                 'status': 'error',
                 'error': 'Internal server error'
             }, status=500)
+            return add_cors_headers(response_data)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

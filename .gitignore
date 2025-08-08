@@ -9,3 +9,5 @@ notes.txt
 logs
 test/
 doc/
+
+staticfiles/

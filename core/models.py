@@ -132,6 +132,19 @@ class UserProfile(models.Model):
             return True
         return (self.current_month_tokens + token_count) <= monthly_token_limit
     
+    def has_token_limit_exceeded(self):
+        """Check if user has exceeded token limit"""
+        if self.status != 'approved':
+            return True
+        
+        # Get current limits from subscription plan
+        current_limits = self.get_current_limits()
+        monthly_token_limit = current_limits['monthly_token_limit']
+        
+        if monthly_token_limit == 0:  # Unlimited
+            return False
+        return self.current_month_tokens >= monthly_token_limit
+    
     def update_activity(self):
         self.last_activity = timezone.now()
         self.save(update_fields=['last_activity'])

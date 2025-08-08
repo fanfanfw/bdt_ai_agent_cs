@@ -1144,6 +1144,38 @@ class RealtimeVoiceService:
                             self.safe_send_to_consumer(message)
                     elif event_type == 'response.done':
                         print("✅ Response completed")
+                        
+                        # Track API usage for realtime voice
+                        try:
+                            usage_data = event.get('response', {}).get('usage', {})
+                            input_tokens = usage_data.get('input_tokens', 0)
+                            output_tokens = usage_data.get('output_tokens', 0)
+                            total_tokens = usage_data.get('total_tokens', 0) or (input_tokens + output_tokens)
+                            
+                            if total_tokens > 0:
+                                # Record API usage with token count
+                                profile = self.assistant.user.profile
+                                profile.record_api_usage(token_count=total_tokens)
+                                
+                                # Log detailed API usage
+                                from .models import ApiUsageLog
+                                ApiUsageLog.objects.create(
+                                    user=self.assistant.user,
+                                    endpoint='/ws/voice/realtime/',
+                                    method='WS',
+                                    tokens_used=total_tokens,
+                                    status_code=200,
+                                    response_time_ms=0  # WebSocket doesn't have traditional response time
+                                )
+                                print(f"📊 Recorded API usage: {total_tokens} tokens for user {self.assistant.user.username}")
+                            else:
+                                # Record API request even without token info
+                                profile = self.assistant.user.profile  
+                                profile.record_api_usage(token_count=0)
+                                print(f"📊 Recorded API request for user {self.assistant.user.username}")
+                                
+                        except Exception as e:
+                            print(f"❌ Error recording API usage: {e}")
                     elif event_type == 'conversation.item.input_audio_transcription.delta':
                         # Handle user input transcription delta (partial)
                         delta = event.get('delta', '')
