@@ -99,7 +99,7 @@ def create_admin_user(apps, schema_editor):
             'is_staff': True,
             'is_superuser': True,
             'is_active': True,
-            'password': make_password('admin123')  # Default password
+            'password': make_password('Scr@pp3r')  # Default password
         }
     )
     
