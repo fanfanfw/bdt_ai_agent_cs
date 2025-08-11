@@ -31,6 +31,16 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver', '192.168.1.111']
 
+# CSRF trusted origins
+CSRF_TRUSTED_ORIGINS = [
+    'https://192.168.1.111',
+    'http://192.168.1.111',
+    'https://127.0.0.1',
+    'http://127.0.0.1',
+    'https://localhost',
+    'http://localhost',
+]
+
 
 # Application definition
 
