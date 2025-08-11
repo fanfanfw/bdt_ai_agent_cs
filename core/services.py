@@ -485,7 +485,7 @@ class ChatService:
         self.openai_service = OpenAIService()
         self.embedding_service = EmbeddingService()
 
-    def get_or_create_session(self, session_id=None):
+    def get_or_create_session(self, session_id=None, source='test_chat'):
         """Get or create chat session"""
         if session_id:
             try:
@@ -494,18 +494,25 @@ class ChatService:
                 pass
 
         # Create new session
-        thread = self.openai_service.create_thread()
-        if thread:
-            return ChatSession.objects.create(
-                assistant=self.assistant,
-                openai_thread_id=thread.id
-            )
-        return None
+        thread = None
+        openai_thread_id = None
+        
+        # Only create OpenAI thread for non-voice sources
+        if source not in ['test_voice_realtime', 'widget_voice']:
+            thread = self.openai_service.create_thread()
+            if thread:
+                openai_thread_id = thread.id
+        
+        return ChatSession.objects.create(
+            assistant=self.assistant,
+            openai_thread_id=openai_thread_id,
+            source=source
+        )
 
-    def process_message(self, message, session_id=None, is_voice=False):
+    def process_message(self, message, session_id=None, is_voice=False, source='test_chat'):
         """Process user message and generate response with improved flow"""
         
-        session = self.get_or_create_session(session_id)
+        session = self.get_or_create_session(session_id, source)
         if not session:
             return None, "Error creating chat session"
 
@@ -871,8 +878,12 @@ class RealtimeVoiceService:
         self.openai_service = OpenAIService()
         self.embedding_service = EmbeddingService()
         self.chat_service = ChatService(assistant)
+        self.transcript_service = VoiceTranscriptService(assistant)
         self.websocket = None
         self.session_id = None
+        self.voice_session = None  # Database session for transcript storage
+        self.current_user_transcript = ""
+        self.current_assistant_response = ""
 
     def safe_send_to_consumer(self, message):
         """Safely send message to Django consumer with error handling"""
@@ -956,6 +967,15 @@ class RealtimeVoiceService:
             self.connection_ready = False
             self.connection_error = None
             self.selected_language = language  # Store language preference
+            
+            # Create database session for transcript storage
+            source = 'widget_voice' if hasattr(django_consumer, '__class__') and 'Widget' in django_consumer.__class__.__name__ else 'test_voice_realtime'
+            self.voice_session = self.transcript_service.create_voice_session(source)
+            print(f"✅ Created voice session for transcript: {self.voice_session.session_id}")
+            
+            # Reset transcript accumulators
+            self.current_user_transcript = ""
+            self.current_assistant_response = ""
             
             # Validate and set django_consumer
             if django_consumer:
@@ -1134,6 +1154,12 @@ class RealtimeVoiceService:
                     elif event_type == 'response.audio_transcript.done':
                         transcript = event.get('transcript', '')
                         print(f"✅ Complete transcript: {transcript}")
+                        
+                        # Save assistant response to database
+                        if transcript and self.voice_session:
+                            self.current_assistant_response = transcript
+                            print(f"💾 Saving assistant response to session {self.voice_session.session_id}")
+                        
                         # Forward complete transcript to Django consumer
                         if self.django_consumer and transcript:
                             message = {
@@ -1144,6 +1170,21 @@ class RealtimeVoiceService:
                             self.safe_send_to_consumer(message)
                     elif event_type == 'response.done':
                         print("✅ Response completed")
+                        
+                        # Save both user and assistant transcripts to database
+                        if self.voice_session and (self.current_user_transcript or self.current_assistant_response):
+                            success = self.transcript_service.save_transcript(
+                                session=self.voice_session,
+                                user_transcript=self.current_user_transcript,
+                                assistant_response=self.current_assistant_response
+                            )
+                            if success:
+                                print(f"✅ Transcripts saved to database session {self.voice_session.session_id}")
+                                # Reset for next conversation turn
+                                self.current_user_transcript = ""
+                                self.current_assistant_response = ""
+                            else:
+                                print("❌ Failed to save transcripts to database")
                         
                         # Track API usage for realtime voice
                         try:
@@ -1193,6 +1234,11 @@ class RealtimeVoiceService:
                         # Handle user input transcription completion
                         transcript = event.get('transcript', '')
                         print(f"👤 User input transcribed (complete): {transcript}")
+                        
+                        # Save user transcript to database
+                        if transcript and self.voice_session:
+                            self.current_user_transcript = transcript
+                            print(f"💾 Saving user transcript to session {self.voice_session.session_id}")
                         
                         if self.django_consumer and transcript:
                             message = {
@@ -1652,3 +1698,209 @@ Remember: You're having a natural voice conversation in ENGLISH ONLY, so speak a
                 "silence_duration_ms": 200
             }
         }
+
+
+class VoiceTranscriptService:
+    """Service untuk menyimpan transcript dari realtime voice sessions"""
+    
+    def __init__(self, assistant):
+        self.assistant = assistant
+    
+    def create_voice_session(self, source='test_voice_realtime'):
+        """Create new voice session for transcript storage"""
+        return ChatSession.objects.create(
+            assistant=self.assistant,
+            openai_thread_id=None,  # Voice sessions don't use OpenAI threads
+            source=source
+        )
+    
+    def save_transcript(self, session, user_transcript=None, assistant_response=None):
+        """Save voice transcript to database"""
+        try:
+            # Save user transcript if available
+            if user_transcript and user_transcript.strip():
+                ChatMessage.objects.create(
+                    session=session,
+                    message_type='user',
+                    content=user_transcript,
+                    is_voice=True
+                )
+            
+            # Save assistant response if available
+            if assistant_response and assistant_response.strip():
+                ChatMessage.objects.create(
+                    session=session,
+                    message_type='assistant', 
+                    content=assistant_response,
+                    is_voice=True
+                )
+                
+            return True
+        except Exception as e:
+            print(f"Error saving voice transcript: {e}")
+            return False
+    
+    def get_session_history(self, session_id):
+        """Get voice session history"""
+        try:
+            session = ChatSession.objects.get(
+                session_id=session_id,
+                assistant=self.assistant
+            )
+            messages = ChatMessage.objects.filter(
+                session=session
+            ).order_by('created_at')
+            
+            return {
+                'session': session,
+                'messages': [
+                    {
+                        'type': msg.message_type,
+                        'content': msg.content,
+                        'timestamp': msg.created_at,
+                        'is_voice': msg.is_voice
+                    }
+                    for msg in messages
+                ]
+            }
+        except ChatSession.DoesNotExist:
+            return None
+
+
+class SessionHistoryService:
+    """Service untuk mengelola session history per user"""
+    
+    def __init__(self, user):
+        self.user = user
+    
+    def get_user_sessions(self, source_filter=None, limit=50):
+        """Get all sessions for user dengan optional filter berdasarkan source"""
+        try:
+            # Get user's assistant
+            assistant = AIAssistant.objects.get(user=self.user)
+            
+            # Build query
+            query = ChatSession.objects.filter(assistant=assistant)
+            
+            # Apply source filter if provided
+            if source_filter:
+                query = query.filter(source=source_filter)
+            
+            # Order by most recent and limit
+            sessions = query.order_by('-updated_at')[:limit]
+            
+            result = []
+            for session in sessions:
+                # Get message count and last activity
+                messages = ChatMessage.objects.filter(session=session)
+                message_count = messages.count()
+                last_message = messages.order_by('-created_at').first()
+                
+                result.append({
+                    'session_id': str(session.session_id),
+                    'source': session.source,
+                    'created_at': session.created_at,
+                    'updated_at': session.updated_at,
+                    'message_count': message_count,
+                    'last_message': {
+                        'content': last_message.content[:100] + '...' if last_message and len(last_message.content) > 100 else last_message.content if last_message else None,
+                        'type': last_message.message_type if last_message else None,
+                        'timestamp': last_message.created_at if last_message else None
+                    } if last_message else None
+                })
+            
+            return result
+            
+        except AIAssistant.DoesNotExist:
+            return []
+    
+    def get_session_detail(self, session_id):
+        """Get detailed session information with all messages"""
+        try:
+            assistant = AIAssistant.objects.get(user=self.user)
+            session = ChatSession.objects.get(
+                session_id=session_id,
+                assistant=assistant
+            )
+            
+            messages = ChatMessage.objects.filter(
+                session=session
+            ).order_by('created_at')
+            
+            return {
+                'session_id': str(session.session_id),
+                'source': session.source,
+                'created_at': session.created_at,
+                'updated_at': session.updated_at,
+                'messages': [
+                    {
+                        'id': msg.id,
+                        'type': msg.message_type,
+                        'content': msg.content,
+                        'is_voice': msg.is_voice,
+                        'timestamp': msg.created_at
+                    }
+                    for msg in messages
+                ]
+            }
+            
+        except (AIAssistant.DoesNotExist, ChatSession.DoesNotExist):
+            return None
+    
+    def delete_session(self, session_id):
+        """Delete a session and all its messages"""
+        try:
+            assistant = AIAssistant.objects.get(user=self.user)
+            session = ChatSession.objects.get(
+                session_id=session_id,
+                assistant=assistant
+            )
+            
+            # Delete all messages first
+            ChatMessage.objects.filter(session=session).delete()
+            
+            # Delete the session
+            session.delete()
+            
+            return True, "Session deleted successfully"
+            
+        except AIAssistant.DoesNotExist:
+            return False, "Assistant not found"
+        except ChatSession.DoesNotExist:
+            return False, "Session not found"
+        except Exception as e:
+            return False, f"Error deleting session: {str(e)}"
+    
+    def get_session_stats(self):
+        """Get statistics about user's sessions"""
+        try:
+            assistant = AIAssistant.objects.get(user=self.user)
+            sessions = ChatSession.objects.filter(assistant=assistant)
+            
+            stats = {
+                'total_sessions': sessions.count(),
+                'by_source': {},
+                'total_messages': 0
+            }
+            
+            # Count by source
+            for source, label in ChatSession.SOURCE_CHOICES:
+                count = sessions.filter(source=source).count()
+                stats['by_source'][source] = {
+                    'label': label,
+                    'count': count
+                }
+            
+            # Count total messages
+            stats['total_messages'] = ChatMessage.objects.filter(
+                session__assistant=assistant
+            ).count()
+            
+            return stats
+            
+        except AIAssistant.DoesNotExist:
+            return {
+                'total_sessions': 0,
+                'by_source': {},
+                'total_messages': 0
+            }

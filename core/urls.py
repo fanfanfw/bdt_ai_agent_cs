@@ -20,6 +20,14 @@ urlpatterns = [
     path('edit-knowledge-base/', views.edit_knowledge_base_view, name='edit_knowledge_base'),
     path('edit-business-type/', views.edit_business_type_view, name='edit_business_type'),
     path('widget-generator/', views.widget_generator_view, name='widget_generator'),
+    path('load-widget-config/<int:config_id>/', views.load_widget_config_view, name='load_widget_config'),
+    path('delete-widget-config/<int:config_id>/', views.delete_widget_config_view, name='delete_widget_config'),
+    path('copy-widget-code/<int:config_id>/', views.copy_widget_code_view, name='copy_widget_code'),
+    
+    # Session History
+    path('session-history/', views.session_history_view, name='session_history'),
+    path('session-detail/<uuid:session_id>/', views.session_detail_view, name='session_detail'),
+    path('delete-session/<uuid:session_id>/', views.delete_session_view, name='delete_session'),
     
     # Custom admin route - akan ditangani oleh middleware
     path('admin/', views.admin_redirect_view, name='admin_redirect'),

@@ -167,8 +167,10 @@
                         position: absolute;
                         bottom: 80px;
                         right: 0;
-                        width: 350px;
-                        height: 500px;
+                        width: 380px;
+                        height: 520px;
+                        max-height: 80vh;
+                        max-width: 90vw;
                         background: ${isDark ? '#2d2d2d' : '#ffffff'};
                         border-radius: ${this.getBorderRadius()};
                         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
@@ -179,6 +181,7 @@
                         display: flex;
                         flex-direction: column;
                         overflow: hidden;
+                        z-index: 999999;
                     }
 
                     .widget-panel.open {
@@ -237,13 +240,37 @@
                         flex: 1;
                         padding: 16px;
                         overflow-y: auto;
+                        overflow-x: hidden;
                         background: ${isDark ? '#1a1a1a' : '#ffffff'};
+                        max-height: calc(100vh - 200px);
+                        scrollbar-width: thin;
+                        scrollbar-color: ${isDark ? '#555 #333' : '#ccc #f1f1f1'};
+                    }
+                    
+                    .chat-messages::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    
+                    .chat-messages::-webkit-scrollbar-track {
+                        background: ${isDark ? '#333' : '#f1f1f1'};
+                        border-radius: 3px;
+                    }
+                    
+                    .chat-messages::-webkit-scrollbar-thumb {
+                        background: ${isDark ? '#555' : '#ccc'};
+                        border-radius: 3px;
+                    }
+                    
+                    .chat-messages::-webkit-scrollbar-thumb:hover {
+                        background: ${isDark ? '#777' : '#999'};
                     }
                     
                     .message {
                         margin-bottom: 16px;
                         display: flex;
                         max-width: 80%;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
                     }
                     
                     .message.user {
@@ -265,8 +292,14 @@
                     .message-content {
                         padding: 12px 16px;
                         word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        white-space: pre-wrap;
                         font-size: 14px;
                         line-height: 1.4;
+                        max-width: 100%;
+                        min-width: 0;
+                        flex: 1;
+                        border-radius: 18px;
                     }
 
                     .chat-input {
@@ -495,14 +528,32 @@
                         .widget-panel {
                             width: 100vw;
                             height: 100vh;
+                            max-height: 100vh;
+                            max-width: 100vw;
                             right: 0;
                             bottom: 0;
                             border-radius: 0;
                         }
                         
+                        .chat-messages {
+                            max-height: calc(100vh - 150px);
+                        }
+                        
                         :host {
                             bottom: 20px;
                             right: 20px;
+                        }
+                    }
+                    
+                    @media (max-width: 768px) {
+                        .widget-panel {
+                            width: calc(100vw - 40px);
+                            max-width: calc(100vw - 40px);
+                            right: 20px;
+                        }
+                        
+                        .chat-messages {
+                            max-height: calc(80vh - 150px);
                         }
                     }
                 </style>
@@ -709,7 +760,14 @@
             
             messageDiv.appendChild(messageContent);
             messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Smooth scroll to bottom with better behavior
+            setTimeout(() => {
+                messagesContainer.scrollTo({
+                    top: messagesContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
 
         // ===== REALTIME VOICE FUNCTIONALITY =====

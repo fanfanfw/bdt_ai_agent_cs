@@ -130,7 +130,8 @@ class WidgetChatAPIView(WidgetAPIView):
             session_id, response = chat_service.process_message(
                 message=message,
                 session_id=session_id,
-                is_voice=False
+                is_voice=False,
+                source='widget_chat'
             )
             
             print(f"Widget Chat API - Response generated: '{response[:100]}...' Session: {session_id}")
