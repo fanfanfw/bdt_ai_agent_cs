@@ -4,9 +4,9 @@ from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views import View
 import json
-import base64
-from .models import AIAssistant
-from .services import ChatService
+
+from ..models import AIAssistant
+from ..services import ChatService
 
 
 def add_cors_headers(response):

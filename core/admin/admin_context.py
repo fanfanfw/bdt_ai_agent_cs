@@ -1,5 +1,5 @@
-from .models import UserProfile
-from .user_utils import RegularUserQuerySet
+from ..models import UserProfile
+from ..utils.user_utils import RegularUserQuerySet
 
 
 def admin_context(request):

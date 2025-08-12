@@ -63,15 +63,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.admin_middleware.AdminRedirectMiddleware',  # Harus sebelum AdminUserSeparationMiddleware
-    'core.admin_middleware.AdminUserSeparationMiddleware',
+    'core.admin.admin_middleware.AdminRedirectMiddleware',  # Harus sebelum AdminUserSeparationMiddleware
+    'core.admin.admin_middleware.AdminUserSeparationMiddleware',
     'core.middleware.SubscriptionEnforcementMiddleware',
     'core.middleware.ApiUsageTrackingMiddleware',
 ]
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
-    'core.backends.ApprovalRequiredBackend',
+    'core.utils.backends.ApprovalRequiredBackend',
     # ModelBackend removed to prevent bypassing approval check
 ]
 
@@ -87,7 +87,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'core.admin_context.admin_context',
+                'core.admin.admin_context.admin_context',
             ],
         },
     },

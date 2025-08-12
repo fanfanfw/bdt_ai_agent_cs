@@ -1,6 +1,6 @@
 from django.urls import path
-from . import admin_views
-from .admin_auth import admin_logout_view
+from ..admin import admin_views
+from ..admin.admin_auth import admin_logout_view
 
 admin_urlpatterns = [
     # Admin authentication (logout only, login uses regular login page)

@@ -22,7 +22,6 @@ from django.conf.urls.static import static
 urlpatterns = [
     # Django admin dihapus - diganti dengan custom admin dashboard
     # path('admin/', admin.site.urls),  # Dikomentari untuk menggunakan custom admin
-    path('api/', include('core.api_urls')),
     path('', include('core.urls')),
 ]
 

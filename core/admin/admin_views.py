@@ -7,9 +7,9 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 
-from .models import UserProfile, AIAssistant, ApiUsageLog, ChatSession, ChatMessage, KnowledgeBase, SubscriptionPlan
+from ..models import UserProfile, AIAssistant, ApiUsageLog, ChatSession, ChatMessage, KnowledgeBase, SubscriptionPlan
 from .admin_auth import admin_required
-from .user_utils import RegularUserQuerySet
+from ..utils.user_utils import RegularUserQuerySet
 
 
 @admin_required

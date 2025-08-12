@@ -27,7 +27,7 @@ class VoiceConsumer(AsyncWebsocketConsumer):
             
         # Get user's assistant
         try:
-            from .models import AIAssistant
+            from ..models import AIAssistant
             self.assistant = await database_sync_to_async(
                 AIAssistant.objects.get
             )(user=self.scope["user"])
@@ -120,7 +120,7 @@ class VoiceConsumer(AsyncWebsocketConsumer):
                 
             # Initialize voice service if not done yet
             if not self.voice_service:
-                from .services import RealtimeVoiceService
+                from ..services import RealtimeVoiceService
                 self.voice_service = RealtimeVoiceService(self.assistant)
             
             # Set language preference in voice service
@@ -276,7 +276,7 @@ class WidgetVoiceConsumer(AsyncWebsocketConsumer):
         
         # Authenticate using API key and assistant ID
         try:
-            from .models import AIAssistant
+            from ..models import AIAssistant
             self.assistant = await database_sync_to_async(
                 AIAssistant.objects.get
             )(api_key=api_key, id=assistant_id)
@@ -361,7 +361,7 @@ class WidgetVoiceConsumer(AsyncWebsocketConsumer):
             
             # Initialize voice service
             if not self.voice_service:
-                from .services import RealtimeVoiceService
+                from ..services import RealtimeVoiceService
                 self.voice_service = RealtimeVoiceService(self.assistant)
             
             # Set language preference
