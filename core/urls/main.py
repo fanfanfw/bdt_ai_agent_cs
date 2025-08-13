@@ -3,7 +3,6 @@ from ..views.auth import home, custom_login_view, logout_view, register_view, ad
 from ..views.dashboard import dashboard, business_type_selection, qna_customization, knowledge_base_setup, usage_stats_api
 from ..views.assistant import edit_qna_view, edit_knowledge_base_view, edit_business_type_view
 from ..views.testing import test_chat_view, test_realtime_voice_view
-from ..views.widget import widget_generator_view, load_widget_config_view, delete_widget_config_view, copy_widget_code_view
 from ..views.session import session_history_view, session_detail_view, delete_session_view
 from ..views.language import switch_language, get_current_language
 
@@ -30,11 +29,6 @@ urlpatterns = [
     path('test-chat/', test_chat_view, name='test_chat'),
     path('test-realtime-voice/', test_realtime_voice_view, name='test_realtime_voice'),
     
-    # Widget views
-    path('widget-generator/', widget_generator_view, name='widget_generator'),
-    path('load-widget-config/<int:config_id>/', load_widget_config_view, name='load_widget_config'),
-    path('delete-widget-config/<int:config_id>/', delete_widget_config_view, name='delete_widget_config'),
-    path('copy-widget-code/<int:config_id>/', copy_widget_code_view, name='copy_widget_code'),
     
     # Session History views
     path('session-history/', session_history_view, name='session_history'),

@@ -6,26 +6,17 @@
 (function() {
     'use strict';
 
-    // Widget configuration defaults
+    // Widget configuration defaults - Modern Standardized Design
     const DEFAULT_CONFIG = {
-        mode: 'chat', // 'chat', 'voice', 'both'
-        theme: 'light', // 'light', 'dark'
-        baseBgColor: '#ffffff',
-        accentColor: '#007bff',
-        ctaButtonColor: '#007bff',
-        ctaButtonTextColor: '#ffffff',
-        borderRadius: 'medium', // 'small', 'medium', 'large'
-        size: 'medium', // 'small', 'medium', 'large', 'full'
-        position: 'bottom-right', // 'bottom-right', 'bottom-left', 'top-right', 'top-left'
+        mode: 'both', // Always enable both chat and voice
+        theme: 'modern', // Standardized modern theme
         title: 'AI Assistant',
-        startButtonText: 'Start Chat',
-        endButtonText: 'End Chat',
-        chatFirstMessage: 'Hello! How can I help you today?',
+        chatFirstMessage: 'Hi there! 👋 How can I help you today?',
         chatPlaceholder: 'Type your message...',
         voiceShowTranscript: 'true',
         consentRequired: 'false',
-        consentTitle: 'Terms and Conditions',
-        consentContent: 'By using this chat, you agree to our terms of service.',
+        consentTitle: 'Privacy Notice',
+        consentContent: 'This chat uses AI to provide assistance. Your conversations help us improve our service.',
         consentStorageKey: 'ai_agent_widget_consent'
     };
 
@@ -125,7 +116,20 @@
         }
 
         render() {
+            // Define theme variables with custom color palette
             const isDark = this.config.theme === 'dark';
+            
+            // Custom Color Palette
+            const colors = {
+                primary: '#00ADB5',        // Cyan/Teal - for accent elements
+                darkBg: '#222831',         // Dark gray - main dark background
+                mediumBg: '#393E46',       // Medium gray - secondary elements
+                lightBg: '#EEEEEE',        // Light gray - main light background
+                text: isDark ? '#EEEEEE' : '#222831',
+                textSecondary: isDark ? '#EEEEEE' : '#393E46',
+                border: isDark ? '#393E46' : '#E0E0E0',
+                shadow: isDark ? 'rgba(34, 40, 49, 0.3)' : 'rgba(57, 62, 70, 0.15)'
+            };
             
             this.shadowRoot.innerHTML = `
                 <style>
@@ -137,47 +141,73 @@
 
                     :host {
                         position: fixed;
+                        bottom: 24px;
+                        right: 24px;
                         z-index: 9999;
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                        ${this.getPositionStyles()}
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
                     }
 
+                    /* Modern Toggle Button with Gradient */
                     .widget-toggle {
-                        width: 60px;
-                        height: 60px;
+                        width: 64px;
+                        height: 64px;
                         border-radius: 50%;
-                        background: ${this.config.ctaButtonColor};
-                        color: ${this.config.ctaButtonTextColor};
+                        background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.mediumBg} 100%);
+                        color: white;
                         border: none;
                         cursor: pointer;
                         font-size: 24px;
-                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                        transition: all 0.3s ease;
+                        box-shadow: 0 8px 32px rgba(0, 173, 181, 0.3);
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                         display: flex;
                         align-items: center;
                         justify-content: center;
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .widget-toggle:before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+                        border-radius: inherit;
+                        transition: opacity 0.3s ease;
                     }
 
                     .widget-toggle:hover {
-                        transform: scale(1.1);
-                        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+                        transform: scale(1.05) translateY(-2px);
+                        box-shadow: 0 12px 48px rgba(0, 173, 181, 0.4);
                     }
 
+                    .widget-toggle:active {
+                        transform: scale(0.95);
+                    }
+
+                    /* Modern Widget Panel with Glassmorphism */
                     .widget-panel {
                         position: absolute;
-                        bottom: 80px;
+                        bottom: 84px;
                         right: 0;
-                        width: 380px;
-                        height: 520px;
-                        max-height: 80vh;
-                        max-width: 90vw;
-                        background: ${isDark ? '#2d2d2d' : '#ffffff'};
-                        border-radius: ${this.getBorderRadius()};
-                        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-                        transform: scale(0.8) translateY(20px);
+                        width: 400px;
+                        height: 600px;
+                        max-height: 85vh;
+                        max-width: 95vw;
+                        background: ${isDark ? colors.darkBg : colors.lightBg};
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        border-radius: 24px;
+                        border: 1px solid ${colors.border};
+                        box-shadow: 0 20px 64px ${colors.shadow};
+                        transform: scale(0.85) translateY(40px);
                         opacity: 0;
                         visibility: hidden;
-                        transition: all 0.3s ease;
+                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                         display: flex;
                         flex-direction: column;
                         overflow: hidden;
@@ -190,33 +220,63 @@
                         visibility: visible;
                     }
 
+                    /* Modern Gradient Header */
                     .widget-header {
-                        background: ${this.config.accentColor};
+                        background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.mediumBg} 100%);
                         color: white;
-                        padding: 16px;
+                        padding: 20px;
                         text-align: center;
                         font-weight: 600;
+                        font-size: 18px;
+                        letter-spacing: -0.02em;
+                        position: relative;
+                        border-radius: 24px 24px 0 0;
                     }
 
+                    .widget-header:before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+                        border-radius: inherit;
+                    }
+
+                    /* Modern Mode Toggle */
                     .widget-modes {
                         display: flex;
-                        background: ${isDark ? '#3d3d3d' : '#f8f9fa'};
+                        background: ${isDark ? colors.mediumBg : 'rgba(238, 238, 238, 0.8)'};
+                        backdrop-filter: blur(10px);
+                        border-bottom: 1px solid ${colors.border};
+                        padding: 8px;
                     }
 
                     .mode-button {
                         flex: 1;
-                        padding: 12px;
+                        padding: 12px 16px;
                         border: none;
                         background: transparent;
-                        color: ${isDark ? '#fff' : '#666'};
+                        color: ${colors.textSecondary};
                         cursor: pointer;
                         font-size: 14px;
-                        transition: all 0.3s ease;
+                        font-weight: 500;
+                        border-radius: 12px;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        position: relative;
+                        margin: 0 4px;
                     }
 
                     .mode-button.active {
-                        background: ${this.config.accentColor};
-                        color: white;
+                        background: rgba(0, 173, 181, 0.1);
+                        color: ${colors.primary};
+                        transform: translateY(-1px);
+                    }
+
+                    .mode-button:hover:not(.active) {
+                        background: ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
+                        color: ${colors.text};
                     }
 
                     .widget-content {
@@ -230,126 +290,182 @@
                         flex: 1;
                         display: none;
                         flex-direction: column;
+                        /* Ensure proper flex layout */
+                        height: 100%;
+                        min-height: 0;
                     }
                     
                     .chat-container.active, .voice-container.active {
                         display: flex;
                     }
                     
+                    /* Modern Chat Messages Area - Fixed Scroll with Proper Flex */
                     .chat-messages {
                         flex: 1;
-                        padding: 16px;
+                        padding: 20px;
                         overflow-y: auto;
                         overflow-x: hidden;
-                        background: ${isDark ? '#1a1a1a' : '#ffffff'};
-                        max-height: calc(100vh - 200px);
+                        background: transparent;
                         scrollbar-width: thin;
-                        scrollbar-color: ${isDark ? '#555 #333' : '#ccc #f1f1f1'};
+                        scrollbar-color: rgba(0, 173, 181, 0.3) transparent;
+                        scroll-behavior: smooth;
+                        /* Ensure it takes available space but doesn't overflow */
+                        min-height: 0;
+                        height: 0;
                     }
                     
                     .chat-messages::-webkit-scrollbar {
-                        width: 6px;
+                        width: 4px;
                     }
                     
                     .chat-messages::-webkit-scrollbar-track {
-                        background: ${isDark ? '#333' : '#f1f1f1'};
-                        border-radius: 3px;
+                        background: transparent;
                     }
                     
                     .chat-messages::-webkit-scrollbar-thumb {
-                        background: ${isDark ? '#555' : '#ccc'};
-                        border-radius: 3px;
+                        background: rgba(0, 173, 181, 0.2);
+                        border-radius: 8px;
                     }
                     
                     .chat-messages::-webkit-scrollbar-thumb:hover {
-                        background: ${isDark ? '#777' : '#999'};
+                        background: rgba(0, 173, 181, 0.4);
                     }
                     
+                    /* Modern Chat Messages */
                     .message {
-                        margin-bottom: 16px;
+                        margin-bottom: 20px;
                         display: flex;
-                        max-width: 80%;
+                        max-width: 85%;
                         word-wrap: break-word;
                         overflow-wrap: break-word;
+                        animation: slideIn 0.3s ease-out;
+                    }
+                    
+                    @keyframes slideIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
                     }
                     
                     .message.user {
                         margin-left: auto;
+                        justify-content: flex-end;
                     }
                     
                     .message.user .message-content {
-                        background: ${this.config.accentColor};
+                        background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.mediumBg} 100%);
                         color: white;
-                        border-radius: 18px 18px 4px 18px;
+                        border-radius: 20px 20px 4px 20px;
+                        box-shadow: 0 4px 16px rgba(0, 173, 181, 0.2);
                     }
                     
                     .message.assistant .message-content {
-                        background: ${isDark ? '#444' : '#f0f0f0'};
-                        color: ${isDark ? '#fff' : '#333'};
-                        border-radius: 18px 18px 18px 4px;
+                        background: ${isDark ? colors.mediumBg : 'rgba(238, 238, 238, 0.8)'};
+                        color: ${colors.text};
+                        border-radius: 20px 20px 20px 4px;
+                        border: 1px solid ${colors.border};
+                        backdrop-filter: blur(10px);
                     }
                     
                     .message-content {
-                        padding: 12px 16px;
+                        padding: 14px 18px;
                         word-wrap: break-word;
                         overflow-wrap: break-word;
                         white-space: pre-wrap;
                         font-size: 14px;
-                        line-height: 1.4;
+                        line-height: 1.5;
                         max-width: 100%;
                         min-width: 0;
                         flex: 1;
-                        border-radius: 18px;
+                        font-weight: 400;
+                        letter-spacing: -0.01em;
                     }
 
+                    /* Modern Chat Input - Fixed Position */
                     .chat-input {
                         display: flex;
-                        padding: 16px;
-                        background: ${isDark ? '#2d2d2d' : '#ffffff'};
-                        border-top: 1px solid ${isDark ? '#444' : '#eee'};
+                        padding: 20px;
+                        background: ${isDark ? colors.darkBg : colors.lightBg};
+                        backdrop-filter: blur(10px);
+                        border-top: 1px solid ${colors.border};
+                        align-items: center;
+                        gap: 12px;
+                        border-radius: 0 0 24px 24px;
+                        /* Ensure input stays at bottom */
+                        flex-shrink: 0;
+                        position: relative;
+                        z-index: 1;
                     }
 
                     .chat-input input {
                         flex: 1;
-                        padding: 12px;
-                        border: 1px solid ${isDark ? '#555' : '#ddd'};
+                        padding: 14px 18px;
+                        border: 1px solid ${colors.border};
                         border-radius: 24px;
-                        background: ${isDark ? '#444' : '#fff'};
-                        color: ${isDark ? '#fff' : '#333'};
+                        background: ${isDark ? colors.mediumBg : 'rgba(255, 255, 255, 0.9)'};
+                        color: ${colors.text};
                         outline: none;
                         font-size: 14px;
-                        margin-right: 8px;
+                        font-weight: 400;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        backdrop-filter: blur(10px);
+                    }
+
+                    .chat-input input:focus {
+                        border-color: ${colors.primary};
+                        box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+                        background: ${isDark ? colors.mediumBg : 'rgba(255, 255, 255, 1)'};
+                    }
+
+                    .chat-input input::placeholder {
+                        color: ${colors.textSecondary};
+                        opacity: 0.7;
                     }
 
                     .chat-input button {
-                        padding: 12px 16px;
-                        background: ${this.config.accentColor};
+                        padding: 14px 18px;
+                        background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.mediumBg} 100%);
                         color: white;
                         border: none;
                         border-radius: 24px;
                         cursor: pointer;
                         font-size: 14px;
-                        transition: background 0.3s ease;
+                        font-weight: 500;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 0 4px 16px rgba(0, 173, 181, 0.2);
+                        min-width: 60px;
                     }
 
                     .chat-input button:hover:not(:disabled) {
-                        opacity: 0.9;
+                        transform: translateY(-1px);
+                        box-shadow: 0 6px 20px rgba(0, 173, 181, 0.3);
+                    }
+
+                    .chat-input button:active:not(:disabled) {
+                        transform: translateY(0);
                     }
 
                     .chat-input button:disabled {
                         opacity: 0.5;
                         cursor: not-allowed;
+                        transform: none;
+                        box-shadow: 0 4px 16px rgba(0, 173, 181, 0.1);
                     }
 
                     /* Voice Container Styles */
                     .voice-container {
                         padding: 20px;
                         text-align: center;
-                        background: ${isDark ? '#1a1a1a' : '#ffffff'};
+                        background: ${isDark ? colors.darkBg : colors.lightBg};
                     }
                     
                     .voice-status {
-                        color: ${isDark ? '#fff' : '#666'};
+                        color: ${colors.text};
                         margin-bottom: 20px;
                         font-size: 16px;
                         font-weight: 500;
@@ -359,7 +475,7 @@
                         width: 100px;
                         height: 100px;
                         border-radius: 50%;
-                        background: ${this.config.accentColor};
+                        background: ${colors.primary};
                         color: white;
                         border: none;
                         cursor: pointer;
@@ -369,7 +485,7 @@
                         font-size: 32px;
                         margin: 20px auto;
                         transition: all 0.3s ease;
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                        box-shadow: 0 4px 15px ${colors.shadow};
                     }
                     
                     .voice-button:hover {
@@ -377,7 +493,7 @@
                     }
                     
                     .voice-button.active {
-                        background: #dc3545;
+                        background: ${colors.mediumBg};
                         animation: pulse 1.5s infinite;
                     }
                     
@@ -419,7 +535,7 @@
                     }
                     
                     .transcript-user {
-                        color: ${this.config.accentColor};
+                        color: ${this.config.accentColor || '#007bff'};
                         font-weight: 600;
                     }
                     
@@ -482,7 +598,7 @@
                     }
 
                     .consent-accept {
-                        background: ${this.config.accentColor};
+                        background: ${this.config.accentColor || '#007bff'};
                         color: white;
                     }
 
@@ -535,8 +651,26 @@
                             border-radius: 0;
                         }
                         
+                        .widget-content {
+                            height: calc(100vh - 140px);
+                        }
+                        
+                        .chat-container {
+                            height: 100%;
+                        }
+                        
                         .chat-messages {
-                            max-height: calc(100vh - 150px);
+                            /* Make sure messages area doesn't push input out */
+                            flex: 1;
+                            min-height: 0;
+                            height: calc(100% - 100px);
+                        }
+                        
+                        .chat-input {
+                            /* Fixed at bottom on mobile */
+                            position: sticky;
+                            bottom: 0;
+                            flex-shrink: 0;
                         }
                         
                         :host {
@@ -550,30 +684,58 @@
                             width: calc(100vw - 40px);
                             max-width: calc(100vw - 40px);
                             right: 20px;
+                            height: 600px;
+                            max-height: 80vh;
+                        }
+                        
+                        .widget-content {
+                            height: calc(100% - 120px);
+                        }
+                        
+                        .chat-container {
+                            height: 100%;
                         }
                         
                         .chat-messages {
-                            max-height: calc(80vh - 150px);
+                            flex: 1;
+                            min-height: 0;
+                            height: calc(100% - 100px);
+                        }
+                        
+                        .chat-input {
+                            flex-shrink: 0;
                         }
                     }
                 </style>
 
-                <div class="widget-toggle" id="widgetToggle">💬</div>
+                <div class="widget-toggle" id="widgetToggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                    </svg>
+                </div>
                 
                 <div class="widget-panel" id="widgetPanel">
                     <div class="widget-header">
                         ${this.config.title}
                     </div>
                     
-                    ${(this.config.mode === 'both') ? `
                     <div class="widget-modes">
-                        <button class="mode-button active" data-mode="chat">💬 Chat</button>
-                        <button class="mode-button" data-mode="voice">🎤 Voice</button>
+                        <button class="mode-button active" data-mode="chat">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
+                                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                            </svg>
+                            Chat
+                        </button>
+                        <button class="mode-button" data-mode="voice">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
+                                <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                            </svg>
+                            Voice
+                        </button>
                     </div>
-                    ` : ''}
                     
                     <div class="widget-content">
-                        <div class="chat-container ${this.config.mode === 'chat' || this.config.mode === 'both' ? 'active' : ''}">
+                        <div class="chat-container active">
                             <div class="chat-messages" id="chatMessages">
                                 <div class="message assistant">
                                     <div class="message-content">${this.config.chatFirstMessage}</div>
@@ -585,9 +747,13 @@
                             </div>
                         </div>
                         
-                        <div class="voice-container ${this.config.mode === 'voice' ? 'active' : ''}">
+                        <div class="voice-container">
                             <div class="voice-status" id="voiceStatus">Click to start conversation</div>
-                            <button class="voice-button" id="voiceButton">🎤</button>
+                            <button class="voice-button" id="voiceButton">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                                </svg>
+                            </button>
                             ${this.config.voiceShowTranscript === 'true' ? '<div class="voice-transcript" id="voiceTranscript">Conversation will appear here...</div>' : ''}
                             <div id="voiceError" class="error" style="display: none;"></div>
                         </div>
@@ -685,7 +851,21 @@
             
             this.isOpen = !this.isOpen;
             panel.classList.toggle('open', this.isOpen);
-            button.textContent = this.isOpen ? '×' : '💬';
+            
+            // Update button icon with SVG
+            if (this.isOpen) {
+                button.innerHTML = `
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                `;
+            } else {
+                button.innerHTML = `
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                    </svg>
+                `;
+            }
             
             // Stop voice if closing widget
             if (!this.isOpen && this.isVoiceActive) {
@@ -1025,7 +1205,7 @@
                     this.isVoiceActive = true;
                     this.voiceSessionId = data.session_id;
                     this.updateVoiceButton(true);
-                    this.updateVoiceStatus('🟢 Listening... Speak naturally');
+                    this.updateVoiceStatus('Listening... Speak naturally');
                     break;
                     
                 case 'voice_stopped':
@@ -1034,14 +1214,14 @@
                     
                 case 'user_transcript_delta':
                     // Show live transcription
-                    this.updateVoiceStatus(`🎤 "${data.delta}"`);
+                    this.updateVoiceStatus(`"${data.delta}"`);
                     break;
                     
                 case 'user_transcript':
                     // Complete user transcription
                     if (data.transcript) {
                         this.addVoiceTranscript(data.transcript, 'user');
-                        this.updateVoiceStatus('🤖 AI is responding...');
+                        this.updateVoiceStatus('AI is responding...');
                     }
                     break;
                     
@@ -1049,7 +1229,7 @@
                     // AI text response
                     if (data.text) {
                         this.addVoiceTranscript(data.text, 'assistant');
-                        this.updateVoiceStatus('🟢 Listening... Speak naturally');
+                        this.updateVoiceStatus('Listening... Speak naturally');
                     }
                     break;
                     
@@ -1084,10 +1264,20 @@
             if (voiceButton) {
                 if (isActive) {
                     voiceButton.classList.add('active');
-                    voiceButton.textContent = '🛑';
+                    // Stop icon (square)
+                    voiceButton.innerHTML = `
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 6h12v12H6z"/>
+                        </svg>
+                    `;
                 } else {
                     voiceButton.classList.remove('active');
-                    voiceButton.textContent = '🎤';
+                    // Microphone icon
+                    voiceButton.innerHTML = `
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                        </svg>
+                    `;
                 }
                 voiceButton.disabled = this.isVoiceConnecting;
             }
