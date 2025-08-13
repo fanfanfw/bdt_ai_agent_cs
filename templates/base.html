@@ -5,155 +5,391 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AI Agent Customer Service{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --color-light: #DDDDDD;
-            --color-dark: #222831;
-            --color-blue: #30475E;
-            --color-red: #F05454;
+            /* Modern Color Palette - Consistent with Widget */
+            --primary: #00ADB5;
+            --dark-bg: #222831;
+            --medium-bg: #393E46;
+            --light-bg: #EEEEEE;
+            --white: #FFFFFF;
+            --text-primary: #222831;
+            --text-secondary: #393E46;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --shadow: rgba(57, 62, 70, 0.15);
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, var(--primary), var(--medium-bg));
+            --gradient-dark: linear-gradient(135deg, var(--dark-bg), var(--medium-bg));
+            --gradient-light: linear-gradient(135deg, #F8FAFC, var(--light-bg));
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            background-color: var(--color-light);
-            color: var(--color-dark);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gradient-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
         
-        .navbar {
-            background-color: var(--color-dark) !important;
+        /* Modern Navbar */
+        .navbar-modern {
+            background: rgba(34, 40, 49, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
         
-        .navbar-brand, .navbar-nav .nav-link {
-            color: var(--color-light) !important;
-        }
-        
-        .btn-primary {
-            background-color: var(--color-blue);
-            border-color: var(--color-blue);
-        }
-        
-        .btn-primary:hover {
-            background-color: #2a3d52;
-            border-color: #2a3d52;
-        }
-        
-        .btn-danger {
-            background-color: var(--color-red);
-            border-color: var(--color-red);
-        }
-        
-        .btn-danger:hover {
-            background-color: #e04848;
-            border-color: #e04848;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card-header {
-            background-color: var(--color-blue);
-            color: white;
-            border-radius: 12px 12px 0 0 !important;
-        }
-        
-        .form-control:focus {
-            border-color: var(--color-blue);
-            box-shadow: 0 0 0 0.2rem rgba(48, 71, 94, 0.25);
-        }
-        
-        .alert-success {
-            background-color: rgba(48, 71, 94, 0.1);
-            border-color: var(--color-blue);
-            color: var(--color-dark);
-        }
-        
-        .alert-danger {
-            background-color: rgba(240, 84, 84, 0.1);
-            border-color: var(--color-red);
-            color: var(--color-dark);
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, var(--color-blue), var(--color-dark));
-            color: white;
-            padding: 80px 0;
-        }
-        
-        .feature-card {
-            transition: transform 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 2rem;
-        }
-        
-        .step {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--color-light);
-            border: 2px solid var(--color-blue);
+        .navbar-brand-modern {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white) !important;
+            text-decoration: none;
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin: 0 10px;
-            font-weight: bold;
-            color: var(--color-blue);
+            gap: 0.5rem;
         }
         
-        .step.active {
-            background-color: var(--color-blue);
-            color: white;
+        .navbar-brand-modern i {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.75rem;
         }
         
-        .step.completed {
-            background-color: #28a745;
-            border-color: #28a745;
-            color: white;
+        .nav-link-modern {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-link-modern:hover {
+            color: var(--white) !important;
+            background: rgba(0, 173, 181, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .nav-link-modern.active {
+            color: var(--white) !important;
+            background: rgba(0, 173, 181, 0.2);
+        }
+        
+        .dropdown-menu-modern {
+            background: rgba(34, 40, 49, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .dropdown-item-modern {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .dropdown-item-modern:hover {
+            background: rgba(0, 173, 181, 0.1);
+            color: var(--white);
+            transform: translateX(4px);
+        }
+        
+        .navbar-toggler-modern {
+            border: none;
+            padding: 0.5rem;
+            background: rgba(0, 173, 181, 0.1);
+            border-radius: 8px;
+        }
+        
+        .navbar-toggler-modern:focus {
+            box-shadow: 0 0 0 2px rgba(0, 173, 181, 0.3);
+        }
+        
+        /* Modern Cards */
+        .card-modern {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        
+        .card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 40px rgba(57, 62, 70, 0.2);
+        }
+        
+        .card-header-modern {
+            background: var(--gradient-primary);
+            color: var(--white);
+            padding: 1.5rem;
+            border: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .card-body-modern {
+            padding: 1.5rem;
+        }
+        
+        /* Modern Buttons */
+        .btn-modern {
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn-primary-modern {
+            background: var(--gradient-primary);
+            color: var(--white);
+            box-shadow: 0 4px 16px rgba(0, 173, 181, 0.3);
+        }
+        
+        .btn-primary-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 173, 181, 0.4);
+            color: var(--white);
+        }
+        
+        .btn-outline-modern {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+        
+        .btn-outline-modern:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+        
+        /* Form Controls */
+        .form-control-modern {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control-modern:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+            outline: none;
+        }
+        
+        /* Utilities */
+        .bg-gradient-primary {
+            background: var(--gradient-primary);
+        }
+        
+        .bg-gradient-dark {
+            background: var(--gradient-dark);
+        }
+        
+        .text-primary-modern {
+            color: var(--primary) !important;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .card-modern {
+                margin-bottom: 1rem;
+            }
+            
+            .navbar-collapse {
+                background: rgba(34, 40, 49, 0.98);
+                margin-top: 1rem;
+                border-radius: 12px;
+                padding: 1rem;
+            }
+        }
+        
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--light-bg);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--medium-bg);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <!-- Modern Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-modern">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-robot me-2"></i>AI Agent CS
+            <a class="navbar-brand-modern" href="{% url 'home' %}">
+                <i class="fas fa-robot"></i>
+                <span>AI Agent CS</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            
+            <button class="navbar-toggler navbar-toggler-modern" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-bars text-white"></i>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'dashboard' %}">
-                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            <a class="nav-link-modern" href="{% url 'dashboard' %}">
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}" onclick="return confirm('Are you sure you want to logout?')">
-                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        
+                        <!-- Test Assistant Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link-modern dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-flask"></i>
+                                <span>Test Assistant</span>
                             </a>
+                            <ul class="dropdown-menu dropdown-menu-modern">
+                                <li>
+                                    <a class="dropdown-item-modern" href="{% url 'test_chat' %}">
+                                        <i class="fas fa-comments"></i>
+                                        <span>Test Chat</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item-modern" href="{% url 'test_realtime_voice' %}">
+                                        <i class="fas fa-microphone"></i>
+                                        <span>Test Voice AI</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link-modern" href="{% url 'edit_qna' %}">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Q&A Manager</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link-modern" href="{% url 'edit_knowledge_base' %}">
+                                <i class="fas fa-database"></i>
+                                <span>Knowledge Base</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link-modern" href="{% url 'edit_business_type' %}">
+                                <i class="fas fa-store"></i>
+                                <span>Business Setup</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link-modern" href="{% url 'session_history' %}">
+                                <i class="fas fa-history"></i>
+                                <span>History</span>
+                            </a>
+                        </li>
+                        
+                        <!-- User Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link-modern dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i>
+                                <span>{{ user.first_name|default:user.username }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-modern">
+                                <li>
+                                    <a class="dropdown-item-modern" href="{% url 'dashboard' %}">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                        <span>Profile</span>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,0.1);"></li>
+                                <li>
+                                    <a class="dropdown-item-modern" href="{% url 'logout' %}" onclick="return confirm('Are you sure you want to logout?')">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            <a class="nav-link-modern" href="{% url 'login' %}">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>Login</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">
-                                <i class="fas fa-user-plus me-1"></i>Register
+                            <a class="nav-link-modern" href="{% url 'register' %}">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Register</span>
                             </a>
                         </li>
                     {% endif %}
@@ -162,13 +398,15 @@
         </div>
     </nav>
 
-    <main>
+    <!-- Main Content -->
+    <main class="pb-5">
         {% if messages %}
-            <div class="container mt-3">
+            <div class="container mt-4">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(57, 62, 70, 0.15);">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             </div>
@@ -178,10 +416,11 @@
         {% endblock %}
     </main>
 
+    <!-- Bootstrap & Custom Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Get CSRF token
+        // Enhanced CSRF token function
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -195,6 +434,70 @@
                 }
             }
             return cookieValue;
+        }
+        
+        // Modern UI Enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add active class to current nav item
+            const currentLocation = location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link-modern');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentLocation) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+        
+        // Loading state for buttons
+        function setButtonLoading(button, loading = true) {
+            if (loading) {
+                button.disabled = true;
+                const originalText = button.innerHTML;
+                button.setAttribute('data-original-text', originalText);
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+            } else {
+                button.disabled = false;
+                button.innerHTML = button.getAttribute('data-original-text');
+            }
+        }
+        
+        // Copy to clipboard function
+        function copyToClipboard(text, button = null) {
+            navigator.clipboard.writeText(text).then(() => {
+                if (button) {
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+                    button.classList.add('btn-success');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.classList.remove('btn-success');
+                    }, 2000);
+                }
+            });
         }
     </script>
     

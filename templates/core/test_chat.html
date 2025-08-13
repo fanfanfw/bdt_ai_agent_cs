@@ -3,103 +3,173 @@
 {% block title %}Test Chat - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid px-3 px-md-4 py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card modern-card border-0 shadow-sm">
+                <div class="card-body py-3">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                        <div class="d-flex align-items-center mb-2 mb-md-0">
+                            <div class="icon-circle me-3">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div>
+                                <h4 class="mb-1 text-dark-custom">Test Your AI Assistant</h4>
+                                <p class="mb-0 text-muted">Interact with your {{ assistant.business_type.name }} assistant</p>
+                            </div>
+                        </div>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-modern">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface -->
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-comments me-2"></i>Test Your AI Assistant
-                    </h5>
-                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                    </a>
+        <div class="col-12 col-xl-10">
+            <div class="card modern-card border-0 shadow-sm overflow-hidden">
+                <div class="card-header gradient-bg text-white border-0">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-circle me-3">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ assistant.business_type.name }} Assistant</h6>
+                            <small class="opacity-75">Online and ready to help</small>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <!-- Chat Messages -->
-                    <div id="chatMessages" class="p-4" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                    <div id="chatMessages" class="chat-container">
                         <div class="message assistant mb-3">
                             <div class="d-flex align-items-start">
-                                <div class="avatar me-3">
-                                    <i class="fas fa-robot fa-2x text-primary"></i>
+                                <div class="avatar-sm me-3">
+                                    <i class="fas fa-robot text-primary"></i>
                                 </div>
-                                <div class="message-content bg-white p-3 rounded shadow-sm">
-                                    <strong>{{ assistant.business_type.name }} Assistant</strong><br>
-                                    Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                                <div class="message-content assistant-message">
+                                    <div class="message-header mb-1">
+                                        <strong>{{ assistant.business_type.name }} Assistant</strong>
+                                        <small class="text-muted ms-2">Just now</small>
+                                    </div>
+                                    <div class="message-text">
+                                        Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Chat Input -->
-                    <div class="border-top p-3 bg-white">
+                    <!-- Chat Input Section -->
+                    <div class="chat-input-section">
                         <!-- Language Selection -->
-                        <div class="mb-3">
-                            <label class="form-label small text-muted mb-1">Language / Bahasa:</label>
-                            <select class="form-select form-select-sm" id="languageSelect" onchange="updateLanguagePlaceholder()">
+                        <div class="language-selector mb-3">
+                            <label class="form-label small text-muted mb-2">
+                                <i class="fas fa-language me-1"></i>Language / Bahasa:
+                            </label>
+                            <select class="form-select form-select-sm modern-select" id="languageSelect" onchange="updateLanguagePlaceholder()">
                                 <option value="auto">Auto-Detect / Kesan Automatik</option>
                                 <option value="en">English Only / Bahasa Inggeris</option>
                                 <option value="ms">Bahasa Malaysia Sahaja</option>
                             </select>
                         </div>
                         
-                        <div class="input-group">
+                        <!-- Message Input -->
+                        <div class="input-group input-group-modern mb-3">
                             <input 
                                 type="text" 
-                                class="form-control" 
+                                class="form-control form-control-modern" 
                                 placeholder="Type your message here..." 
                                 id="messageInput"
                                 onkeypress="handleKeyPress(event)"
                             >
-                            <button class="btn btn-primary" onclick="sendMessage()" id="sendBtn">
+                            <button class="btn btn-primary btn-send" onclick="sendMessage()" id="sendBtn">
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
                         
                         <!-- Quick Test Buttons -->
-                        <div class="mt-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <small class="text-muted">Quick tests:</small>
-                                <button class="btn btn-sm btn-outline-danger" onclick="clearConversation()">
+                        <div class="quick-actions">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+                                <small class="text-muted mb-2 mb-md-0">
+                                    <i class="fas fa-bolt me-1"></i>Quick tests:
+                                </small>
+                                <button class="btn btn-sm btn-outline-danger btn-modern" onclick="clearConversation()">
                                     <i class="fas fa-trash me-1"></i>Clear Chat
                                 </button>
                             </div>
-                            <div id="quickButtons">
+                            <div id="quickButtons" class="quick-buttons">
                                 <!-- English quick buttons (default) -->
-                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What are your business hours?')">
-                                    Business Hours
+                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What are your business hours?')">
+                                    <i class="fas fa-clock me-1"></i>Business Hours
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What services do you offer?')">
-                                    Services
+                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What services do you offer?')">
+                                    <i class="fas fa-cogs me-1"></i>Services
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('How can I contact you?')">
-                                    Contact Info
+                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('How can I contact you?')">
+                                    <i class="fas fa-phone me-1"></i>Contact Info
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Do you offer delivery?')">
-                                    Delivery
+                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Do you offer delivery?')">
+                                    <i class="fas fa-truck me-1"></i>Delivery
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Assistant Info -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2"></i>Assistant Information
+        </div>
+    </div>
+
+    <!-- Assistant Information -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-12 col-xl-10">
+            <div class="card modern-card border-0 shadow-sm">
+                <div class="card-header bg-light-custom border-0">
+                    <h6 class="mb-0 text-dark-custom">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>Assistant Information
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="row">
+                    <div class="row g-4">
                         <div class="col-md-6">
-                            <p><strong>Business Type:</strong> {{ assistant.business_type.name }}</p>
-                            <p><strong>Q&As Configured:</strong> {{ assistant.qnas.count }}</p>
+                            <div class="info-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-building text-primary me-2"></i>
+                                    <strong class="text-dark-custom">Business Type</strong>
+                                </div>
+                                <p class="text-muted mb-0">{{ assistant.business_type.name }}</p>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Knowledge Base Items:</strong> {{ assistant.knowledge_base.count }}</p>
-                            <p><strong>API Key:</strong> <code class="small">{{ assistant.api_key }}</code></p>
+                            <div class="info-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-question-circle text-primary me-2"></i>
+                                    <strong class="text-dark-custom">Q&As Configured</strong>
+                                </div>
+                                <p class="text-muted mb-0">{{ assistant.qnas.count }} items</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-database text-primary me-2"></i>
+                                    <strong class="text-dark-custom">Knowledge Base Items</strong>
+                                </div>
+                                <p class="text-muted mb-0">{{ assistant.knowledge_base.count }} items</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-key text-primary me-2"></i>
+                                    <strong class="text-dark-custom">API Key</strong>
+                                </div>
+                                <code class="api-key-display">{{ assistant.api_key }}</code>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -133,34 +203,34 @@ function updateLanguagePlaceholder() {
         case 'ms':
             messageInput.placeholder = 'Taip mesej anda di sini...';
             quickButtons.innerHTML = `
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
-                    Waktu Operasi
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
+                    <i class="fas fa-clock me-1"></i>Waktu Operasi
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Apa perkhidmatan yang anda tawarkan?')">
-                    Perkhidmatan
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Apa perkhidmatan yang anda tawarkan?')">
+                    <i class="fas fa-cogs me-1"></i>Perkhidmatan
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
-                    Maklumat Hubungan
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
+                    <i class="fas fa-phone me-1"></i>Maklumat Hubungan
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Adakah anda menawarkan penghantaran?')">
-                    Penghantaran
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Adakah anda menawarkan penghantaran?')">
+                    <i class="fas fa-truck me-1"></i>Penghantaran
                 </button>
             `;
             break;
         case 'en':
             messageInput.placeholder = 'Type your message here...';
             quickButtons.innerHTML = `
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What are your business hours?')">
-                    Business Hours
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What are your business hours?')">
+                    <i class="fas fa-clock me-1"></i>Business Hours
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What services do you offer?')">
-                    Services
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What services do you offer?')">
+                    <i class="fas fa-cogs me-1"></i>Services
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('How can I contact you?')">
-                    Contact Info
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('How can I contact you?')">
+                    <i class="fas fa-phone me-1"></i>Contact Info
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Do you offer delivery?')">
-                    Delivery
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Do you offer delivery?')">
+                    <i class="fas fa-truck me-1"></i>Delivery
                 </button>
             `;
             break;
@@ -168,17 +238,17 @@ function updateLanguagePlaceholder() {
         default:
             messageInput.placeholder = 'Type your message here / Taip mesej anda di sini...';
             quickButtons.innerHTML = `
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What are your business hours?')">
-                    Business Hours
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What are your business hours?')">
+                    <i class="fas fa-clock me-1"></i>Business Hours
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('What services do you offer?')">
-                    Services
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What services do you offer?')">
+                    <i class="fas fa-cogs me-1"></i>Services
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
-                    Waktu Operasi
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
+                    <i class="fas fa-clock me-1"></i>Waktu Operasi
                 </button>
-                <button class="btn btn-sm btn-outline-secondary me-2 mt-1" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
-                    Maklumat Hubungan
+                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
+                    <i class="fas fa-phone me-1"></i>Maklumat Hubungan
                 </button>
             `;
             break;
@@ -190,12 +260,17 @@ function clearConversation() {
     messagesContainer.innerHTML = `
         <div class="message assistant mb-3">
             <div class="d-flex align-items-start">
-                <div class="avatar me-3">
-                    <i class="fas fa-robot fa-2x text-primary"></i>
+                <div class="avatar-sm me-3">
+                    <i class="fas fa-robot text-primary"></i>
                 </div>
-                <div class="message-content bg-white p-3 rounded shadow-sm">
-                    <strong>{{ assistant.business_type.name }} Assistant</strong><br>
-                    Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                <div class="message-content assistant-message">
+                    <div class="message-header mb-1">
+                        <strong>{{ assistant.business_type.name }} Assistant</strong>
+                        <small class="text-muted ms-2">Just now</small>
+                    </div>
+                    <div class="message-text">
+                        Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,25 +337,39 @@ function addMessage(content, type) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type} mb-3`;
     
+    const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
     if (type === 'user') {
         messageDiv.innerHTML = `
             <div class="d-flex align-items-start justify-content-end">
-                <div class="message-content bg-primary text-white p-3 rounded shadow-sm me-3">
-                    ${content}
+                <div class="message-content user-message me-3" style="background: linear-gradient(135deg, #00ADB5, #00ADB5); color: #EEEEEE !important;">
+                    <div class="message-header mb-1 text-end" style="color: rgba(238, 238, 238, 0.9) !important;">
+                        <small class="me-2" style="color: rgba(238, 238, 238, 0.8) !important;">${currentTime}</small>
+                        <strong style="color: #EEEEEE !important;">You</strong>
+                    </div>
+                    <div class="message-text" style="color: #EEEEEE !important; font-weight: 500;">
+                        ${content}
+                    </div>
                 </div>
-                <div class="avatar">
-                    <i class="fas fa-user fa-2x text-secondary"></i>
+                <div class="avatar-sm">
+                    <i class="fas fa-user text-secondary"></i>
                 </div>
             </div>
         `;
     } else {
         messageDiv.innerHTML = `
             <div class="d-flex align-items-start">
-                <div class="avatar me-3">
-                    <i class="fas fa-robot fa-2x text-primary"></i>
+                <div class="avatar-sm me-3">
+                    <i class="fas fa-robot text-primary"></i>
                 </div>
-                <div class="message-content bg-white p-3 rounded shadow-sm">
-                    ${content}
+                <div class="message-content assistant-message">
+                    <div class="message-header mb-1">
+                        <strong>{{ assistant.business_type.name }} Assistant</strong>
+                        <small class="text-muted ms-2">${currentTime}</small>
+                    </div>
+                    <div class="message-text">
+                        ${content}
+                    </div>
                 </div>
             </div>
         `;
@@ -300,10 +389,14 @@ function showTyping() {
     
     typingDiv.innerHTML = `
         <div class="d-flex align-items-start">
-            <div class="avatar me-3">
-                <i class="fas fa-robot fa-2x text-primary"></i>
+            <div class="avatar-sm me-3">
+                <i class="fas fa-robot text-primary"></i>
             </div>
-            <div class="message-content bg-white p-3 rounded shadow-sm">
+            <div class="message-content assistant-message">
+                <div class="message-header mb-1">
+                    <strong>{{ assistant.business_type.name }} Assistant</strong>
+                    <small class="text-muted ms-2">typing...</small>
+                </div>
                 <div class="typing-animation">
                     <span></span>
                     <span></span>
@@ -341,16 +434,248 @@ function getCookie(name) {
 </script>
 
 <style>
+/* Modern Chat Interface Styling */
+.icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: var(--light-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    border: 2px solid rgba(0, 173, 181, 0.1);
+}
+
+.chat-container {
+    height: 500px;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+}
+
+.chat-input-section {
+    padding: 1.5rem;
+    background: white;
+    border-top: 1px solid rgba(0, 173, 181, 0.1);
+}
+
+.language-selector .form-label {
+    font-weight: 600;
+    color: var(--medium-color);
+}
+
+.modern-select {
+    border: 2px solid rgba(0, 173, 181, 0.1);
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.modern-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 173, 181, 0.25);
+}
+
+.input-group-modern {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-control-modern {
+    border: none;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    background: white;
+}
+
+.form-control-modern:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.btn-send {
+    border: none;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-send:hover {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    transform: translateY(-2px);
+}
+
+.quick-actions {
+    background: rgba(0, 173, 181, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+}
+
+.quick-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.btn-modern {
+    border-radius: 25px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-outline-secondary.btn-modern {
+    border-color: rgba(0, 173, 181, 0.3);
+    color: var(--medium-color);
+}
+
+.btn-outline-secondary.btn-modern:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.btn-outline-danger.btn-modern {
+    border-color: rgba(220, 53, 69, 0.3);
+    color: #dc3545;
+}
+
+.btn-outline-danger.btn-modern:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-outline-primary.btn-modern {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline-primary.btn-modern:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Message Styling */
+.message {
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-content {
+    max-width: 75%;
+    word-wrap: break-word;
+    border-radius: 18px;
+    padding: 1rem 1.25rem;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.assistant-message {
+    background: white;
+    border: 1px solid rgba(0, 173, 181, 0.1);
+    color: var(--dark-color) !important;
+}
+
+.assistant-message .message-header {
+    color: var(--medium-color) !important;
+}
+
+.assistant-message .message-text {
+    color: var(--dark-color) !important;
+}
+
+.user-message {
+    background: linear-gradient(135deg, #00ADB5, #00ADB5) !important;
+    color: #EEEEEE !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.user-message .message-header {
+    color: rgba(238, 238, 238, 0.9) !important;
+}
+
+.user-message .message-header strong {
+    color: #EEEEEE !important;
+}
+
+.user-message .message-header small {
+    color: rgba(238, 238, 238, 0.8) !important;
+}
+
+.user-message .message-text {
+    color: #EEEEEE !important;
+    font-weight: 500 !important;
+}
+
+.user-message * {
+    color: #EEEEEE !important;
+}
+
+.message-header {
+    font-size: 0.85rem;
+}
+
+.message-text {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Typing Animation */
 .typing-animation {
     display: flex;
-    gap: 3px;
+    gap: 4px;
     align-items: center;
+    padding: 0.5rem 0;
 }
 
 .typing-animation span {
     width: 8px;
     height: 8px;
-    background: #6c757d;
+    background: var(--primary-color);
     border-radius: 50%;
     animation: typing 1.4s infinite;
 }
@@ -366,19 +691,110 @@ function getCookie(name) {
 @keyframes typing {
     0%, 60%, 100% {
         transform: translateY(0);
+        opacity: 0.5;
     }
     30% {
         transform: translateY(-10px);
+        opacity: 1;
     }
 }
 
-.message-content {
-    max-width: 70%;
-    word-wrap: break-word;
+/* Info Section */
+.info-item {
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(0, 173, 181, 0.05);
+    border: 1px solid rgba(0, 173, 181, 0.1);
+    transition: all 0.3s ease;
 }
 
-#chatMessages {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+.info-item:hover {
+    background: rgba(0, 173, 181, 0.1);
+    transform: translateY(-2px);
+}
+
+.api-key-display {
+    background: var(--dark-color);
+    color: var(--primary-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .chat-container {
+        height: 400px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+    
+    .quick-buttons {
+        justify-content: center;
+    }
+    
+    .btn-modern {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .chat-container {
+        height: 350px;
+        padding: 1rem;
+    }
+    
+    .chat-input-section {
+        padding: 1rem;
+    }
+    
+    .message-content {
+        max-width: 90%;
+        padding: 0.8rem 1rem;
+    }
+    
+    .quick-buttons {
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    
+    .btn-modern {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Scrollbar Styling */
+.chat-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: rgba(0, 173, 181, 0.1);
+    border-radius: 10px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
 }
 </style>
 {% endblock %}

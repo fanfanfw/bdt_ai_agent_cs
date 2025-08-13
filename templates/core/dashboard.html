@@ -3,326 +3,369 @@
 {% block title %}Dashboard - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>
-                    <i class="fas fa-tachometer-alt me-2"></i>
-                    Welcome back, {{ user.first_name|default:user.username }}!
-                </h2>
-                <div class="badge bg-success fs-6">
-                    <i class="fas fa-check-circle me-1"></i>AI Assistant Active
+<!-- Hero Section with Gradient Background -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-robot fs-3"></i>
+                    </div>
+                    <div>
+                        <h1 class="mb-1 fw-bold">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+                        <p class="mb-0 opacity-75">Manage your AI assistant and monitor performance</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="d-inline-flex align-items-center bg-success rounded-pill px-3 py-2">
+                    <div class="bg-white rounded-circle me-2" style="width: 8px; height: 8px;"></div>
+                    <span class="fw-medium">AI Assistant Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    
+    <!-- Quick Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="card-modern h-100">
+                <div class="card-body-modern text-center">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <i class="fas fa-comments text-white fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold text-primary-modern mb-1">{{ profile.api_requests_count }}</h3>
+                    <p class="text-muted mb-0">Total Conversations</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card-modern h-100">
+                <div class="card-body-modern text-center">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <i class="fas fa-brain text-white fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold text-primary-modern mb-1">{{ profile.tokens_used|floatformat:0 }}</h3>
+                    <p class="text-muted mb-0">Tokens Processed</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card-modern h-100">
+                <div class="card-body-modern text-center">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <i class="fas fa-question-circle text-white fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold text-primary-modern mb-1">{{ assistant.qnas.count }}</h3>
+                    <p class="text-muted mb-0">Q&A Pairs</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card-modern h-100">
+                <div class="card-body-modern text-center">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <i class="fas fa-database text-white fs-4"></i>
+                    </div>
+                    <h3 class="fw-bold text-primary-modern mb-1">{{ assistant.knowledge_base.count }}</h3>
+                    <p class="text-muted mb-0">Knowledge Items</p>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Assistant Info -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-robot me-2"></i>Your AI Assistant
-                    </h5>
+    <!-- Main Content Row - AI Assistant & Usage -->
+    <div class="row g-4 mb-5">
+        
+        <!-- Left Column - Subscription Plan (Full Height) -->
+        <div class="col-lg-4">
+            <div class="card-modern h-100">
+                <div class="card-header-modern">
+                    <i class="fas fa-crown me-2"></i>
+                    <span>Subscription Plan</span>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Business Type:</strong> 
-                                {{ assistant.business_type.name }}
-                                <a href="{% url 'edit_business_type' %}" class="btn btn-sm btn-outline-primary ms-2">
-                                    <i class="fas fa-edit"></i> Change
-                                </a>
-                            </p>
-                            <p><strong>Created:</strong> {{ assistant.created_at|date:"F d, Y" }}</p>
-                            <p><strong>Status:</strong> 
-                                {% if assistant.is_active %}
-                                    <span class="badge bg-success">Active</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Inactive</span>
-                                {% endif %}
-                            </p>
+                <div class="card-body-modern">
+                    <div class="text-center mb-4">
+                        <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                            <i class="fas fa-{% if profile.subscription_plan == 'free' %}gift{% elif profile.subscription_plan == 'pro' %}star{% else %}crown{% endif %} text-white fs-4"></i>
                         </div>
-                        <div class="col-md-6">
-                            <p><strong>Q&As Configured:</strong> {{ assistant.qnas.count }}</p>
-                            <p><strong>Knowledge Base Items:</strong> {{ assistant.knowledge_base.count }}</p>
-                            <p><strong>Assistant:</strong> 
-                                {% if assistant.openai_assistant_id %}
-                                    <span class="badge bg-success">Connected</span>
-                                {% else %}
-                                    <span class="badge bg-warning">Pending</span>
-                                {% endif %}
-                            </p>
+                        <h5 class="fw-bold text-capitalize">{{ profile.subscription_plan }}{% if profile.subscription_plan == 'pro_plus' %} Plus{% endif %}</h5>
+                        {% if current_limits.monthly_api_limit == 0 and current_limits.monthly_token_limit == 0 %}
+                            <span class="badge bg-success">Unlimited Access</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Plan Features -->
+                    <div class="mb-4">
+                        {% if current_limits.monthly_api_limit > 0 %}
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-check text-success me-3"></i>
+                                <span>{{ current_limits.monthly_api_limit|floatformat:0 }} API requests/month</span>
+                            </div>
+                        {% else %}
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-infinity text-success me-3"></i>
+                                <span>Unlimited API requests</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if current_limits.monthly_token_limit > 0 %}
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-check text-success me-3"></i>
+                                <span>{{ current_limits.monthly_token_limit|floatformat:0 }} tokens/month</span>
+                            </div>
+                        {% else %}
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-infinity text-success me-3"></i>
+                                <span>Unlimited tokens</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-check text-success me-3"></i>
+                            <span>{{ current_limits.max_assistants }} AI Assistant{{ current_limits.max_assistants|pluralize }}</span>
                         </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-check text-success me-3"></i>
+                            <span>{{ current_limits.max_knowledge_bases }} Knowledge Base{{ current_limits.max_knowledge_bases|pluralize }}</span>
+                        </div>
+                        
+                        {% if current_limits.features %}
+                            {% for feature in current_limits.features %}
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-check text-success me-3"></i>
+                                    <span>{{ feature }}</span>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Upgrade Button -->
+                    {% if profile.subscription_plan == 'free' %}
+                    <a href="#" class="btn btn-primary-modern w-100 mb-3">
+                        <i class="fas fa-arrow-up me-2"></i>Upgrade to Pro
+                    </a>
+                    {% elif profile.subscription_plan == 'pro' %}
+                    <a href="#" class="btn btn-primary-modern w-100 mb-3">
+                        <i class="fas fa-arrow-up me-2"></i>Upgrade to Pro Plus
+                    </a>
+                    {% endif %}
+                    
+                    <div class="text-center">
+                        <small class="text-muted">Usage resets on the 1st of each month</small>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-key me-2"></i>API Integration
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="small text-muted">Your API Key:</p>
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control font-monospace small" value="{{ assistant.api_key }}" readonly id="apiKey">
-                        <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
-                            <i class="fas fa-copy"></i>
-                        </button>
+        <!-- Right Column - AI Assistant Overview & Usage Analytics -->
+        <div class="col-lg-8">
+            
+            <!-- AI Assistant Overview -->
+            <div class="card-modern mb-4">
+                <div class="card-header-modern d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-robot me-2"></i>
+                        <span>AI Assistant Overview</span>
                     </div>
-                    <button class="btn btn-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#integrationModal">
-                        <i class="fas fa-code me-2"></i>Integration Guide
-                    </button>
+                    <div class="d-flex gap-2">
+                        {% if assistant.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                        {% if assistant.openai_assistant_id %}
+                            <span class="badge bg-success">Connected</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body-modern">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-light rounded p-2 me-3">
+                                    <i class="fas fa-store text-primary-modern"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Business Type</p>
+                                    <p class="mb-0 text-muted">{{ assistant.business_type.name }}</p>
+                                </div>
+                                <a href="{% url 'edit_business_type' %}" class="btn btn-outline-modern btn-sm ms-auto">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-light rounded p-2 me-3">
+                                    <i class="fas fa-calendar text-primary-modern"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-medium">Created</p>
+                                    <p class="mb-0 text-muted">{{ assistant.created_at|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Key Section -->
+                    <div class="bg-light rounded-3 p-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="mb-1 fw-medium">API Key</p>
+                                <code class="small">{{ assistant.api_key }}</code>
+                            </div>
+                            <button class="btn btn-outline-modern btn-sm" onclick="copyToClipboard('{{ assistant.api_key }}', this)">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Usage Statistics -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>Monthly Usage Statistics
-                    </h5>
+            
+            <!-- Usage Analytics -->
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <i class="fas fa-chart-line me-2"></i>
+                    <span>Usage Analytics</span>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-muted">Subscription Plan</h6>
+                <div class="card-body-modern">
+                    
+                    <!-- Subscription Plan Badge -->
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h6 class="mb-1">Current Plan</h6>
                             <span class="badge bg-{% if profile.subscription_plan == 'free' %}secondary{% elif profile.subscription_plan == 'pro' %}primary{% else %}success{% endif %} fs-6 text-capitalize">
                                 {{ profile.subscription_plan }}{% if profile.subscription_plan == 'pro_plus' %} (Unlimited){% endif %}
                             </span>
                         </div>
+                        <small class="text-muted">Resets: {{ profile.last_reset_date|date:"M d, Y" }}</small>
                     </div>
                     
-                    <!-- API Requests Usage -->
+                    <!-- API Requests Progress -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0">API Requests</h6>
-                            <span class="text-muted api-limit-text">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exchange-alt text-primary-modern me-2"></i>
+                                <span class="fw-medium">API Requests</span>
+                            </div>
+                            <span class="badge bg-light text-dark api-limit-text">
                                 {{ profile.current_month_api_requests }}{% if current_limits.monthly_api_limit > 0 %}/{{ current_limits.monthly_api_limit }}{% else %} (Unlimited){% endif %}
                             </span>
                         </div>
+                        
                         {% if current_limits.monthly_api_limit > 0 %}
-                        <div class="progress" style="height: 8px;">
+                        <div class="progress mb-2" style="height: 10px; border-radius: 10px;">
                             <div class="progress-bar api-usage-progress {% if api_usage_percentage > 90 %}bg-danger{% elif api_usage_percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
                                  role="progressbar" 
-                                 style="width: {{ api_usage_percentage|floatformat:1 }}%"
+                                 style="width: {{ api_usage_percentage|floatformat:1 }}%; border-radius: 10px;"
                                  aria-valuenow="{{ api_usage_percentage|floatformat:1 }}" 
                                  aria-valuemin="0" 
                                  aria-valuemax="100">
                             </div>
                         </div>
-                        <small class="text-muted api-usage-text">{{ api_usage_percentage|floatformat:1 }}% used</small>
+                        <small class="text-muted api-usage-text">{{ api_usage_percentage|floatformat:1 }}% used this month</small>
                         {% else %}
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar api-usage-progress bg-success" role="progressbar" style="width: 100%"></div>
+                        <div class="progress mb-2" style="height: 10px; border-radius: 10px;">
+                            <div class="progress-bar api-usage-progress bg-success" role="progressbar" style="width: 100%; border-radius: 10px;"></div>
                         </div>
-                        <small class="text-muted api-usage-text">Unlimited plan</small>
+                        <small class="text-success api-usage-text"><i class="fas fa-infinity me-1"></i>Unlimited usage</small>
                         {% endif %}
                     </div>
                     
-                    <!-- Token Usage -->
-                    <div class="mb-3">
+                    <!-- Token Usage Progress -->
+                    <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0">Token Usage</h6>
-                            <span class="text-muted token-limit-text">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-coins text-primary-modern me-2"></i>
+                                <span class="fw-medium">Token Usage</span>
+                            </div>
+                            <span class="badge bg-light text-dark token-limit-text">
                                 {{ profile.current_month_tokens|floatformat:0 }}{% if current_limits.monthly_token_limit > 0 %}/{{ current_limits.monthly_token_limit|floatformat:0 }}{% else %} (Unlimited){% endif %}
                             </span>
                         </div>
+                        
                         {% if current_limits.monthly_token_limit > 0 %}
-                        <div class="progress" style="height: 8px;">
+                        <div class="progress mb-2" style="height: 10px; border-radius: 10px;">
                             <div class="progress-bar token-usage-progress {% if token_usage_percentage > 90 %}bg-danger{% elif token_usage_percentage > 75 %}bg-warning{% else %}bg-success{% endif %}" 
                                  role="progressbar" 
-                                 style="width: {{ token_usage_percentage|floatformat:1 }}%"
+                                 style="width: {{ token_usage_percentage|floatformat:1 }}%; border-radius: 10px;"
                                  aria-valuenow="{{ token_usage_percentage|floatformat:1 }}" 
                                  aria-valuemin="0" 
                                  aria-valuemax="100">
                             </div>
                         </div>
-                        <small class="text-muted token-usage-text">{{ token_usage_percentage|floatformat:1 }}% used</small>
+                        <small class="text-muted token-usage-text">{{ token_usage_percentage|floatformat:1 }}% used this month</small>
                         {% else %}
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar token-usage-progress bg-success" role="progressbar" style="width: 100%"></div>
+                        <div class="progress mb-2" style="height: 10px; border-radius: 10px;">
+                            <div class="progress-bar token-usage-progress bg-success" role="progressbar" style="width: 100%; border-radius: 10px;"></div>
                         </div>
-                        <small class="text-muted token-usage-text">Unlimited plan</small>
+                        <small class="text-success token-usage-text"><i class="fas fa-infinity me-1"></i>Unlimited usage</small>
                         {% endif %}
                     </div>
                     
+                    <!-- Usage Alert -->
                     {% if api_usage_percentage > 90 or token_usage_percentage > 90 %}
-                    <div class="alert alert-warning alert-sm mb-2" id="usage-alert">
+                    <div class="alert alert-warning d-flex align-items-center" id="usage-alert" style="border-radius: 12px; border: none;">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Usage Alert:</strong> You're approaching your monthly limit. Consider upgrading your plan.
+                        <div>
+                            <strong>Usage Alert:</strong> You're approaching your monthly limit. Consider upgrading your plan.
+                        </div>
                     </div>
                     {% elif api_usage_percentage > 75 or token_usage_percentage > 75 %}
-                    <div class="alert alert-info alert-sm mb-2" id="usage-alert">
+                    <div class="alert alert-info d-flex align-items-center" id="usage-alert" style="border-radius: 12px; border: none;">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Usage Notice:</strong> You've used over 75% of your monthly limit.
+                        <div>
+                            <strong>Usage Notice:</strong> You've used over 75% of your monthly limit.
+                        </div>
                     </div>
                     {% endif %}
-                    
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <small class="text-muted d-block">Total Requests</small>
-                            <strong class="total-requests">{{ profile.api_requests_count }}</strong>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted d-block">Total Tokens</small>
-                            <strong class="total-tokens">{{ profile.tokens_used|floatformat:0 }}</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-cog me-2"></i>Subscription Management
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="subscription-info">
-                        <h6 class="mb-3">Current Plan: <span class="text-capitalize">{{ profile.subscription_plan }}</span></h6>
-                        
-                        <div class="plan-limits mb-3">
-                            {% if current_limits.monthly_api_limit > 0 %}
-                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.monthly_api_limit|floatformat:0 }} API requests/month</p>
-                            {% else %}
-                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>Unlimited API requests</p>
-                            {% endif %}
-                            
-                            {% if current_limits.monthly_token_limit > 0 %}
-                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.monthly_token_limit|floatformat:0 }} tokens/month</p>
-                            {% else %}
-                                <p class="mb-1"><i class="fas fa-check text-success me-2"></i>Unlimited tokens</p>
-                            {% endif %}
-                            
-                            <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.max_assistants }} AI Assistant{{ current_limits.max_assistants|pluralize }}</p>
-                            <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ current_limits.max_knowledge_bases }} Knowledge Base{{ current_limits.max_knowledge_bases|pluralize }}</p>
-                            
-                            {% if current_limits.features %}
-                                {% for feature in current_limits.features %}
-                                    <p class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ feature }}</p>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        {% if profile.subscription_plan == 'free' %}
-                        <button class="btn btn-primary btn-sm w-100 mb-2">
-                            <i class="fas fa-arrow-up me-2"></i>Upgrade to Pro
-                        </button>
-                        {% elif profile.subscription_plan == 'pro' %}
-                        <button class="btn btn-primary btn-sm w-100 mb-2">
-                            <i class="fas fa-arrow-up me-2"></i>Upgrade to Pro+
-                        </button>
-                        {% elif current_limits.monthly_api_limit == 0 and current_limits.monthly_token_limit == 0 %}
-                        <div class="alert alert-success alert-sm">
-                            <i class="fas fa-crown me-2"></i>You have unlimited access!
-                        </div>
-                        {% endif %}
-                        
-                        <small class="text-muted d-block">
-                            Usage resets on the 1st of each month.
-                            <br>Last reset: {{ profile.last_reset_date|date:"M d, Y" }}
-                        </small>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-tools me-2"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            {% if profile.can_make_api_request %}
-                                <a href="{% url 'test_chat' %}" class="btn btn-outline-primary w-100 test-chat-btn">
-                                    <i class="fas fa-comments me-2"></i>Test Chat
-                                </a>
-                            {% else %}
-                                <button class="btn btn-outline-secondary w-100 test-chat-btn" disabled title="API limit reached">
-                                    <i class="fas fa-comments me-2"></i>Test Chat
-                                    <i class="fas fa-lock ms-1"></i>
-                                </button>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-3">
-                            {% if profile.can_make_api_request %}
-                                <a href="{% url 'test_realtime_voice' %}" class="btn btn-outline-warning w-100 test-voice-btn">
-                                    <i class="fas fa-microphone me-2"></i>Test Voice AI (Server-Side)
-                                </a>
-                            {% else %}
-                                <button class="btn btn-outline-secondary w-100 test-voice-btn" disabled title="API limit reached">
-                                    <i class="fas fa-microphone me-2"></i>Test Voice AI (Server-Side)
-                                    <i class="fas fa-lock ms-1"></i>
-                                </button>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'edit_qna' %}" class="btn btn-outline-info w-100">
-                                <i class="fas fa-edit me-2"></i>Edit Q&As
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'edit_knowledge_base' %}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-database me-2"></i>Manage Knowledge
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'edit_business_type' %}" class="btn btn-outline-warning w-100">
-                                <i class="fas fa-store me-2"></i>Change Business
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'widget_generator' %}" class="btn btn-outline-purple w-100">
-                                <i class="fas fa-code me-2"></i>Widget Generator
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'session_history' %}" class="btn btn-outline-dark w-100">
-                                <i class="fas fa-history me-2"></i>Session History
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Recent Activity (placeholder) -->
+    <!-- Widget Integration Section (Full Width) -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history me-2"></i>Recent Activity
-                    </h5>
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <i class="fas fa-code me-2"></i>
+                    <span>Widget Integration</span>
                 </div>
-                <div class="card-body">
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-comments fa-3x mb-3"></i>
-                        <p>No recent chat activity. Your AI assistant is ready to help customers!</p>
-                        <button class="btn btn-primary" onclick="testChat()">
-                            <i class="fas fa-play me-2"></i>Start Test Conversation
-                        </button>
+                <div class="card-body-modern">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h6 class="mb-3">Embed AI Chat Widget</h6>
+                            <p class="text-muted mb-3">Copy and paste this code into your website to add the AI chat widget:</p>
+                            
+                            <div class="bg-light rounded-3 p-3 position-relative">
+                                <code class="small d-block text-wrap" style="white-space: pre-wrap;" id="widgetCode">&lt;script src="{{ request.scheme }}://{{ request.get_host }}/widget.js?key={{ assistant.api_key }}&amp;id={{ assistant.id }}"&gt;&lt;/script&gt;</code>
+                                <button class="btn btn-outline-modern btn-sm position-absolute top-0 end-0 m-2" onclick="copyToClipboard(document.getElementById('widgetCode').textContent, this)">
+                                    <i class="fas fa-copy me-1"></i>Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 text-center">
+                            <div class="bg-light rounded-3 p-4">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwXzEyM180NTYpIi8+CjxwYXRoIGQ9Ik03MCAzNUg0MEMzNi42ODYzIDM1IDM0IDM3LjY4NjMgMzQgNDFWNTlDMzQgNjIuMzEzNyAzNi42ODYzIDY1IDQwIDY1SDcwQzczLjMxMzcgNjUgNzYgNjIuMzEzNyA3NiA1OVY0MUM3NiAzNy42ODYzIDczLjMxMzcgMzUgNzAgMzVaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI0NiIgY3k9IjQ4IiByPSIzIiBmaWxsPSIjMDBBREI1Ii8+CjxjaXJjbGUgY3g9IjU1IiBjeT0iNDgiIHI9IjMiIGZpbGw9IiMwMEFEQjUiLz4KPGNpcmNsZSBjeD0iNjQiIGN5PSI0OCIgcj0iMyIgZmlsbD0iIzAwQURCNSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfMTIzXzQ1NiIgeDE9IjAiIHkxPSIwIiB4Mj0iMTAwIiB5Mj0iMTAwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiMwMEFEQjUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzkzRTQ2Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPHN2Zz4K" alt="Widget Preview" class="img-fluid mb-3" style="max-width: 100px;">
+                                <p class="text-muted small mb-0">AI Chat Widget</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Appears instantly on your website
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -330,170 +373,69 @@
     </div>
 </div>
 
-<!-- Integration Modal -->
-<div class="modal fade" id="integrationModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-code me-2"></i>Integration Guide
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-12">
-                        <h6>Option 1: Embed Chat Widget</h6>
-                        <p class="text-muted">Add this iframe to your website:</p>
-                        <pre class="bg-light p-3 rounded"><code>&lt;!-- AI Chat Widget --&gt;
-&lt;iframe 
-  src="{{ request.scheme }}://{{ request.get_host }}/api/widget/?api_key={{ assistant.api_key }}" 
-  style="position: fixed; bottom: 20px; right: 20px; width: 400px; height: 600px; border: none; z-index: 1000;"
-  title="AI Chat Assistant"&gt;
-&lt;/iframe&gt;</code></pre>
-                        
-                        <h6 class="mt-4">Option 2: API Integration</h6>
-                        <p class="text-muted">Use our REST API for custom integration:</p>
-                        <pre class="bg-light p-3 rounded"><code>POST {{ request.scheme }}://{{ request.get_host }}/api/chat/
-Content-Type: application/json
-Authorization: Bearer {{ assistant.api_key }}
-
-{
-  "message": "Hello, I need help",
-  "session_id": "optional-session-id"
-}</code></pre>
-                        
-                        <h6 class="mt-4">Option 3: Voice Integration</h6>
-                        <p class="text-muted">Enable voice chat with our JavaScript SDK:</p>
-                        <pre class="bg-light p-3 rounded"><code>// Enable voice features
-const voiceChat = new AIVoiceChat('{{ assistant.api_key }}');
-voiceChat.startListening();</code></pre>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a href="#" class="btn btn-primary">
-                    <i class="fas fa-download me-2"></i>Download SDK
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Chat Test Modal -->
-<div class="modal fade" id="chatTestModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-comments me-2"></i>Test Your AI Assistant
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="chatMessages" class="border rounded p-3 mb-3" style="height: 300px; overflow-y: auto;">
-                    <div class="text-center text-muted">
-                        <i class="fas fa-robot fa-2x mb-2"></i>
-                        <p>Start a conversation with your AI assistant</p>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Type your message..." id="chatInput">
-                    <button class="btn btn-primary" onclick="sendTestMessage()">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 {% block extra_js %}
 <script>
+// Modern Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Auto-refresh usage stats every 30 seconds
+    setInterval(refreshUsageStats, 30000);
+    
+    // Add loading states to buttons
+    document.querySelectorAll('a[href*="test_"], .test-assistant-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (!this.disabled) {
+                setButtonLoading(this);
+            }
+        });
+    });
+});
+
+// Enhanced copy functions with modern UI feedback
 function copyApiKey() {
-    const apiKeyInput = document.getElementById('apiKey');
-    apiKeyInput.select();
-    apiKeyInput.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(apiKeyInput.value);
-    
-    // Show feedback
-    const button = apiKeyInput.nextElementSibling;
-    const originalContent = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-check"></i>';
-    button.classList.add('btn-success');
-    button.classList.remove('btn-outline-secondary');
-    
-    setTimeout(() => {
-        button.innerHTML = originalContent;
-        button.classList.remove('btn-success');
-        button.classList.add('btn-outline-secondary');
-    }, 2000);
+    const apiKey = '{{ assistant.api_key }}';
+    copyToClipboard(apiKey);
+    showToast('API Key copied to clipboard!', 'success');
 }
 
-function testChat() {
-    const modal = new bootstrap.Modal(document.getElementById('chatTestModal'));
-    modal.show();
+function copyWidgetCode() {
+    const widgetCode = document.getElementById('widgetCode').textContent;
+    copyToClipboard(widgetCode);
+    showToast('Widget code copied to clipboard!', 'success');
 }
 
-function sendTestMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-    
-    if (!message) return;
-    
-    const messagesContainer = document.getElementById('chatMessages');
-    
-    // Add user message
-    const userMessage = document.createElement('div');
-    userMessage.className = 'mb-2 text-end';
-    userMessage.innerHTML = `
-        <div class="bg-primary text-white rounded p-2 d-inline-block">
-            ${message}
-        </div>
-    `;
-    messagesContainer.appendChild(userMessage);
-    
-    // Clear input
-    input.value = '';
-    
-    // Add typing indicator
-    const typingIndicator = document.createElement('div');
-    typingIndicator.className = 'mb-2';
-    typingIndicator.innerHTML = `
-        <div class="bg-light rounded p-2 d-inline-block">
-            <i class="fas fa-robot me-2"></i>
-            <span class="typing-dots">Typing...</span>
-        </div>
-    `;
-    messagesContainer.appendChild(typingIndicator);
-    
-    // Scroll to bottom
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
-        typingIndicator.remove();
-        
-        const aiMessage = document.createElement('div');
-        aiMessage.className = 'mb-2';
-        aiMessage.innerHTML = `
-            <div class="bg-light rounded p-2 d-inline-block">
-                <i class="fas fa-robot me-2"></i>
-                Thank you for your message! This is a test response from your AI assistant. In the live version, I would provide a helpful answer based on your Q&As and knowledge base.
+// Modern toast notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0 position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = '9999';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'success' ? 'check' : 'info'}-circle me-2"></i>
+                ${message}
             </div>
-        `;
-        messagesContainer.appendChild(aiMessage);
-        
-        // Scroll to bottom
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        // Refresh usage stats after test message (for demo purposes)
-        // Note: In actual implementation, stats would update after real API call
-        refreshUsageStats();
-    }, 1500);
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+        document.body.removeChild(toast);
+    });
 }
 
+// Enhanced usage stats refresh
 function refreshUsageStats() {
     fetch('/api/usage-stats/')
         .then(response => response.json())
@@ -507,126 +449,203 @@ function refreshUsageStats() {
         });
 }
 
+// Modern usage display update
 function updateUsageDisplay(data) {
     // Update API requests usage
-    const apiProgressBar = document.querySelector('.api-usage-progress');
-    const apiUsageText = document.querySelector('.api-usage-text');
-    const apiLimitText = document.querySelector('.api-limit-text');
-    
-    if (apiProgressBar && apiUsageText && apiLimitText) {
-        // Update progress bar
-        apiProgressBar.style.width = data.api_usage_percentage + '%';
-        
-        // Update color based on usage
-        apiProgressBar.className = 'progress-bar';
-        if (data.api_usage_percentage > 90) {
-            apiProgressBar.classList.add('bg-danger');
-        } else if (data.api_usage_percentage > 75) {
-            apiProgressBar.classList.add('bg-warning');
-        } else {
-            apiProgressBar.classList.add('bg-success');
-        }
-        
-        // Update text
-        if (data.monthly_api_limit > 0) {
-            apiLimitText.textContent = `${data.current_month_api_requests}/${data.monthly_api_limit}`;
-            apiUsageText.textContent = `${data.api_usage_percentage}% used`;
-        } else {
-            apiLimitText.textContent = `${data.current_month_api_requests} (Unlimited)`;
-            apiUsageText.textContent = 'Unlimited plan';
-        }
-    }
+    updateProgressBar('.api-usage-progress', data.api_usage_percentage);
+    updateUsageText('.api-usage-text', data.api_usage_percentage, data.monthly_api_limit > 0);
+    updateLimitText('.api-limit-text', data.current_month_api_requests, data.monthly_api_limit);
     
     // Update token usage
-    const tokenProgressBar = document.querySelector('.token-usage-progress');
-    const tokenUsageText = document.querySelector('.token-usage-text');
-    const tokenLimitText = document.querySelector('.token-limit-text');
+    updateProgressBar('.token-usage-progress', data.token_usage_percentage);
+    updateUsageText('.token-usage-text', data.token_usage_percentage, data.monthly_token_limit > 0);
+    updateLimitText('.token-limit-text', Math.round(data.current_month_tokens), data.monthly_token_limit);
     
-    if (tokenProgressBar && tokenUsageText && tokenLimitText) {
-        // Update progress bar
-        tokenProgressBar.style.width = data.token_usage_percentage + '%';
-        
-        // Update color based on usage
-        tokenProgressBar.className = 'progress-bar';
-        if (data.token_usage_percentage > 90) {
-            tokenProgressBar.classList.add('bg-danger');
-        } else if (data.token_usage_percentage > 75) {
-            tokenProgressBar.classList.add('bg-warning');
-        } else {
-            tokenProgressBar.classList.add('bg-success');
+    // Update quick stats
+    const statsElements = {
+        '.total-requests': data.total_api_requests,
+        '.total-tokens': Math.round(data.total_tokens)
+    };
+    
+    Object.entries(statsElements).forEach(([selector, value]) => {
+        const element = document.querySelector(selector);
+        if (element) {
+            animateNumber(element, parseInt(element.textContent), value);
         }
-        
-        // Update text
-        if (data.monthly_token_limit > 0) {
-            tokenLimitText.textContent = `${Math.round(data.current_month_tokens)}/${Math.round(data.monthly_token_limit)}`;
-            tokenUsageText.textContent = `${data.token_usage_percentage}% used`;
-        } else {
-            tokenLimitText.textContent = `${Math.round(data.current_month_tokens)} (Unlimited)`;
-            tokenUsageText.textContent = 'Unlimited plan';
-        }
-    }
-    
-    // Update total stats
-    const totalRequestsElement = document.querySelector('.total-requests');
-    const totalTokensElement = document.querySelector('.total-tokens');
-    
-    if (totalRequestsElement) {
-        totalRequestsElement.textContent = data.total_api_requests;
-    }
-    
-    if (totalTokensElement) {
-        totalTokensElement.textContent = Math.round(data.total_tokens);
-    }
+    });
     
     // Update usage alert
-    const usageAlert = document.getElementById('usage-alert');
-    const highUsage = data.api_usage_percentage > 90 || data.token_usage_percentage > 90;
-    const moderateUsage = data.api_usage_percentage > 75 || data.token_usage_percentage > 75;
+    updateUsageAlert(data);
     
-    if (highUsage) {
-        if (usageAlert) {
-            usageAlert.className = 'alert alert-warning alert-sm mb-2';
-            usageAlert.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i><strong>Usage Alert:</strong> You\'re approaching your monthly limit. Consider upgrading your plan.';
-        }
-    } else if (moderateUsage) {
-        if (usageAlert) {
-            usageAlert.className = 'alert alert-info alert-sm mb-2';
-            usageAlert.innerHTML = '<i class="fas fa-info-circle me-2"></i><strong>Usage Notice:</strong> You\'ve used over 75% of your monthly limit.';
-        }
-    } else if (usageAlert) {
-        usageAlert.style.display = 'none';
-    }
-    
-    // Update buttons based on limits
-    const testChatBtn = document.querySelector('.test-chat-btn');
-    const testVoiceBtn = document.querySelector('.test-voice-btn');
-    
-    if (!data.can_make_api_request) {
-        if (testChatBtn && !testChatBtn.disabled) {
-            testChatBtn.disabled = true;
-            testChatBtn.innerHTML = '<i class="fas fa-comments me-2"></i>Test Chat <i class="fas fa-lock ms-1"></i>';
-            testChatBtn.className = 'btn btn-outline-secondary w-100';
-            testChatBtn.title = 'API limit reached';
-        }
+    // Update button states
+    updateButtonStates(data.can_make_api_request);
+}
+
+function updateProgressBar(selector, percentage) {
+    const progressBar = document.querySelector(selector);
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+        progressBar.className = 'progress-bar';
         
-        if (testVoiceBtn && !testVoiceBtn.disabled) {
-            testVoiceBtn.disabled = true;
-            testVoiceBtn.innerHTML = '<i class="fas fa-microphone me-2"></i>Test Voice AI (Server-Side) <i class="fas fa-lock ms-1"></i>';
-            testVoiceBtn.className = 'btn btn-outline-secondary w-100';
-            testVoiceBtn.title = 'API limit reached';
+        if (percentage > 90) {
+            progressBar.classList.add('bg-danger');
+        } else if (percentage > 75) {
+            progressBar.classList.add('bg-warning');
+        } else {
+            progressBar.classList.add('bg-success');
         }
     }
 }
 
-// Auto-refresh usage stats every 30 seconds
-setInterval(refreshUsageStats, 30000);
-
-// Enter key to send message
-document.getElementById('chatInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        sendTestMessage();
+function updateUsageText(selector, percentage, hasLimit) {
+    const element = document.querySelector(selector);
+    if (element) {
+        if (hasLimit) {
+            element.innerHTML = `${percentage.toFixed(1)}% used this month`;
+        } else {
+            element.innerHTML = '<i class="fas fa-infinity me-1"></i>Unlimited usage';
+        }
     }
-});
+}
+
+function updateLimitText(selector, current, limit) {
+    const element = document.querySelector(selector);
+    if (element) {
+        if (limit > 0) {
+            element.textContent = `${current}/${limit}`;
+        } else {
+            element.textContent = `${current} (Unlimited)`;
+        }
+    }
+}
+
+function updateUsageAlert(data) {
+    const usageAlert = document.getElementById('usage-alert');
+    const highUsage = data.api_usage_percentage > 90 || data.token_usage_percentage > 90;
+    const moderateUsage = data.api_usage_percentage > 75 || data.token_usage_percentage > 75;
+    
+    if (highUsage && !usageAlert) {
+        createUsageAlert('warning', 'Usage Alert: You\'re approaching your monthly limit. Consider upgrading your plan.');
+    } else if (moderateUsage && !usageAlert) {
+        createUsageAlert('info', 'Usage Notice: You\'ve used over 75% of your monthly limit.');
+    } else if (!highUsage && !moderateUsage && usageAlert) {
+        usageAlert.remove();
+    }
+}
+
+function createUsageAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} d-flex align-items-center" id="usage-alert" style="border-radius: 12px; border: none;">
+            <i class="fas fa-${type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            <div><strong>${type === 'warning' ? 'Usage Alert' : 'Usage Notice'}:</strong> ${message.split(': ')[1]}</div>
+        </div>
+    `;
+    
+    const usageContainer = document.querySelector('.card-modern .card-body-modern');
+    if (usageContainer) {
+        usageContainer.insertAdjacentHTML('beforeend', alertHtml);
+    }
+}
+
+function updateButtonStates(canMakeApiRequest) {
+    const testButtons = document.querySelectorAll('.test-assistant-btn, .test-chat-btn, .test-voice-btn');
+    
+    testButtons.forEach(btn => {
+        if (!canMakeApiRequest && !btn.disabled) {
+            btn.disabled = true;
+            btn.className = 'btn btn-outline-secondary w-100';
+            btn.title = 'API limit reached';
+            
+            if (btn.innerHTML.indexOf('lock') === -1) {
+                btn.innerHTML += ' <i class="fas fa-lock ms-1"></i>';
+            }
+        }
+    });
+}
+
+// Smooth number animation
+function animateNumber(element, from, to, duration = 1000) {
+    const startTime = performance.now();
+    const difference = to - from;
+    
+    function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(from + (difference * easeOutCubic));
+        
+        element.textContent = current.toLocaleString();
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        }
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+// Enhanced loading states with modern animations
+function setButtonLoading(button, loading = true) {
+    if (loading) {
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.setAttribute('data-original-text', originalText);
+        button.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading...';
+        button.classList.add('loading');
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.getAttribute('data-original-text');
+        button.classList.remove('loading');
+    }
+}
 </script>
+
+<style>
+/* Additional animations for the dashboard */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-modern {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.card-modern:nth-child(1) { animation-delay: 0.1s; }
+.card-modern:nth-child(2) { animation-delay: 0.2s; }
+.card-modern:nth-child(3) { animation-delay: 0.3s; }
+.card-modern:nth-child(4) { animation-delay: 0.4s; }
+
+.btn-modern.loading {
+    pointer-events: none;
+}
+
+.progress-bar {
+    transition: width 0.8s ease-in-out, background-color 0.3s ease;
+}
+
+/* Toast animations */
+.toast {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+</style>
 {% endblock %}
 {% endblock %}
