@@ -418,6 +418,7 @@ class WidgetVoiceConsumer(AsyncWebsocketConsumer):
         """Process audio data from widget client"""
         try:
             if not self.is_voice_active or not self.voice_service:
+                print("Voice not active or no voice service")
                 return
             
             # Convert base64 audio to binary
@@ -425,6 +426,9 @@ class WidgetVoiceConsumer(AsyncWebsocketConsumer):
                 audio_bytes = base64.b64decode(audio_data)
             else:
                 audio_bytes = audio_data
+            
+            # Debug logging
+            print(f"Received audio data: {len(audio_bytes)} bytes")
             
             # Send audio to OpenAI WebSocket
             await self.send_to_openai({

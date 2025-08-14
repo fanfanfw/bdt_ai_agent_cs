@@ -1072,6 +1072,7 @@
                 }
                 
                 // Get microphone access
+                console.log('Requesting microphone access...');
                 this.audioStream = await navigator.mediaDevices.getUserMedia({ 
                     audio: {
                         sampleRate: 24000,
@@ -1081,6 +1082,7 @@
                         autoGainControl: true
                     }
                 });
+                console.log('Microphone access granted, stream:', this.audioStream);
                 
                 // Create audio context for recording
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
@@ -1179,6 +1181,12 @@
                         binaryString += String.fromCharCode(uint8Array[i]);
                     }
                     const base64Audio = btoa(binaryString);
+                    
+                    // Debug: Check audio level
+                    const audioLevel = Math.sqrt(inputData.reduce((sum, sample) => sum + sample * sample, 0) / inputData.length);
+                    if (audioLevel > 0.001) { // Only log if there's actual audio
+                        console.log('Sending audio data, level:', audioLevel.toFixed(4), 'size:', base64Audio.length);
+                    }
                     
                     this.voiceWebSocket.send(JSON.stringify({
                         type: 'audio_data',
