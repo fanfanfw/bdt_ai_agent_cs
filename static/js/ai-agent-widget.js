@@ -27,7 +27,7 @@
     function detectBaseUrl() {
         const scripts = document.getElementsByTagName('script');
         for (let script of scripts) {
-            if (script.src && script.src.includes('ai-agent-widget.js')) {
+            if (script.src && (script.src.includes('widget.js') || script.src.includes('ai-agent-widget.js'))) {
                 const url = new URL(script.src);
                 BASE_URL = `${url.protocol}//${url.host}`;
                 console.log('Detected BASE_URL from script:', BASE_URL);
@@ -40,10 +40,10 @@
             console.log('Using fallback BASE_URL:', BASE_URL);
         }
         
-        // Special handling for localhost development
-        if (BASE_URL.includes('file://') || !BASE_URL.includes('http')) {
+        // Only use fallback for file:// protocol or invalid URLs
+        if (BASE_URL.includes('file://') || (!BASE_URL.includes('http') && !BASE_URL)) {
             BASE_URL = 'http://127.0.0.1:8000';
-            console.log('Development mode - hardcoded BASE_URL:', BASE_URL);
+            console.log('Development mode - fallback BASE_URL:', BASE_URL);
         }
     }
 
