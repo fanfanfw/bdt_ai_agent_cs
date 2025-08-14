@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-n!xa&ia!v3t6*+h2k*!h$$a*p8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver', '192.168.1.111']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver', '192.168.1.111', 'aiagent.fanfanfw.biz.id']
 
 # CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
@@ -39,7 +39,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1',
     'https://localhost',
     'http://localhost',
+    'https://aiagent.fanfanfw.biz.id',
 ]
+
+# Security settings for reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_TLS = True
 
 
 # Application definition
