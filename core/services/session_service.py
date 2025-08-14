@@ -20,8 +20,10 @@ class SessionHistoryService:
             if source_filter:
                 query = query.filter(source=source_filter)
             
-            # Order by most recent and limit
-            sessions = query.order_by('-updated_at')[:limit]
+            # Order by most recent and optionally limit
+            sessions = query.order_by('-updated_at')
+            if limit is not None:
+                sessions = sessions[:limit]
             
             result = []
             for session in sessions:
@@ -83,6 +85,8 @@ class SessionHistoryService:
     
     def delete_session(self, session_id):
         """Delete a session and all its messages"""
+        from django.db import transaction
+        
         try:
             assistant = AIAssistant.objects.get(user=self.user)
             session = ChatSession.objects.get(
@@ -90,19 +94,30 @@ class SessionHistoryService:
                 assistant=assistant
             )
             
-            # Delete all messages first
-            ChatMessage.objects.filter(session=session).delete()
-            
-            # Delete the session
-            session.delete()
+            # Use transaction to ensure atomic delete
+            with transaction.atomic():
+                # Count messages for debugging
+                message_count = ChatMessage.objects.filter(session=session).count()
+                print(f"Deleting session {session_id} with {message_count} messages")
+                
+                # Delete all messages first (explicit)
+                deleted_messages = ChatMessage.objects.filter(session=session).delete()
+                print(f"Deleted messages: {deleted_messages}")
+                
+                # Delete the session
+                session.delete()
+                print(f"Deleted session: {session_id}")
             
             return True, "Session deleted successfully"
             
         except AIAssistant.DoesNotExist:
+            print(f"Assistant not found for user: {self.user}")
             return False, "Assistant not found"
         except ChatSession.DoesNotExist:
+            print(f"Session not found: {session_id}")
             return False, "Session not found"
         except Exception as e:
+            print(f"Error deleting session {session_id}: {str(e)}")
             return False, f"Error deleting session: {str(e)}"
     
     def get_session_stats(self):

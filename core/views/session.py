@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from ..services import SessionHistoryService
 
@@ -20,13 +21,23 @@ def session_history_view(request):
     
     # Get filter parameters
     source_filter = request.GET.get('source')
-    limit = min(int(request.GET.get('limit', 50)), 100)  # Max 100 sessions
+    per_page = min(int(request.GET.get('per_page', 25)), 50)  # Max 50 per page
+    page = request.GET.get('page', 1)
     
-    # Get sessions untuk user ini saja
-    sessions = history_service.get_user_sessions(
+    # Get sessions untuk user ini saja (tanpa limit dulu untuk pagination)
+    all_sessions = history_service.get_user_sessions(
         source_filter=source_filter, 
-        limit=limit
+        limit=None  # Get all sessions for pagination
     )
+    
+    # Setup pagination
+    paginator = Paginator(all_sessions, per_page)
+    try:
+        sessions = paginator.page(page)
+    except PageNotAnInteger:
+        sessions = paginator.page(1)
+    except EmptyPage:
+        sessions = paginator.page(paginator.num_pages)
     
     # Get statistics
     stats = history_service.get_session_stats()
@@ -45,7 +56,9 @@ def session_history_view(request):
         'stats': stats,
         'source_choices': source_choices,
         'current_filter': source_filter,
-        'current_limit': limit
+        'current_per_page': per_page,
+        'paginator': paginator,
+        'page_obj': sessions
     })
 
 
@@ -83,14 +96,36 @@ def delete_session_view(request, session_id):
     # Initialize service dengan user saat ini
     history_service = SessionHistoryService(request.user)
     
-    # Delete session (hanya milik user ini)
-    success, message = history_service.delete_session(session_id)
-    
-    if request.headers.get('Content-Type') == 'application/json':
-        return JsonResponse({'success': success, 'message': message})
-    else:
-        if success:
-            messages.success(request, message)
+    try:
+        # Delete session (hanya milik user ini)
+        success, message = history_service.delete_session(session_id)
+        
+        # Debug logging
+        print(f"Delete attempt - Session ID: {session_id}, Success: {success}, Message: {message}")
+        
+        # Always return JSON for requests with Content-Type: application/json
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({
+                'success': success, 
+                'message': message,
+                'session_id': str(session_id)
+            })
         else:
-            messages.error(request, message)
-        return redirect('session_history')
+            if success:
+                messages.success(request, message)
+            else:
+                messages.error(request, message)
+            return redirect('session_history')
+            
+    except Exception as e:
+        # Catch any unexpected errors
+        print(f"Unexpected error in delete_session_view: {str(e)}")
+        
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({
+                'success': False, 
+                'message': f'Unexpected error: {str(e)}'
+            })
+        else:
+            messages.error(request, f'Unexpected error: {str(e)}')
+            return redirect('session_history')

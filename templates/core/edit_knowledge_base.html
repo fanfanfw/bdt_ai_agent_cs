@@ -3,85 +3,147 @@
 {% block title %}Edit Knowledge Base - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-database me-2"></i>Manage Knowledge Base
-                    </h5>
-                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                    </a>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Knowledge Base Management:</strong> Add, edit, or remove content that your AI assistant uses to answer questions not covered in your Q&As.
+<!-- Dashboard-style Hero Section -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-database text-white fs-4"></i>
                     </div>
+                    <div>
+                        <h1 class="mb-1 fs-2 fw-bold">Knowledge Base</h1>
+                        <p class="mb-0 opacity-75">Manage your AI assistant's knowledge library</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <!-- Knowledge Base Stats Alert -->
+        <div class="alert alert-info glass-effect mt-4">
+            <div class="row g-2">
+                <div class="col-lg-4 col-md-6">
+                    <strong>Total Items:</strong> {{ knowledge_items.count }} entries
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>File Types:</strong> PDF, TXT, DOCX
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>Max Size:</strong> 10MB per file
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Status:</strong> <span class="badge bg-success">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <!-- Info Card -->
+            <div class="card-modern mb-4">
+                <div class="card-body-modern">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-info-circle text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 fw-semibold">Knowledge Base Management</h6>
+                            <p class="mb-0 text-muted small">Add, edit, or remove content that your AI assistant uses to answer questions not covered in your Q&As</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Existing Knowledge Base Items -->
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-list me-2 text-primary-modern"></i>
+                        <h5 class="mb-0 fw-semibold">Current Knowledge Base</h5>
+                    </div>
+                    <span class="badge bg-primary">{{ knowledge_items.count }} items</span>
+                </div>
+                <div class="card-body-modern">
                     
-                    <!-- Existing Knowledge Base Items -->
-                    <div class="mb-4">
-                        <h6 class="mb-3">
-                            <i class="fas fa-list me-2"></i>Current Knowledge Base ({{ knowledge_items.count }} items)
-                        </h6>
-                        
+                    {% if knowledge_items %}
+                    <div class="knowledge-items-list">
                         {% for item in knowledge_items %}
-                        <div class="card mb-3">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">
-                                        {% if item.file_path %}
-                                            <i class="fas fa-file me-2"></i>{{ item.title }}
-                                        {% else %}
-                                            <i class="fas fa-text-width me-2"></i>{{ item.title }}
-                                        {% endif %}
-                                    </h6>
-                                    <small class="text-muted">
-                                        Added: {{ item.created_at|date:"M d, Y H:i" }}
-                                        {% if item.file_path %}| File: {{ item.file_path.name }}{% endif %}
-                                    </small>
+                        <div class="knowledge-item mb-3" data-item-id="{{ item.id }}">
+                            <div class="knowledge-card p-3 border rounded-3 bg-light position-relative">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                            {% if item.file_path %}
+                                                <i class="fas fa-file text-white"></i>
+                                            {% else %}
+                                                <i class="fas fa-text-width text-white"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1 fw-semibold">{{ item.title }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>{{ item.created_at|date:"M d, Y H:i" }}
+                                                {% if item.file_path %}
+                                                    <i class="fas fa-paperclip ms-2 me-1"></i>{{ item.file_path.name }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editKnowledgeItem({{ item.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteKnowledgeItem({{ item.id }}, '{{ item.title|escapejs }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="editKnowledgeItem({{ item.id }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteKnowledgeItem({{ item.id }}, '{{ item.title|escapejs }}')">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
+                                
+                                <!-- Content View -->
                                 <div id="content-view-{{ item.id }}">
-                                    <p class="mb-0">{{ item.content|truncatewords:50 }}</p>
-                                    {% if item.content|length > 200 %}
-                                        <small class="text-muted">
-                                            <a href="#" onclick="toggleFullContent({{ item.id }}); return false;">
-                                                <span id="toggle-text-{{ item.id }}">Show more...</span>
-                                            </a>
-                                        </small>
-                                    {% endif %}
+                                    <div class="content-preview p-3 bg-white rounded-2 border">
+                                        <p class="mb-0">{{ item.content|truncatewords:30 }}</p>
+                                        {% if item.content|length > 150 %}
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleFullContent({{ item.id }})">
+                                                    <span id="toggle-text-{{ item.id }}">
+                                                        <i class="fas fa-expand-alt me-1"></i>Show more
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 
                                 <!-- Edit Form (Hidden by default) -->
                                 <div id="edit-form-{{ item.id }}" style="display: none;">
-                                    <form method="post">
+                                    <form method="post" class="edit-knowledge-form">
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="update">
                                         <input type="hidden" name="item_id" value="{{ item.id }}">
                                         
                                         <div class="mb-3">
-                                            <label class="form-label">Content:</label>
-                                            <textarea name="content" class="form-control" rows="8" required>{{ item.content }}</textarea>
+                                            <label class="form-label fw-semibold text-primary-modern">
+                                                <i class="fas fa-edit me-1"></i>Content:
+                                            </label>
+                                            <textarea name="content" class="form-control-modern" rows="8" required>{{ item.content }}</textarea>
                                         </div>
                                         
-                                        <div class="text-end">
+                                        <div class="d-flex gap-2 justify-content-end">
                                             <button type="button" class="btn btn-outline-secondary" onclick="cancelEdit({{ item.id }})">
-                                                Cancel
+                                                <i class="fas fa-times me-1"></i>Cancel
                                             </button>
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fas fa-save me-2"></i>Save Changes
+                                            <button type="submit" class="btn btn-primary-modern">
+                                                <i class="fas fa-save me-1"></i>Save Changes
                                             </button>
                                         </div>
                                     </form>
@@ -89,125 +151,188 @@
                                 
                                 <!-- Full Content (Hidden by default) -->
                                 <div id="full-content-{{ item.id }}" style="display: none;">
-                                    <p class="mb-0">{{ item.content|linebreaksbr }}</p>
+                                    <div class="content-full p-3 bg-white rounded-2 border">
+                                        <p class="mb-0 pre-wrap">{{ item.content|linebreaksbr }}</p>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleFullContent({{ item.id }})">
+                                                <i class="fas fa-compress-alt me-1"></i>Show less
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        {% empty %}
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-database fa-3x mb-3"></i>
-                            <p>No knowledge base items found. Add some content below!</p>
-                        </div>
                         {% endfor %}
                     </div>
-                    
-                    <!-- Add New Knowledge Base Content -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-plus me-2"></i>Add New Knowledge Base Content
-                            </h6>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="bg-gradient-primary rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-database text-white fs-1"></i>
                         </div>
-                        <div class="card-body">
-                            <form method="post" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="add">
+                        <h5 class="text-muted mb-2">No Knowledge Base Items</h5>
+                        <p class="text-muted">Add your first knowledge base entry below to get started!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Add New Knowledge Base Content -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-plus-circle me-2 text-success"></i>
+                        <h5 class="mb-0 fw-semibold">Add New Content</h5>
+                    </div>
+                </div>
+                <div class="card-body-modern">
+                    <form method="post" enctype="multipart/form-data" id="addKnowledgeForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
+                        
+                        <!-- Content Type Tabs -->
+                        <ul class="nav nav-pills mb-4" id="addContentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="manual-tab" data-bs-toggle="pill" data-bs-target="#manual-content" type="button" role="tab">
+                                    <i class="fas fa-keyboard me-2"></i>Manual Entry
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="file-tab" data-bs-toggle="pill" data-bs-target="#file-upload" type="button" role="tab">
+                                    <i class="fas fa-file-upload me-2"></i>File Upload
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="addContentTabsContent">
+                            <!-- Manual Content Entry -->
+                            <div class="tab-pane fade show active" id="manual-content" role="tabpanel">
+                                <div class="mb-4">
+                                    <label for="title" class="form-label fw-semibold text-primary-modern">
+                                        <i class="fas fa-heading me-1"></i>Title:
+                                    </label>
+                                    <input type="text" class="form-control-modern w-100" id="title" name="title" placeholder="Enter a descriptive title for your content..." maxlength="200">
+                                </div>
                                 
-                                <!-- Manual Content Tab -->
-                                <ul class="nav nav-tabs" id="addContentTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-content" type="button">
-                                            <i class="fas fa-keyboard me-2"></i>Manual Content
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-upload" type="button">
-                                            <i class="fas fa-file-upload me-2"></i>File Upload
-                                        </button>
-                                    </li>
-                                </ul>
-                                
-                                <div class="tab-content" id="addContentTabsContent">
-                                    <!-- Manual Content -->
-                                    <div class="tab-pane fade show active" id="manual-content">
-                                        <div class="p-3">
-                                            <div class="mb-3">
-                                                <label for="title" class="form-label">Title:</label>
-                                                <input type="text" class="form-control" id="title" name="title" placeholder="Enter a descriptive title...">
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label for="manual_content" class="form-label">Content:</label>
-                                                <textarea 
-                                                    id="manual_content" 
-                                                    name="manual_content" 
-                                                    class="form-control" 
-                                                    rows="8" 
-                                                    placeholder="Enter your content here...
+                                <div class="mb-3">
+                                    <label for="manual_content" class="form-label fw-semibold text-primary-modern">
+                                        <i class="fas fa-file-text me-1"></i>Content:
+                                    </label>
+                                    <textarea 
+                                        id="manual_content" 
+                                        name="manual_content" 
+                                        class="form-control-modern w-100" 
+                                        rows="12"
+                                        style="width: 100% !important; max-width: 100% !important; resize: vertical;"
+                                        placeholder="Enter your knowledge base content here...
 
-Example:
-- Store policies and procedures
-- Product information and specifications  
-- Frequently asked questions
-- Company information and history
-- Contact details and locations"
-                                                ></textarea>
+📝 Examples of what to include:
+• Store policies and procedures
+• Product information and specifications  
+• Frequently asked questions
+• Company information and history
+• Contact details and locations
+• Operating hours and services
+• Pricing and payment information"
+                                    ></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- File Upload -->
+                            <div class="tab-pane fade" id="file-upload" role="tabpanel">
+                                <div class="upload-section">
+                                    <div class="mb-3">
+                                        <label for="knowledge_files" class="form-label fw-semibold text-primary-modern">
+                                            <i class="fas fa-cloud-upload-alt me-1"></i>Upload Documents:
+                                        </label>
+                                        <input 
+                                            type="file" 
+                                            class="form-control-modern" 
+                                            id="knowledge_files" 
+                                            name="knowledge_files" 
+                                            multiple 
+                                            accept=".pdf,.txt,.docx,.doc"
+                                        >
+                                        <div class="form-text mt-2">
+                                            <div class="d-flex align-items-center text-muted">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                <div>
+                                                    <strong>Supported formats:</strong> PDF, TXT, DOCX, DOC<br>
+                                                    <strong>Maximum size:</strong> 10MB per file | <strong>Multiple files:</strong> Allowed
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <!-- File Upload -->
-                                    <div class="tab-pane fade" id="file-upload">
-                                        <div class="p-3">
-                                            <div class="mb-3">
-                                                <label for="knowledge_files" class="form-label">
-                                                    Upload Documents (PDF, TXT, DOCX):
-                                                </label>
-                                                <input 
-                                                    type="file" 
-                                                    class="form-control" 
-                                                    id="knowledge_files" 
-                                                    name="knowledge_files" 
-                                                    multiple 
-                                                    accept=".pdf,.txt,.docx,.doc"
-                                                >
-                                                <div class="form-text">
-                                                    You can upload multiple files. Supported formats: PDF, TXT, DOCX.
-                                                    Maximum file size: 10MB each.
-                                                </div>
-                                            </div>
-                                            
-                                            <div id="filePreview" class="mt-3"></div>
-                                        </div>
-                                    </div>
+                                    <div id="filePreview" class="mt-3"></div>
                                 </div>
-                                
-                                <div class="text-end">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-plus me-2"></i>Add to Knowledge Base
-                                    </button>
-                                </div>
-                            </form>
+                            </div>
                         </div>
-                    </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-flex justify-content-end pt-3 border-top">
+                            <button type="submit" class="btn btn-primary-modern">
+                                <i class="fas fa-plus me-2"></i>Add to Knowledge Base
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
             
-            <!-- Help Section -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-lightbulb me-2"></i>Knowledge Base Best Practices
-                    </h6>
+            <!-- Best Practices Card -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>
+                        <h6 class="mb-0 fw-semibold">Knowledge Base Best Practices</h6>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="mb-0">
-                        <li><strong>Organize Content:</strong> Use clear titles and organize related information together</li>
-                        <li><strong>Keep Updated:</strong> Regularly review and update content to keep it current</li>
-                        <li><strong>Be Comprehensive:</strong> Include detailed information that customers might need</li>
-                        <li><strong>Use Keywords:</strong> Include terms and phrases customers might search for</li>
-                        <li><strong>Structure Well:</strong> Use headings, bullet points, and clear formatting</li>
-                    </ul>
+                <div class="card-body-modern">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-sitemap text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Organize Content</h6>
+                                    <p class="mb-0 text-muted small">Use clear titles and organize related information together</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-sync-alt text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Keep Updated</h6>
+                                    <p class="mb-0 text-muted small">Regularly review and update content to keep it current</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-search text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Use Keywords</h6>
+                                    <p class="mb-0 text-muted small">Include terms and phrases customers might search for</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-list-ul text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Structure Well</h6>
+                                    <p class="mb-0 text-muted small">Use headings, bullet points, and clear formatting</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -216,24 +341,38 @@ Example:
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-dark text-white border-0">
+                <h5 class="modal-title fw-semibold">
                     <i class="fas fa-trash me-2"></i>Delete Knowledge Base Item
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone.
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-exclamation-triangle text-white fs-1"></i>
+                    </div>
                 </div>
-                <p>Are you sure you want to delete "<span id="deleteItemTitle"></span>"?</p>
+                
+                <div class="alert alert-warning border-0 glass-effect">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-exclamation-triangle me-3 text-warning"></i>
+                        <div>
+                            <h6 class="fw-semibold mb-2">Important Warning</h6>
+                            <p class="mb-0">This action cannot be undone. The knowledge base item will be permanently removed.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-center text-muted">Are you sure you want to delete "<strong><span id="deleteItemTitle"></span></strong>"?</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="post" style="display: inline;">
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <form method="post" style="display: inline;" id="deleteForm">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="item_id" value="" id="deleteItemId">
@@ -246,16 +385,296 @@ Example:
     </div>
 </div>
 
+{% block extra_css %}
+<style>
+/* Knowledge Base specific styling */
+.knowledge-item {
+    transition: all 0.3s ease;
+}
+
+.knowledge-card {
+    transition: all 0.3s ease;
+    border: 2px solid var(--border) !important;
+}
+
+.knowledge-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 173, 181, 0.1);
+    border-color: var(--primary) !important;
+}
+
+.content-preview {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.content-preview:hover {
+    box-shadow: 0 4px 15px rgba(0, 173, 181, 0.05);
+}
+
+.content-full {
+    background: rgba(0, 173, 181, 0.02) !important;
+}
+
+/* Form controls */
+.form-control-modern {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Ensure full width for textarea specifically */
+#manual_content, #title {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Override any Bootstrap constraints */
+.tab-content .form-control-modern {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.form-control-modern:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+/* Upload section styling */
+.upload-section {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.upload-section:hover {
+    border-color: var(--primary);
+    background: rgba(0, 173, 181, 0.02);
+}
+
+.upload-section input[type="file"] {
+    border: none;
+    background: transparent;
+}
+
+/* File preview styling */
+.file-item {
+    background: rgba(0, 173, 181, 0.05);
+    border: 1px solid var(--primary) !important;
+    transition: all 0.3s ease;
+}
+
+.file-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0, 173, 181, 0.1);
+}
+
+/* Nav pills styling */
+.nav-pills .nav-link {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.nav-pills .nav-link:hover {
+    background: rgba(0, 173, 181, 0.1);
+    transform: translateY(-2px);
+}
+
+.nav-pills .nav-link.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Tips section styling */
+.tip-item {
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 12px;
+}
+
+.tip-item:hover {
+    background: rgba(0, 173, 181, 0.05);
+    transform: translateX(5px);
+}
+
+/* Pre-wrap for content display */
+.pre-wrap {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .knowledge-card {
+        padding: 1rem !important;
+    }
+    
+    .knowledge-card .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .upload-section {
+        padding: 1rem;
+        text-align: left;
+    }
+    
+    .nav-pills {
+        flex-direction: column;
+    }
+    
+    .nav-pills .nav-link {
+        text-align: left;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Hero section mobile */
+    .bg-gradient-dark .col-lg-8,
+    .bg-gradient-dark .col-lg-4 {
+        text-align: center;
+    }
+    
+    .bg-gradient-dark .col-lg-4 {
+        margin-top: 1rem;
+    }
+    
+    /* Alert responsive */
+    .alert.glass-effect .row .col-lg-4,
+    .alert.glass-effect .row .col-lg-3,
+    .alert.glass-effect .row .col-lg-2,
+    .alert.glass-effect .row .col-md-6 {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .bg-gradient-dark {
+        padding: 2rem 0 !important;
+    }
+    
+    .bg-gradient-dark h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .bg-gradient-primary.rounded-circle.p-3 {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .knowledge-card .d-flex.gap-2 {
+        justify-content: center;
+    }
+    
+    .tip-item {
+        margin-bottom: 1rem;
+    }
+    
+    .tip-item .d-flex {
+        align-items: center !important;
+    }
+    
+    /* Modal mobile adjustments */
+    .modal-dialog {
+        margin: 1rem;
+    }
+    
+    .upload-section {
+        padding: 1rem;
+    }
+}
+
+/* Animation for button interactions */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Loading animation */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Content animation */
+.knowledge-item {
+    animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
 function editKnowledgeItem(itemId) {
     document.getElementById(`content-view-${itemId}`).style.display = 'none';
     document.getElementById(`edit-form-${itemId}`).style.display = 'block';
+    
+    // Hide full content if visible
+    const fullContent = document.getElementById(`full-content-${itemId}`);
+    if (fullContent.style.display === 'block') {
+        fullContent.style.display = 'none';
+    }
+    
+    // Auto-resize textarea
+    const textarea = document.querySelector(`#edit-form-${itemId} textarea`);
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+    
+    showToast('Edit mode enabled', 'info');
 }
 
 function cancelEdit(itemId) {
     document.getElementById(`content-view-${itemId}`).style.display = 'block';
     document.getElementById(`edit-form-${itemId}`).style.display = 'none';
+    
+    showToast('Edit cancelled', 'info');
 }
 
 function deleteKnowledgeItem(itemId, itemTitle) {
@@ -270,45 +689,76 @@ function toggleFullContent(itemId) {
     const fullView = document.getElementById(`full-content-${itemId}`);
     const toggleText = document.getElementById(`toggle-text-${itemId}`);
     
-    if (fullView.style.display === 'none') {
+    if (fullView.style.display === 'none' || fullView.style.display === '') {
         shortView.style.display = 'none';
         fullView.style.display = 'block';
-        toggleText.textContent = 'Show less...';
+        toggleText.innerHTML = '<i class="fas fa-compress-alt me-1"></i>Show less';
     } else {
         shortView.style.display = 'block';
         fullView.style.display = 'none';
-        toggleText.textContent = 'Show more...';
+        toggleText.innerHTML = '<i class="fas fa-expand-alt me-1"></i>Show more';
     }
 }
 
-// File preview functionality
+// Enhanced file preview functionality
 document.getElementById('knowledge_files').addEventListener('change', function(e) {
     const filePreview = document.getElementById('filePreview');
     filePreview.innerHTML = '';
     
     if (e.target.files.length > 0) {
-        const fileList = document.createElement('div');
-        fileList.className = 'file-list';
+        const fileListContainer = document.createElement('div');
+        fileListContainer.className = 'file-list';
+        
+        const header = document.createElement('h6');
+        header.className = 'mb-3 fw-semibold text-primary-modern';
+        header.innerHTML = `<i class="fas fa-files me-2"></i>Selected Files (${e.target.files.length})`;
+        fileListContainer.appendChild(header);
         
         for (let i = 0; i < e.target.files.length; i++) {
             const file = e.target.files[i];
             const fileItem = document.createElement('div');
-            fileItem.className = 'file-item d-flex align-items-center justify-content-between p-2 mb-2 border rounded';
+            fileItem.className = 'file-item d-flex align-items-center justify-content-between p-3 mb-2 border rounded-3';
             
+            const fileIcon = getFileIcon(file.name);
             const fileInfo = document.createElement('div');
+            fileInfo.className = 'd-flex align-items-center';
             fileInfo.innerHTML = `
-                <i class="fas fa-file me-2"></i>
-                <strong>${file.name}</strong>
-                <span class="text-muted ms-2">(${formatFileSize(file.size)})</span>
+                <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                    <i class="${fileIcon} text-white small"></i>
+                </div>
+                <div>
+                    <div class="fw-semibold">${file.name}</div>
+                    <small class="text-muted">${formatFileSize(file.size)}</small>
+                </div>
             `;
             
+            const fileStatus = document.createElement('div');
+            if (file.size > 10 * 1024 * 1024) { // 10MB
+                fileStatus.innerHTML = '<span class="badge bg-danger">Too large</span>';
+            } else {
+                fileStatus.innerHTML = '<span class="badge bg-success">Ready</span>';
+            }
+            
             fileItem.appendChild(fileInfo);
-            fileList.appendChild(fileItem);
+            fileItem.appendChild(fileStatus);
+            fileListContainer.appendChild(fileItem);
         }
         
-        filePreview.appendChild(fileList);
+        filePreview.appendChild(fileListContainer);
+        showToast(`${e.target.files.length} file(s) selected`, 'success');
     }
 });
+
+function getFileIcon(fileName) {
+    const extension = fileName.split('.').pop().toLowerCase();
+    switch(extension) {
+        case 'pdf': return 'fas fa-file-pdf';
+        case 'doc':
+        case 'docx': return 'fas fa-file-word';
+        case 'txt': return 'fas fa-file-alt';
+        default: return 'fas fa-file';
+    }
+}
 
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -326,8 +776,8 @@ document.addEventListener('input', function(e) {
     }
 });
 
-// Form validation for manual content
-document.querySelector('form').addEventListener('submit', function(e) {
+// Enhanced form validation
+document.getElementById('addKnowledgeForm').addEventListener('submit', function(e) {
     const activeTab = document.querySelector('.nav-link.active').id;
     
     if (activeTab === 'manual-tab') {
@@ -341,9 +791,138 @@ document.querySelector('form').addEventListener('submit', function(e) {
         
         if (!title || !content) {
             e.preventDefault();
-            alert('Please provide both title and content for manual knowledge base entry.');
+            showToast('Please provide both title and content for manual knowledge base entry.', 'error');
+            return;
         }
+        
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalHTML = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        submitBtn.disabled = true;
+        
+        showToast('Adding content to knowledge base...', 'info');
+    } else if (activeTab === 'file-tab') {
+        const files = document.getElementById('knowledge_files').files;
+        if (files.length === 0) {
+            e.preventDefault();
+            showToast('Please select at least one file to upload.', 'error');
+            return;
+        }
+        
+        // Check file sizes
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].size > 10 * 1024 * 1024) {
+                e.preventDefault();
+                showToast(`File "${files[i].name}" is too large. Maximum size is 10MB.`, 'error');
+                return;
+            }
+        }
+        
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalHTML = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+        submitBtn.disabled = true;
+        
+        showToast(`Uploading ${files.length} file(s)...`, 'info');
     }
+});
+
+// Enhanced edit form submission
+document.addEventListener('submit', function(e) {
+    if (e.target.classList.contains('edit-knowledge-form')) {
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalHTML = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+        submitBtn.disabled = true;
+        
+        showToast('Saving changes...', 'info');
+    }
+});
+
+// Delete form submission
+document.getElementById('deleteForm').addEventListener('submit', function(e) {
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+    submitBtn.disabled = true;
+    
+    showToast('Deleting item...', 'warning');
+});
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Create toast if it doesn't exist
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast align-items-center border-0`;
+    toast.setAttribute('role', 'alert');
+    
+    // Set toast color based on type
+    let bgClass = 'bg-primary text-white';
+    let icon = 'fas fa-info-circle';
+    
+    switch(type) {
+        case 'success':
+            bgClass = 'bg-success text-white';
+            icon = 'fas fa-check-circle';
+            break;
+        case 'warning':
+            bgClass = 'bg-warning text-dark';
+            icon = 'fas fa-exclamation-triangle';
+            break;
+        case 'error':
+            bgClass = 'bg-danger text-white';
+            icon = 'fas fa-exclamation-circle';
+            break;
+    }
+    
+    toast.className += ` ${bgClass}`;
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center">
+                <i class="${icon} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: type === 'error' ? 5000 : 3000
+    });
+    
+    bsToast.show();
+    
+    // Remove toast element after it's hidden
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize existing textareas
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    });
+    
+    showToast('Knowledge Base Editor loaded successfully!', 'success');
 });
 </script>
 {% endblock %}

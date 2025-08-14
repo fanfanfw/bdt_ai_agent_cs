@@ -3,217 +3,209 @@
 {% block title %}Realtime Voice Test{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-md-10 mx-auto">
-            <!-- Header Card -->
-            <div class="card shadow-lg mb-4">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="mb-0">
-                                <i class="fas fa-microphone me-2"></i>
-                                Realtime Voice Assistant Test
-                            </h4>
-                            <small>Speech-to-Speech with OpenAI Realtime API + RAG</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <!-- Language Selector -->
-                            <div class="me-3">
-                                <label class="form-label text-white mb-0 me-2">Language:</label>
-                                <select id="language-selector" class="form-select form-select-sm" style="width: auto; display: inline-block;">
-                                    <option value="auto">Auto-detect</option>
-                                    <option value="en">English</option>
-                                    <option value="ms">Bahasa Malaysia</option>
-                                </select>
-                            </div>
-                            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
-                                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                            </a>
-                        </div>
+<!-- Dashboard-style Hero Section -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-microphone-alt fs-3"></i>
                     </div>
-                </div>
-                <div class="card-body">
-                    <!-- Assistant Info -->
-                    <div class="alert alert-info">
-                        <strong>Assistant:</strong> {{ assistant.business_type.name }} Customer Service<br>
-                        <strong>Knowledge Base Items:</strong> {{ assistant.knowledge_base.count }}<br>
-                        <strong>Q&A Items:</strong> {{ assistant.qnas.count }}<br>
-                        <strong>API:</strong> OpenAI Realtime API (Server-side WebSocket)<br>
-                        <strong>Current Language:</strong> <span id="current-language-display">English</span> (Voice + Transcription)
-                    </div>
-
-                    <!-- Connection Status -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="card h-100 border-secondary">
-                                <div class="card-header bg-secondary text-white text-center">
-                                    <h6 class="mb-0">Connection Status</h6>
-                                </div>
-                                <div class="card-body text-center">
-                                    <div id="connection-status" class="mb-2">
-                                        <i class="fas fa-circle text-muted fa-2x"></i>
-                                    </div>
-                                    <div id="connection-text" class="fw-bold">Initializing...</div>
-                                    <small class="text-muted">Server WebSocket</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card h-100 border-info">
-                                <div class="card-header bg-info text-white text-center">
-                                    <h6 class="mb-0">Voice Activity</h6>
-                                </div>
-                                <div class="card-body text-center">
-                                    <div id="voice-activity" class="mb-2">
-                                        <i class="fas fa-microphone-slash text-muted fa-2x"></i>
-                                    </div>
-                                    <div id="voice-text" class="fw-bold">Ready</div>
-                                    <small class="text-muted">Speech Detection</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card h-100 border-success">
-                                <div class="card-header bg-success text-white text-center">
-                                    <h6 class="mb-0">AI Response</h6>
-                                </div>
-                                <div class="card-body text-center">
-                                    <div id="ai-status" class="mb-2">
-                                        <i class="fas fa-robot text-muted fa-2x"></i>
-                                    </div>
-                                    <div id="ai-text" class="fw-bold">Standby</div>
-                                    <small class="text-muted">Model Response</small>
-                                </div>
-                            </div>
-                        </div>
+                    <div>
+                        <h1 class="mb-1 fw-bold">Realtime Voice Assistant Test</h1>
+                        <p class="mb-0 opacity-75">Speech-to-Speech with OpenAI Realtime API + RAG</p>
                     </div>
                 </div>
             </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="d-flex flex-wrap gap-2 justify-content-lg-end align-items-center">
+                    <!-- Language Selector -->
+                    <div class="voice-language-selector me-3">
+                        <label class="form-label text-white mb-1 small fw-medium">Language:</label>
+                        <select id="language-selector" class="form-select form-select-sm bg-dark text-light border-0" style="border-radius: 8px; width: auto; display: inline-block;">
+                            <option value="auto">Auto-detect</option>
+                            <option value="en">English</option>
+                            <option value="ms">Bahasa Malaysia</option>
+                        </select>
+                    </div>
+                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assistant Info Alert -->
+        <div class="alert alert-info glass-effect mt-4">
+            <div class="row g-2">
+                <div class="col-lg-3 col-md-6">
+                    <strong>Assistant:</strong> {{ assistant.business_type.name }} Customer Service
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Knowledge:</strong> {{ assistant.knowledge_base.count }} items
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Q&A:</strong> {{ assistant.qnas.count }} pairs
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>API:</strong> OpenAI Realtime API (Server-side)
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Language:</strong> <span id="current-language-display">English</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Main Control Panel -->
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card shadow-lg h-100">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-microphone me-2"></i>Voice Control
-                            </h5>
-                        </div>
-                        <div class="card-body text-center">
-                            <!-- Voice Button -->
-                            <div class="my-4">
-                                <button id="voice-btn" class="btn btn-success rounded-circle" 
-                                        style="width: 120px; height: 120px;" 
-                                        disabled>
-                                    <i class="fas fa-microphone fa-3x"></i>
-                                </button>
-                                <div class="mt-3">
-                                    <div id="voice-btn-text" class="fw-bold fs-5">Initializing...</div>
-                                    <small class="text-muted">Click to start conversation</small>
-                                </div>
-                            </div>
-
-                            <!-- Conversation State -->
-                            <div id="conversation-state" class="alert alert-secondary">
-                                <div class="d-flex align-items-center justify-content-center">
-                                    <span id="state-indicator" class="fs-4 me-2">🤖</span>
-                                    <span id="state-text" class="fw-bold">Getting ready...</span>
-                                </div>
-                            </div>
-
-
-                            <!-- Transcription Preview -->
-                            <div id="transcription-preview" class="alert alert-info d-none">
-                                <div class="d-flex align-items-center">
-                                    <span id="preview-icon" class="fs-5 me-2">👤</span>
-                                    <div>
-                                        <small class="text-muted d-block">Live Transcription:</small>
-                                        <span id="preview-text" class="fw-bold"></span>
-                                        <span id="typing-indicator" class="text-muted">▋</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Instructions -->
-                            <div class="alert alert-light border">
-                                <h6><i class="fas fa-info-circle me-2"></i>How to use:</h6>
-                                <ul class="list-unstyled mb-0 small">
-                                    <li>• Click the GREEN microphone button to START conversation</li>
-                                    <li>• Speak naturally after clicking start</li>
-                                    <li>• Your speech is transcribed in REAL-TIME using Whisper-1</li>
-                                    <li>• See live transcription preview above</li>
-                                    <li>• Click the RED stop button to END conversation</li>
-                                    <li>• Uses your knowledge base for answers</li>
-                                </ul>
-                            </div>
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    
+    <!-- Dashboard-style Status Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-4 col-md-6">
+            <div class="card-modern h-100">
+                <div class="card-body-modern text-center">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <div id="connection-status">
+                            <i class="fas fa-circle text-white fs-4"></i>
                         </div>
                     </div>
+                    <h3 class="fw-bold text-primary-modern mb-1">Connection</h3>
+                    <p class="text-muted mb-0" id="connection-text">Initializing...</p>
+                    <small class="text-muted">Server WebSocket</small>
                 </div>
-
-                <div class="col-md-6">
-                    <div class="card shadow-lg h-100">
-                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-comments me-2"></i>Conversation History
-                            </h5>
-                            <button class="btn btn-sm btn-outline-light" onclick="clearConversation()">
-                                <i class="fas fa-trash me-1"></i>Clear
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card-modern h-100">
+                <div class="card-body-modern text-center">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <div id="voice-activity">
+                            <i class="fas fa-microphone-slash text-white fs-4"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-primary-modern mb-1">Voice Activity</h3>
+                    <p class="text-muted mb-0" id="voice-text">Ready</p>
+                    <small class="text-muted">Speech Detection</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card-modern h-100">
+                <div class="card-body-modern text-center">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <div id="ai-status">
+                            <i class="fas fa-robot text-white fs-4"></i>
+                        </div>
+                    </div>
+                    <h3 class="fw-bold text-primary-modern mb-1">AI Response</h3>
+                    <p class="text-muted mb-0" id="ai-text">Standby</p>
+                    <small class="text-muted">Model Response</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content Row -->
+    <div class="row g-4 mb-5">
+        
+        <!-- Voice Control Panel -->
+        <div class="col-lg-6">
+            <div class="card-modern h-100">
+                <div class="card-header-modern">
+                    <i class="fas fa-microphone me-2"></i>
+                    <span>Voice Control</span>
+                </div>
+                <div class="card-body-modern text-center">
+                    <!-- Main Voice Button -->
+                    <div class="voice-control-center mb-4">
+                        <div class="voice-button-container position-relative d-inline-block">
+                            <!-- Pulse Animation Ring -->
+                            <div class="voice-pulse-ring" style="position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px; border: 3px solid rgba(0,173,181,0.3); border-radius: 50%; animation: pulse 2s infinite;"></div>
+                            <div class="voice-pulse-ring-2" style="position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; border: 2px solid rgba(0,173,181,0.2); border-radius: 50%; animation: pulse 2s infinite 0.5s;"></div>
+                            
+                            <button id="voice-btn" class="btn-primary-modern" 
+                                    style="width: 140px; height: 140px; border-radius: 50%; border: none; position: relative; z-index: 10;" 
+                                    disabled>
+                                <i class="fas fa-microphone" style="font-size: 3rem;"></i>
                             </button>
                         </div>
-                        <div class="card-body p-0">
-                            <div id="conversation-messages" class="p-3" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
-                                <!-- Welcome Message -->
-                                <div class="message assistant mb-3">
-                                    <div class="d-flex align-items-start">
-                                        <div class="avatar me-3">
-                                            <i class="fas fa-robot fa-2x text-primary"></i>
-                                        </div>
-                                        <div class="message-content bg-white p-3 rounded shadow-sm">
-                                            <strong>{{ assistant.business_type.name }} Assistant</strong><br>
-                                            Hello! I'm your realtime AI assistant. Click the microphone and start speaking - I'll respond instantly using your knowledge base!
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="mt-3">
+                            <div id="voice-btn-text" class="fw-bold fs-5 text-primary-modern">Initializing...</div>
+                            <small class="text-muted">Click to start conversation</small>
+                        </div>
+                    </div>
+
+                    <!-- Conversation State -->
+                    <div id="conversation-state" class="alert alert-secondary mb-4">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <span id="state-indicator" class="fs-4 me-2">🤖</span>
+                            <span id="state-text" class="fw-bold">Getting ready...</span>
+                        </div>
+                    </div>
+
+                    <!-- Transcription Preview -->
+                    <div id="transcription-preview" class="alert alert-info d-none mb-4">
+                        <div class="d-flex align-items-center">
+                            <span id="preview-icon" class="fs-5 me-2">👤</span>
+                            <div>
+                                <small class="text-muted d-block">Live Transcription:</small>
+                                <span id="preview-text" class="fw-bold"></span>
+                                <span id="typing-indicator" class="text-muted">▋</span>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="alert alert-light border">
+                        <h6><i class="fas fa-info-circle me-2"></i>How to use:</h6>
+                        <ul class="list-unstyled mb-0 small text-start">
+                            <li>• Click the microphone button to START conversation</li>
+                            <li>• Speak naturally after clicking start</li>
+                            <li>• Your speech is transcribed in REAL-TIME using Whisper-1</li>
+                            <li>• See live transcription preview above</li>
+                            <li>• Click the stop button to END conversation</li>
+                            <li>• Uses your knowledge base for accurate answers</li>
+                        </ul>
                     </div>
                 </div>
             </div>
-
-            <!-- Debug Panel -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-cog me-2"></i>Session Information
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="session-info" class="small">
-                                <div><strong>Session ID:</strong> <span id="session-id-display">Not connected</span></div>
-                                <div><strong>Status:</strong> <span id="session-status-text">Initializing</span></div>
-                                <div><strong>Connection:</strong> <span>Server-side WebSocket</span></div>
-                                <div><strong>Model:</strong> <span>gpt-4o-realtime-preview</span></div>
-                            </div>
-                        </div>
+        </div>
+        
+        <!-- Conversation History -->
+        <div class="col-lg-6">
+            <div class="card-modern h-100">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-comments me-2"></i>
+                        <span>Conversation History</span>
                     </div>
+                    <button class="btn btn-sm btn-outline-light" onclick="clearConversation()">
+                        <i class="fas fa-trash me-1"></i>Clear
+                    </button>
                 </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-bug me-2"></i>Debug Console
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="debug-info" class="small bg-dark text-light p-3 rounded" style="height: 150px; overflow-y: auto; font-family: monospace;">
-=== Realtime Voice AI Debug Console ===
-🚀 System initializing...
-⚡ Connecting to OpenAI Realtime API...
-🎤 Transcription: Using Whisper-1 model for real-time speech-to-text
-📝 Live transcript preview enabled
+                <div class="card-body-modern p-0">
+                    <div id="conversation-messages" class="p-3" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                        <!-- Welcome Message -->
+                        <div class="message assistant mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="avatar me-3">
+                                    <div class="bg-gradient-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-robot text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="message-content bg-white p-3 rounded shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <strong class="text-primary-modern">{{ assistant.business_type.name }} Assistant</strong>
+                                        <span class="badge bg-primary ms-2">AI</span>
+                                    </div>
+                                    Hello! I'm your realtime AI assistant. Click the microphone and start speaking - I'll respond instantly using your knowledge base!
+                                    <div class="small text-muted mt-2">
+                                        <i class="fas fa-clock me-1"></i>Ready to chat
+                                        <i class="fas fa-robot ms-2 me-1"></i>AI Assistant
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -223,10 +215,11 @@
     </div>
 </div>
 
-<!-- Toast Notifications -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
+<!-- Modern Toast Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
     <div id="notification-toast" class="toast" role="alert">
         <div class="toast-header">
+            <i class="fas fa-microphone-alt me-2 text-primary-modern"></i>
             <strong class="me-auto">Voice Assistant</strong>
             <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
         </div>
@@ -240,9 +233,63 @@
 
 {% block extra_css %}
 <style>
+/* Pulse Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+}
+
+.voice-pulse-ring {
+    animation: pulse 2s infinite;
+}
+
+.voice-pulse-ring-2 {
+    animation: pulse 2s infinite 1s;
+}
+
+/* Voice Button States */
+.voice-main-button {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voice-main-button:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+.voice-main-button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.voice-main-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Recording Animation */
+@keyframes recording-pulse {
+    0%, 100% {
+        box-shadow: 0 8px 32px rgba(220, 53, 69, 0.3);
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    50% {
+        box-shadow: 0 8px 40px rgba(220, 53, 69, 0.6);
+        background: linear-gradient(135deg, #e74c3c 0%, #dc3545 100%);
+    }
+}
+
+.voice-main-button.recording {
+    animation: recording-pulse 1.5s infinite;
+}
+
+/* Transcription Preview */
 #transcription-preview {
-    border-left: 4px solid #17a2b8;
-    background: linear-gradient(135deg, #e1f5fe, #f0f9ff);
+    border-left: 4px solid var(--primary);
     transition: all 0.3s ease;
 }
 
@@ -257,7 +304,7 @@
 
 #typing-indicator {
     animation: blink 1s infinite;
-    color: #17a2b8;
+    color: var(--primary);
 }
 
 @keyframes blink {
@@ -265,8 +312,69 @@
     51%, 100% { opacity: 0.3; }
 }
 
-.message .badge {
-    font-size: 0.75em;
+/* Message Animations */
+.message {
+    animation: messageSlideIn 0.5s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Conversation Scrollbar */
+#conversation-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#conversation-messages::-webkit-scrollbar-track {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+#conversation-messages::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+#conversation-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 173, 181, 0.8);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .voice-main-button {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .voice-main-button i {
+        font-size: 2rem !important;
+    }
+    
+    .voice-pulse-ring {
+        top: -15px !important;
+        left: -15px !important;
+        right: -15px !important;
+        bottom: -15px !important;
+    }
+    
+    .voice-pulse-ring-2 {
+        top: -8px !important;
+        left: -8px !important;
+        right: -8px !important;
+        bottom: -8px !important;
+    }
+    
+    #conversation-messages {
+        height: 300px !important;
+    }
 }
 </style>
 {% endblock %}
@@ -284,18 +392,14 @@ let mediaRecorder = null;
 let audioStream = null;
 let isConnected = false;
 let isListening = false;
-let isInConversation = false; // New state for conversation mode
+let isInConversation = false;
 let audioEl = null;
-let selectedLanguage = 'auto'; // Default to auto-detect
+let selectedLanguage = 'auto';
 
 // DOM elements
 const voiceBtn = document.getElementById('voice-btn');
 const voiceBtnText = document.getElementById('voice-btn-text');
 const conversationMessages = document.getElementById('conversation-messages');
-const sessionInfo = document.getElementById('session-info');
-const debugInfo = document.getElementById('debug-info');
-const sessionIdDisplay = document.getElementById('session-id-display');
-const sessionStatusText = document.getElementById('session-status-text');
 const languageSelector = document.getElementById('language-selector');
 const currentLanguageDisplay = document.getElementById('current-language-display');
 
@@ -305,7 +409,7 @@ const previewIcon = document.getElementById('preview-icon');
 const previewText = document.getElementById('preview-text');
 const typingIndicator = document.getElementById('typing-indicator');
 
-// New conversation state elements
+// Conversation state elements
 const conversationState = document.getElementById('conversation-state');
 const stateIndicator = document.getElementById('state-indicator');
 const stateText = document.getElementById('state-text');
@@ -335,7 +439,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // Setup language selector event listener
 function setupLanguageSelector() {
     if (languageSelector) {
-        // Set default language
         selectedLanguage = languageSelector.value;
         
         languageSelector.addEventListener('change', function() {
@@ -348,15 +451,12 @@ function setupLanguageSelector() {
             const langName = langNames[selectedLanguage] || 'Auto-detect';
             updateDebugInfo(`🌐 Language switched to: ${langName}`);
             
-            // Update UI text based on language
             updateUILanguage(selectedLanguage);
             
-            // Update current language display
             if (currentLanguageDisplay) {
                 currentLanguageDisplay.textContent = langName;
             }
             
-            // If already connected, restart session with new language
             if (isConnected && isInConversation) {
                 updateDebugInfo('🔄 Restarting session with new language settings...');
                 endConversation();
@@ -402,7 +502,6 @@ function updateUILanguage(lang) {
         }
     };
     
-    // Update button text if not in conversation
     if (!isInConversation && voiceBtnText) {
         voiceBtnText.textContent = texts[lang]?.startConversation || texts['auto'].startConversation;
     }
@@ -412,21 +511,19 @@ function updateUILanguage(lang) {
 async function initializeRealtimeVoice() {
     updateDebugInfo('🚀 Starting realtime voice initialization...');
     updateConnectionStatus('connecting', 'Initializing...');
-    updateStatus('session', 'processing');
+    updateStatus('connection', 'processing');
     
     try {
-        // Step 1: Connect to Django WebSocket server
         updateDebugInfo('🔗 Connecting to Django WebSocket server...');
         await setupServerSideWebSocket();
         
     } catch (error) {
         updateDebugInfo(`❌ Initialization failed: ${error.message}`);
         updateConnectionStatus('error', 'Connection failed');
-        updateStatus('session', 'error');
+        updateStatus('connection', 'error');
         showToast('Failed to initialize voice connection: ' + error.message, 'error');
     }
 }
-
 
 // Setup server-side WebSocket connection  
 async function setupServerSideWebSocket() {
@@ -435,41 +532,12 @@ async function setupServerSideWebSocket() {
     updateStatus('connection', 'processing');
 
     try {
-        // Create WebSocket connection to Django server
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/ws/voice/default/`;
         
         updateDebugInfo(`📡 Connecting to ${wsUrl}`);
         serverWebSocket = new WebSocket(wsUrl);
         
-        serverWebSocket.onopen = function(event) {
-            updateDebugInfo('✅ Connected to Django WebSocket server');
-            isConnected = true;
-            enableVoiceButton();
-            updateConnectionStatus('connected', 'Connected to server - Voice INACTIVE');
-            updateStatus('session', 'connected');
-        };
-        
-        serverWebSocket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            handleServerMessage(data);
-        };
-        
-        serverWebSocket.onclose = function(event) {
-            updateDebugInfo('🔌 WebSocket connection closed');
-            isConnected = false;
-            isInConversation = false;
-            updateConnectionStatus('error', 'Disconnected from server');
-            voiceBtn.disabled = true;
-            voiceBtnText.textContent = 'Disconnected';
-        };
-        
-        serverWebSocket.onerror = function(error) {
-            updateDebugInfo(`❌ WebSocket error: ${error}`);
-            updateConnectionStatus('error', 'Connection error');
-        };
-        
-        // Wait for connection
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 reject(new Error('WebSocket connection timeout'));
@@ -480,16 +548,37 @@ async function setupServerSideWebSocket() {
                 updateDebugInfo('✅ Connected to Django WebSocket server');
                 isConnected = true;
                 enableVoiceButton();
-                updateConnectionStatus('connected', 'Connected to server - Voice INACTIVE');
-                updateStatus('session', 'connected');
+                updateConnectionStatus('connected', 'Connected to server');
+                updateStatus('connection', 'ready');
                 resolve();
+            };
+            
+            serverWebSocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+            
+            serverWebSocket.onclose = function(event) {
+                updateDebugInfo('🔌 WebSocket connection closed');
+                isConnected = false;
+                isInConversation = false;
+                updateConnectionStatus('error', 'Disconnected from server');
+                voiceBtn.disabled = true;
+                voiceBtnText.textContent = 'Disconnected';
+            };
+            
+            serverWebSocket.onerror = function(error) {
+                clearTimeout(timeout);
+                updateDebugInfo(`❌ WebSocket error: ${error}`);
+                updateConnectionStatus('error', 'Connection error');
+                reject(error);
             };
         });
         
     } catch (error) {
         updateDebugInfo(`❌ Failed to setup WebSocket: ${error.message}`);
         updateConnectionStatus('error', 'Failed to connect to server');
-        updateStatus('session', 'error');
+        updateStatus('connection', 'error');
         throw error;
     }
 }
@@ -506,15 +595,11 @@ function handleServerMessage(data) {
         case 'voice_started':
             updateDebugInfo(`🎤 ${data.message}`);
             currentSessionId = data.session_id;
-            sessionIdDisplay.textContent = currentSessionId;
-            sessionStatusText.textContent = 'Server-side Voice Active';
-            // Start audio recording
             startAudioRecording();
             break;
             
         case 'voice_stopped':
             updateDebugInfo(`🔇 ${data.message}`);
-            // Stop audio recording and clear audio queue
             stopAudioRecording();
             clearAudioQueue();
             break;
@@ -529,7 +614,6 @@ function handleServerMessage(data) {
             break;
             
         case 'ai_audio_delta':
-            // Handle audio response from AI
             updateDebugInfo(`🗣️ AI Audio Delta received`);
             if (data.audio) {
                 playAudioDelta(data.audio);
@@ -537,9 +621,8 @@ function handleServerMessage(data) {
             break;
             
         case 'ai_response_text':
-            // Handle text response from AI
             updateDebugInfo(`📝 AI Response: ${data.text}`);
-            addMessageToHistory('assistant', data.text, true); // Mark as transcription
+            addMessageToHistory('assistant', data.text, true);
             break;
             
         case 'openai_error':
@@ -548,35 +631,30 @@ function handleServerMessage(data) {
             break;
             
         case 'audio_buffer_start':
-            // Start buffering audio chunks
             startAudioBuffer();
             break;
             
         case 'audio_buffer_complete':
-            // Complete buffering and play all chunks
             completeAudioBuffer();
             break;
             
         case 'user_transcript_delta':
-            // Handle partial user transcription
             updateDebugInfo(`👤 Transcribing: "${data.delta}"`);
             updateTranscriptionPreview('user', data.delta, false);
-            updateStatus('ai', 'processing'); // Show processing while transcribing
+            updateStatus('ai', 'processing');
             break;
             
         case 'user_transcript':
-            // Handle complete user speech transcription
             updateDebugInfo(`✅ Transcription complete: "${data.transcript}"`);
             if (data.transcript) {
-                addMessageToHistory('user', data.transcript, true); // Mark as transcription
+                addMessageToHistory('user', data.transcript, true);
                 clearTranscriptionPreview();
-                updateStatus('ai', 'ready'); // Reset AI status after transcription
-                showToast(`🎤 Speech transcribed: "${data.transcript.substring(0, 50)}${data.transcript.length > 50 ? '...' : ''}"`, 'success');
+                updateStatus('ai', 'ready');
+                showToast(`🎤 Speech transcribed`, 'success');
             }
             break;
             
         case 'user_transcript_error':
-            // Handle transcription error
             updateDebugInfo(`❌ User transcription failed: ${JSON.stringify(data.error)}`);
             showToast(`Transcription Error: Unable to transcribe speech`, 'error');
             clearTranscriptionPreview();
@@ -588,40 +666,57 @@ function handleServerMessage(data) {
     }
 }
 
-// Add message to conversation history
+// Add message to conversation history with dashboard styling
 function addMessageToHistory(role, content, isTranscription = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role} mb-3`;
     
-    const avatar = role === 'user' ? 
-        '<i class="fas fa-user fa-2x text-success"></i>' : 
-        '<i class="fas fa-robot fa-2x text-primary"></i>';
-    
-    const alignment = role === 'user' ? 'justify-content-end' : 'align-items-start';
-    const bgClass = role === 'user' ? 'bg-primary text-white' : 'bg-white';
-    
-    // Clean up content
     const cleanContent = content.replace(/^[^:]*:\s*/, '').trim() || content;
     
-    // Add transcription indicator
     const transcriptionBadge = isTranscription ? 
         '<span class="badge bg-info me-2"><i class="fas fa-microphone me-1"></i>Transcribed</span>' : '';
     
-    messageDiv.innerHTML = `
-        <div class="d-flex ${alignment}">
-            ${role === 'assistant' ? `<div class="avatar me-3">${avatar}</div>` : ''}
-            <div class="message-content ${bgClass} p-3 rounded shadow-sm" style="max-width: 80%;">
-                ${role === 'assistant' ? '<strong>AI Assistant</strong><br>' : ''}
-                ${transcriptionBadge}
-                ${cleanContent}
-                <div class="small text-muted mt-2">
-                    <i class="fas fa-clock me-1"></i>${new Date().toLocaleTimeString()}
-                    <i class="fas fa-microphone ms-2 me-1"></i>Voice
+    if (role === 'assistant') {
+        messageDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="avatar me-3">
+                    <div class="bg-gradient-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                </div>
+                <div class="message-content bg-white p-3 rounded shadow-sm" style="max-width: 85%;">
+                    <div class="d-flex align-items-center mb-2">
+                        <strong class="text-primary-modern">AI Assistant</strong>
+                        <span class="badge bg-primary ms-2">AI</span>
+                    </div>
+                    ${transcriptionBadge}
+                    <p class="mb-0">${cleanContent}</p>
+                    <div class="small text-muted mt-2">
+                        <i class="fas fa-clock me-1"></i>${new Date().toLocaleTimeString()}
+                        <i class="fas fa-microphone ms-2 me-1"></i>Voice
+                    </div>
                 </div>
             </div>
-            ${role === 'user' ? `<div class="avatar ms-3">${avatar}</div>` : ''}
-        </div>
-    `;
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="d-flex justify-content-end">
+                <div class="message-content p-3 rounded shadow-sm" style="background: var(--gradient-primary); color: white; max-width: 85%;">
+                    ${transcriptionBadge}
+                    <p class="mb-0">${cleanContent}</p>
+                    <div class="small mt-2" style="color: rgba(255,255,255,0.8);">
+                        <i class="fas fa-clock me-1"></i>${new Date().toLocaleTimeString()}
+                        <i class="fas fa-user ms-2 me-1"></i>You
+                    </div>
+                </div>
+                <div class="avatar ms-3">
+                    <div class="bg-light rounded-circle p-2 d-flex align-items-center justify-content-center border border-primary" style="width: 40px; height: 40px;">
+                        <i class="fas fa-user text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
     
     conversationMessages.appendChild(messageDiv);
     conversationMessages.scrollTop = conversationMessages.scrollHeight;
@@ -632,25 +727,26 @@ function updateConnectionStatus(status, text) {
     connectionText.textContent = text;
     const icon = connectionStatus.querySelector('i');
     
-    icon.className = 'fas fa-circle fa-2x';
+    icon.className = 'fas fa-circle text-white fs-4';
     
+    // Update status card based on connection state
     switch (status) {
         case 'connected':
-            icon.classList.add('text-success');
+            icon.className = 'fas fa-check-circle text-white fs-4';
             break;
         case 'connecting':
-            icon.classList.add('text-warning');
+            icon.className = 'fas fa-spinner fa-spin text-white fs-4';
             break;
         case 'error':
-            icon.classList.add('text-danger');
+            icon.className = 'fas fa-times-circle text-white fs-4';
             break;
         default:
-            icon.classList.add('text-muted');
+            icon.className = 'fas fa-circle text-white fs-4';
     }
 }
 
 function updateStatus(type, status) {
-    let statusEl, textEl, iconClass;
+    let statusEl, textEl;
     
     switch (type) {
         case 'voice':
@@ -665,46 +761,43 @@ function updateStatus(type, status) {
             return;
     }
     
-    statusEl.className = 'fas fa-2x';
+    statusEl.className = 'fas text-white fs-4';
     
     switch (status) {
         case 'listening':
-            statusEl.classList.add('fa-microphone', 'text-success');
+            statusEl.classList.add('fa-microphone');
             textEl.textContent = 'Listening';
             break;
         case 'processing':
-            statusEl.classList.add('fa-spinner', 'fa-spin', 'text-warning');
+            statusEl.classList.add('fa-spinner', 'fa-spin');
             textEl.textContent = 'Processing';
             break;
         case 'speaking':
-            statusEl.classList.add('fa-volume-up', 'text-info');
+            statusEl.classList.add('fa-volume-up');
             textEl.textContent = 'Speaking';
             break;
         case 'ready':
-            statusEl.classList.add('fa-check-circle', 'text-success');
+            statusEl.classList.add('fa-check-circle');
             textEl.textContent = 'Ready';
             break;
         case 'error':
-            statusEl.classList.add('fa-exclamation-triangle', 'text-danger');
+            statusEl.classList.add('fa-exclamation-triangle');
             textEl.textContent = 'Error';
             break;
         default:
-            statusEl.classList.add('fa-circle', 'text-muted');
+            statusEl.classList.add('fa-circle');
             textEl.textContent = 'Standby';
     }
 }
 
 function updateDebugInfo(message) {
-    const timestamp = new Date().toLocaleTimeString();
-    debugInfo.textContent += `[${timestamp}] ${message}\n`;
-    debugInfo.scrollTop = debugInfo.scrollHeight;
+    console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
 }
 
 function enableVoiceButton() {
     voiceBtn.disabled = false;
     voiceBtn.onclick = toggleConversation;
     
-    // Update button text based on language
     const texts = {
         'en': 'Start Conversation',
         'ms': 'Mula Perbualan'
@@ -712,22 +805,14 @@ function enableVoiceButton() {
     voiceBtnText.textContent = texts[selectedLanguage] || texts['en'];
     
     updateConversationState('ready', '🤖', 'Click the button to start');
-    updateStatus('session', 'ready');
+    updateStatus('connection', 'ready');
     updateConnectionStatus('connected', 'Connected - Audio INACTIVE');
     
-    // Display session info with language
-    if (currentSessionId) {
-        sessionIdDisplay.textContent = currentSessionId;
-        sessionStatusText.textContent = `Connected via Server WebSocket (Language: ${selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia'})`;
-    }
-    
     const langName = selectedLanguage === 'en' ? 'English' : 'Bahasa Malaysia';
-    showToast(`🎉 Connection established! Voice & Real-time Transcription ready (${langName}).`, 'success');
-    updateDebugInfo(`✅ Real-time transcription activated with Whisper-1 (${langName})`);
+    showToast(`🎉 Connection established! Voice ready (${langName}).`, 'success');
 }
 
 async function toggleConversation() {
-    // Initialize audio context on user interaction
     if (!globalAudioContext) {
         try {
             globalAudioContext = new (window.AudioContext || window.webkitAudioContext)({
@@ -760,21 +845,21 @@ function startConversation() {
     }
     
     isInConversation = true;
-    voiceBtn.classList.remove('btn-success');
-    voiceBtn.classList.add('btn-danger');
-    voiceBtn.innerHTML = '<i class="fas fa-stop fa-3x"></i>';
+    
+    // Change button to stop state with recording animation
+    voiceBtn.classList.add('recording');
+    voiceBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+    voiceBtn.innerHTML = '<i class="fas fa-stop" style="font-size: 3rem;"></i>';
     
     const texts = {
         'en': {
             stop: 'Stop Conversation',
             starting: 'Starting voice on server...',
-            requesting: 'Requesting server to start voice session...',
             toast: '🎤 Requesting server to activate voice...'
         },
         'ms': {
             stop: 'Henti Perbualan',
             starting: 'Memulakan suara di pelayan...',
-            requesting: 'Meminta pelayan untuk memulakan sesi suara...',
             toast: '🎤 Meminta pelayan untuk mengaktifkan suara...'
         }
     };
@@ -783,9 +868,7 @@ function startConversation() {
     voiceBtnText.textContent = text.stop;
     updateConversationState('listening', '👂', text.starting);
     updateStatus('voice', 'processing');
-    updateDebugInfo(text.requesting);
     
-    // Send message to Django WebSocket to start voice session with language preference
     serverWebSocket.send(JSON.stringify({
         type: 'start_voice',
         language: selectedLanguage
@@ -796,23 +879,22 @@ function startConversation() {
 
 function endConversation() {
     isInConversation = false;
-    voiceBtn.classList.remove('btn-danger');
-    voiceBtn.classList.add('btn-success');
-    voiceBtn.innerHTML = '<i class="fas fa-microphone fa-3x"></i>';
+    
+    // Reset to original styling
+    voiceBtn.classList.remove('recording');
+    voiceBtn.style.background = '';
+    voiceBtn.className = 'btn-primary-modern';
+    voiceBtn.innerHTML = '<i class="fas fa-microphone" style="font-size: 3rem;"></i>';
     
     const texts = {
         'en': {
             start: 'Start Conversation',
             ready: 'Click the button to start',
-            requesting: '✋ Requesting server to stop voice session...',
-            requested: '🛑 Voice DEACTIVATION requested from server',
             toast: '🔇 Requesting server to deactivate voice...'
         },
         'ms': {
             start: 'Mula Perbualan',
             ready: 'Klik butang untuk mula',
-            requesting: '✋ Meminta pelayan untuk hentikan sesi suara...',
-            requested: '🛑 Penonaktifan suara diminta dari pelayan',
             toast: '🔇 Meminta pelayan untuk menyahaktifkan suara...'
         }
     };
@@ -822,14 +904,11 @@ function endConversation() {
     updateConversationState('ready', '🤖', text.ready);
     updateStatus('voice', 'ready');
     updateStatus('ai', 'ready');
-    updateDebugInfo(text.requesting);
     
-    // Send message to Django WebSocket to stop voice session
     if (serverWebSocket && serverWebSocket.readyState === WebSocket.OPEN) {
         serverWebSocket.send(JSON.stringify({
             type: 'stop_voice'
         }));
-        updateDebugInfo(text.requested);
         showToast(text.toast, 'info');
     }
 }
@@ -839,45 +918,35 @@ async function startAudioRecording() {
     try {
         updateDebugInfo('🎤 Starting audio recording...');
         
-        // Get microphone access
         audioStream = await navigator.mediaDevices.getUserMedia({ 
             audio: {
-                sampleRate: 24000,  // OpenAI prefers 24kHz
-                channelCount: 1,    // Mono
+                sampleRate: 24000,
+                channelCount: 1,
                 echoCancellation: true,
                 noiseSuppression: true,
                 autoGainControl: true
             }
         });
         
-        // Use AudioWorklet for real-time audio processing
         const audioContext = new (window.AudioContext || window.webkitAudioContext)({
-            sampleRate: 24000  // OpenAI requires 24kHz
+            sampleRate: 24000
         });
         
-        // Store reference for cleanup
         window.currentAudioContext = audioContext;
-        
         const source = audioContext.createMediaStreamSource(audioStream);
         
-        // Use AudioWorkletProcessor if available, fallback to ScriptProcessor
         if (audioContext.audioWorklet) {
             try {
-                // Create inline AudioWorklet processor
                 const processorCode = `
                     class AudioProcessor extends AudioWorkletProcessor {
                         process(inputs, outputs, parameters) {
                             const input = inputs[0];
                             if (input.length > 0) {
                                 const channelData = input[0];
-                                
-                                // Convert float32 to int16 PCM
                                 const pcm16 = new Int16Array(channelData.length);
                                 for (let i = 0; i < channelData.length; i++) {
                                     pcm16[i] = Math.max(-32768, Math.min(32767, channelData[i] * 32768));
                                 }
-                                
-                                // Send PCM data to main thread
                                 this.port.postMessage({
                                     type: 'audio_data',
                                     data: pcm16.buffer
@@ -897,7 +966,6 @@ async function startAudioRecording() {
                 
                 processorNode.port.onmessage = (event) => {
                     if (event.data.type === 'audio_data' && serverWebSocket && serverWebSocket.readyState === WebSocket.OPEN) {
-                        // Convert ArrayBuffer to base64
                         const uint8Array = new Uint8Array(event.data.data);
                         let binaryString = '';
                         for (let i = 0; i < uint8Array.byteLength; i++) {
@@ -932,14 +1000,11 @@ async function startAudioRecording() {
             processor.onaudioprocess = function(e) {
                 if (serverWebSocket && serverWebSocket.readyState === WebSocket.OPEN) {
                     const inputData = e.inputBuffer.getChannelData(0);
-                    
-                    // Convert float32 to int16 PCM
                     const pcm16 = new Int16Array(inputData.length);
                     for (let i = 0; i < inputData.length; i++) {
                         pcm16[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
                     }
                     
-                    // Convert to base64
                     const uint8Array = new Uint8Array(pcm16.buffer);
                     let binaryString = '';
                     for (let i = 0; i < uint8Array.byteLength; i++) {
@@ -977,7 +1042,6 @@ function stopAudioRecording() {
             audioStream = null;
         }
         
-        // Close audio context if it exists
         if (window.currentAudioContext) {
             window.currentAudioContext.close();
             window.currentAudioContext = null;
@@ -992,7 +1056,7 @@ function stopAudioRecording() {
     }
 }
 
-// Set up audio element for playback
+// Audio playback setup
 if (!audioEl) {
     audioEl = document.createElement("audio");
     audioEl.autoplay = true;
@@ -1000,23 +1064,20 @@ if (!audioEl) {
     updateDebugInfo('🔊 Audio element created for playback');
 }
 
-// Proper audio buffer management
+// Audio buffer management
 let globalAudioContext = null;
 let audioChunksBuffer = [];
 let isBuffering = false;
 let nextPlayTime = 0;
 
-// Buffer audio chunks and play sequentially
 async function playAudioDelta(audioData) {
     try {
         if (!audioData) return;
         
         if (isBuffering) {
-            // Add to buffer during streaming
             audioChunksBuffer.push(audioData);
-            updateDebugInfo(`📦 Buffering audio chunk (${audioData.length} chars) - Buffer size: ${audioChunksBuffer.length}`);
+            updateDebugInfo(`📦 Buffering audio chunk - Buffer size: ${audioChunksBuffer.length}`);
         } else {
-            // Play immediately if not buffering (fallback)
             await playAudioChunk(audioData);
         }
         
@@ -1027,7 +1088,6 @@ async function playAudioDelta(audioData) {
 
 async function playAudioChunk(audioData) {
     try {
-        // Initialize audio context once
         if (!globalAudioContext) {
             globalAudioContext = new (window.AudioContext || window.webkitAudioContext)({
                 sampleRate: 24000
@@ -1041,38 +1101,32 @@ async function playAudioChunk(audioData) {
             nextPlayTime = globalAudioContext.currentTime;
         }
         
-        // Decode base64 to binary
         const binaryString = atob(audioData);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
         }
         
-        // Convert PCM16 to AudioBuffer
         const pcm16Array = new Int16Array(bytes.buffer);
         
         if (pcm16Array.length > 0) {
             const audioBuffer = globalAudioContext.createBuffer(1, pcm16Array.length, 24000);
             const channelData = audioBuffer.getChannelData(0);
             
-            // Convert int16 to float32
             for (let i = 0; i < pcm16Array.length; i++) {
                 channelData[i] = pcm16Array[i] / 32768;
             }
             
-            // Create and schedule audio source
             const source = globalAudioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(globalAudioContext.destination);
             
-            // Schedule at next available time
             const startTime = Math.max(nextPlayTime, globalAudioContext.currentTime);
             source.start(startTime);
             
-            // Update next play time
             nextPlayTime = startTime + audioBuffer.duration;
             
-            updateDebugInfo(`▶️ Audio chunk scheduled (${pcm16Array.length} samples) at ${startTime.toFixed(3)}s`);
+            updateDebugInfo(`▶️ Audio chunk scheduled at ${startTime.toFixed(3)}s`);
         }
         
     } catch (error) {
@@ -1089,15 +1143,13 @@ async function startAudioBuffer() {
 }
 
 async function completeAudioBuffer() {
-    updateDebugInfo(`🎯 Completing audio buffer - Playing ${audioChunksBuffer.length} chunks sequentially`);
+    updateDebugInfo(`🎯 Completing audio buffer - Playing ${audioChunksBuffer.length} chunks`);
     isBuffering = false;
     
-    // Play all buffered chunks in sequence
     for (const chunk of audioChunksBuffer) {
         await playAudioChunk(chunk);
     }
     
-    // Clear buffer
     audioChunksBuffer = [];
     
     updateDebugInfo('✅ Audio buffer playback completed');
@@ -1105,7 +1157,6 @@ async function completeAudioBuffer() {
     updateConversationState('listening', '👂', 'Listening...');
 }
 
-// Clear audio context when conversation stops
 function clearAudioQueue() {
     audioChunksBuffer = [];
     isBuffering = false;
@@ -1124,8 +1175,6 @@ function clearAudioQueue() {
     updateConversationState('listening', '👂', 'Listening...');
 }
 
-// OpenAI events are now handled server-side via Django WebSocket
-
 function updateTranscriptionPreview(speaker, text, isComplete = false) {
     if (!text) return;
     
@@ -1136,10 +1185,9 @@ function updateTranscriptionPreview(speaker, text, isComplete = false) {
     
     if (isComplete) {
         typingIndicator.style.display = 'none';
-        setTimeout(clearTranscriptionPreview, 2000); // Clear after 2 seconds
+        setTimeout(clearTranscriptionPreview, 2000);
     } else {
         typingIndicator.style.display = 'inline';
-        // Animate typing indicator
         animateTypingIndicator();
     }
 }
@@ -1201,8 +1249,6 @@ function showToast(message, type = 'info') {
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
 }
-
-// Utility function to get CSRF token
 
 function getCookie(name) {
     let cookieValue = null;

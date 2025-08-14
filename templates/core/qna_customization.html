@@ -3,187 +3,1275 @@
 {% block title %}Customize Q&As - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-10 mx-auto text-center">
+                <div class="hero-content">
+                    <div class="hero-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <h1 class="hero-title">Customize Q&As for {{ business_type.name }}</h1>
+                    <p class="hero-subtitle">Review and edit the generated questions and answers to match your business needs</p>
+                    
+                    <!-- Modern Step Indicator -->
+                    <div class="step-indicator-modern">
+                        <div class="step-item completed">
+                            <div class="step-circle">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span class="step-label">Business Type</span>
+                        </div>
+                        <div class="step-connector completed"></div>
+                        <div class="step-item active">
+                            <div class="step-circle">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <span class="step-label">Q&A Setup</span>
+                        </div>
+                        <div class="step-connector active"></div>
+                        <div class="step-item">
+                            <div class="step-circle">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <span class="step-label">Knowledge Base</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-10">
-            <!-- Step Indicator -->
-            <div class="step-indicator">
-                <div class="step completed">1</div>
-                <div class="step active">2</div>
-                <div class="step">3</div>
+        <div class="col-lg-10">
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ qnas|length }}</h3>
+                        <p class="stat-label">Generated Q&As</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ business_type.name }}</h3>
+                        <p class="stat-label">Business Type</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">AI-Generated</h3>
+                        <p class="stat-label">Content Ready</p>
+                    </div>
+                </div>
             </div>
             
-            <div class="card">
-                <div class="card-header text-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-edit me-2"></i>Customize Q&As for {{ business_type.name }}
-                    </h4>
-                    <p class="mb-0 mt-2 text-light">Review and edit the generated questions and answers</p>
+            <!-- Info Alert -->
+            <div class="alert-modern info">
+                <div class="alert-icon">
+                    <i class="fas fa-lightbulb"></i>
                 </div>
-                <div class="card-body p-4">
-                    <div class="alert alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Generated Q&As:</strong> We've created {{ qnas|length }} common questions for your {{ business_type.name }} business. 
-                        You can edit, add, or remove any of these to better match your specific needs.
+                <div class="alert-content">
+                    <h6 class="alert-title">Customization Tips</h6>
+                    <p class="alert-text">We've created {{ qnas|length }} industry-specific questions for your {{ business_type.name }} business. Edit, add, or remove any of these to better match your specific needs. The more specific your Q&As, the better your AI assistant will perform.</p>
+                </div>
+            </div>
+            
+            <!-- Q&A Management Section -->
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="header-content">
+                        <h5 class="header-title">
+                            <i class="fas fa-list-alt me-2"></i>
+                            Q&A Management
+                        </h5>
+                        <div class="header-actions">
+                            <button type="button" class="btn-outline-modern btn-sm" onclick="addQnA()">
+                                <i class="fas fa-plus me-2"></i>Add New Q&A
+                            </button>
+                        </div>
                     </div>
-                    
+                </div>
+                
+                <div class="card-body-modern">
                     <form method="post" id="qnaForm">
                         {% csrf_token %}
-                        <div id="qnaContainer">
+                        
+                        <div id="qnaContainer" class="qna-container">
                             {% for qna in qnas %}
-                            <div class="qna-item mb-4 p-3 border rounded" data-index="{{ forloop.counter0 }}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-question-circle me-2"></i>
-                                        Question {{ forloop.counter }}
-                                    </h6>
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-qna" onclick="removeQnA(this)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                            <div class="qna-card" data-index="{{ forloop.counter0 }}">
+                                <div class="qna-header">
+                                    <div class="qna-number">
+                                        <span class="number-badge">{{ forloop.counter }}</span>
+                                        <h6 class="qna-title">Question {{ forloop.counter }}</h6>
+                                    </div>
+                                    <div class="qna-actions">
+                                        <button type="button" class="btn-action delete" onclick="confirmRemoveQnA(this)" title="Remove Q&A">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Question:</label>
-                                    <textarea name="question_{{ forloop.counter0 }}" class="form-control" rows="2" required>{{ qna.question }}</textarea>
-                                </div>
-                                
-                                <div class="mb-2">
-                                    <label class="form-label">Answer:</label>
-                                    <textarea name="answer_{{ forloop.counter0 }}" class="form-control" rows="3" required>{{ qna.answer }}</textarea>
+                                <div class="qna-content">
+                                    <div class="form-group-modern">
+                                        <label class="form-label-modern">
+                                            <i class="fas fa-question me-1"></i>Question
+                                        </label>
+                                        <textarea 
+                                            name="question_{{ forloop.counter0 }}" 
+                                            class="form-control-modern auto-resize" 
+                                            rows="2" 
+                                            required
+                                            placeholder="Enter your question here..."
+                                        >{{ qna.question }}</textarea>
+                                    </div>
+                                    
+                                    <div class="form-group-modern">
+                                        <label class="form-label-modern">
+                                            <i class="fas fa-comment me-1"></i>Answer
+                                        </label>
+                                        <textarea 
+                                            name="answer_{{ forloop.counter0 }}" 
+                                            class="form-control-modern auto-resize" 
+                                            rows="3" 
+                                            required
+                                            placeholder="Enter your answer here..."
+                                        >{{ qna.answer }}</textarea>
+                                    </div>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                         
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <button type="button" class="btn btn-outline-primary" onclick="addQnA()">
-                                    <i class="fas fa-plus me-2"></i>Add New Q&A
-                                </button>
+                        <!-- Tips Section -->
+                        <div class="tips-section">
+                            <h6 class="tips-title">
+                                <i class="fas fa-lightbulb me-2"></i>Tips for Better Q&As
+                            </h6>
+                            <div class="tips-grid">
+                                <div class="tip-item">
+                                    <i class="fas fa-check-circle tip-icon"></i>
+                                    <span>Use clear, conversational language</span>
+                                </div>
+                                <div class="tip-item">
+                                    <i class="fas fa-check-circle tip-icon"></i>
+                                    <span>Include specific details about your business</span>
+                                </div>
+                                <div class="tip-item">
+                                    <i class="fas fa-check-circle tip-icon"></i>
+                                    <span>Cover common customer scenarios</span>
+                                </div>
+                                <div class="tip-item">
+                                    <i class="fas fa-check-circle tip-icon"></i>
+                                    <span>Keep answers helpful and actionable</span>
+                                </div>
                             </div>
-                            <div class="col-md-6 text-end">
-                                <a href="{% url 'business_type_selection' %}" class="btn btn-outline-secondary me-2">
-                                    <i class="fas fa-arrow-left me-2"></i>Back
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-arrow-right me-2"></i>Next: Knowledge Base
-                                </button>
+                        </div>
+                        
+                        <!-- Action Section -->
+                        <div class="action-section">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="action-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <span id="qnaCount">{{ qnas|length }} Q&A pairs configured</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <a href="{% url 'business_type_selection' %}" class="btn-outline-modern me-3">
+                                        <i class="fas fa-arrow-left me-2"></i>Back
+                                    </a>
+                                    <button type="submit" class="btn-primary-modern" id="submitBtn">
+                                        <i class="fas fa-arrow-right me-2"></i>Next: Knowledge Base
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
             
-            <div class="text-center mt-3">
-                <small class="text-muted">
-                    <i class="fas fa-lightbulb me-1"></i>
-                    Tip: The more specific your Q&As, the better your AI assistant will perform
-                </small>
+            <!-- Security Notice -->
+            <div class="security-notice">
+                <div class="security-content">
+                    <div class="security-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="security-text">
+                        <h6>Your Q&As are Secure</h6>
+                        <p>All content is processed securely and used exclusively for your AI assistant training.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-modern">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove this Q&A pair? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline-modern" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-danger-modern" id="confirmDelete">
+                    <i class="fas fa-trash me-2"></i>Delete Q&A
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toastSuccess" class="toast align-items-center text-white border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="toastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hero Section */
+.hero-section {
+    background: var(--gradient-primary);
+    color: var(--white);
+    padding: 4rem 0 2rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="20" fill="url(%23grid)"/></svg>') repeat;
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+    backdrop-filter: blur(20px);
+}
+
+.hero-icon i {
+    font-size: 2rem;
+    color: var(--white);
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    font-weight: 400;
+}
+
+/* Modern Step Indicator */
+.step-indicator-modern {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.step-item.completed .step-circle {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--primary);
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+.step-item.active .step-circle {
+    background: var(--white);
+    color: var(--primary);
+    border-color: var(--white);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.step-item.completed .step-label,
+.step-item.active .step-label {
+    opacity: 1;
+    font-weight: 600;
+}
+
+.step-connector {
+    width: 60px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 0 1rem;
+}
+
+.step-connector.completed,
+.step-connector.active {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+/* Stats Cards */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 173, 181, 0.1);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 173, 181, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.stat-content h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Alert Modern */
+.alert-modern {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    box-shadow: 0 4px 20px var(--shadow);
+}
+
+.alert-modern.info {
+    border-left: 4px solid var(--primary);
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(0, 173, 181, 0.1);
+    color: var(--primary);
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.alert-text {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Card Modern */
+.card-modern {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px var(--shadow);
+    overflow: hidden;
+    width: 100%;
+}
+
+.card-header-modern {
+    background: var(--gradient-primary);
+    color: var(--white);
+    padding: 1.5rem;
+    border: none;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+}
+
+.header-actions .btn-outline-modern {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: var(--white);
+}
+
+.header-actions .btn-outline-modern:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: var(--white);
+}
+
+.card-body-modern {
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Q&A Container */
+.qna-container {
+    margin-bottom: 2rem;
+}
+
+.qna-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.qna-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 16px rgba(0, 173, 181, 0.1);
+    transform: translateY(-1px);
+}
+
+.qna-card.new-item {
+    border-color: var(--primary);
+    background: rgba(0, 173, 181, 0.02);
+    animation: slideInDown 0.5s ease-out;
+}
+
+.qna-header {
+    background: var(--light-bg);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
+
+.qna-number {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.number-badge {
+    width: 30px;
+    height: 30px;
+    background: var(--gradient-primary);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.qna-title {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.qna-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-action {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.btn-action.delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.btn-action.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.1);
+}
+
+.qna-content {
+    padding: 1.5rem;
+}
+
+.form-group-modern {
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.form-label-modern {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.auto-resize {
+    min-height: 80px;
+    resize: vertical;
+    width: 100% !important;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.auto-resize:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+/* Tips Section */
+.tips-section {
+    background: rgba(0, 173, 181, 0.02);
+    border: 1px solid rgba(0, 173, 181, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.tips-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.tip-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.tip-icon {
+    color: var(--success);
+    flex-shrink: 0;
+}
+
+/* Action Section */
+.action-section {
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.action-info {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Modal Modern */
+.modal-modern {
+    border-radius: 16px;
+    border: none;
+    overflow: hidden;
+}
+
+.modal-modern .modal-header {
+    background: var(--light-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.modal-modern .modal-body {
+    padding: 1.5rem;
+}
+
+.modal-modern .modal-footer {
+    background: var(--light-bg);
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+}
+
+.btn-danger-modern {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-danger-modern:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    color: var(--white);
+}
+
+/* Security Notice */
+.security-notice {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(16, 185, 129, 0.02);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.security-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.security-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--success);
+    flex-shrink: 0;
+}
+
+.security-text h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.security-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Toast Styles */
+.toast {
+    background: var(--gradient-primary);
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 8px 32px rgba(0, 173, 181, 0.3);
+}
+
+/* Animations */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .step-indicator-modern {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .step-connector {
+        width: 2px;
+        height: 40px;
+        margin: 0.5rem 0;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-section .row {
+        text-align: center;
+    }
+    
+    .action-section .col-md-6:first-child {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 3rem 0 1.5rem 0;
+    }
+    
+    .hero-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+    
+    .qna-header {
+        padding: 1rem;
+    }
+    
+    .qna-content {
+        padding: 1rem;
+    }
+    
+    .security-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
 {% block extra_js %}
 <script>
 let qnaCounter = {{ qnas|length }};
+let qnaToDelete = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('qnaForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    
+    // Initialize auto-resize for existing textareas
+    initializeTextareas();
+    
+    // Check if we have any Q&As, if not add a default one
+    const existingQnAs = document.querySelectorAll('.qna-card').length;
+    if (existingQnAs === 0) {
+        console.log('No Q&As found, adding default Q&A');
+        addQnA();
+    }
+    
+    // Form submission with validation
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Show loading state
+        setButtonLoading(submitBtn, true);
+        showToast('Saving your Q&As and proceeding to Knowledge Base...', 'info');
+    });
+    
+    // Auto-resize functionality for all textareas
+    document.addEventListener('input', function(e) {
+        if (e.target.tagName === 'TEXTAREA') {
+            autoResize(e.target);
+        }
+    });
+    
+    // Confirm delete button event listener
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            console.log('Confirm delete clicked'); // Debug log
+            console.log('QnA to delete:', qnaToDelete); // Debug log
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Call removeQnA with the stored reference
+            if (qnaToDelete) {
+                removeQnA(qnaToDelete);
+            } else {
+                console.error('No Q&A marked for deletion');
+                showToast('Error: No Q&A selected for deletion', 'error');
+            }
+        });
+    } else {
+        console.error('Confirm delete button not found');
+    }
+    
+    // Check if Bootstrap is available
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap is not loaded');
+        showToast('Error: Bootstrap library not found', 'error');
+    } else {
+        console.log('Bootstrap is available');
+    }
+    
+    // Add entrance animations
+    addEntranceAnimations();
+});
+
+function initializeTextareas() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        autoResize(textarea);
+    });
+}
+
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.max(textarea.scrollHeight, 80) + 'px';
+}
 
 function addQnA() {
     const container = document.getElementById('qnaContainer');
     const newIndex = qnaCounter;
     
-    const qnaItem = document.createElement('div');
-    qnaItem.className = 'qna-item mb-4 p-3 border rounded';
-    qnaItem.setAttribute('data-index', newIndex);
+    const qnaCard = document.createElement('div');
+    qnaCard.className = 'qna-card new-item';
+    qnaCard.setAttribute('data-index', newIndex);
     
-    qnaItem.innerHTML = `
-        <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="mb-0">
-                <i class="fas fa-question-circle me-2"></i>
-                Question ${newIndex + 1}
-            </h6>
-            <button type="button" class="btn btn-sm btn-outline-danger remove-qna" onclick="removeQnA(this)">
-                <i class="fas fa-trash"></i>
-            </button>
+    qnaCard.innerHTML = `
+        <div class="qna-header">
+            <div class="qna-number">
+                <span class="number-badge">${newIndex + 1}</span>
+                <h6 class="qna-title">Question ${newIndex + 1}</h6>
+            </div>
+            <div class="qna-actions">
+                <button type="button" class="btn-action delete" onclick="confirmRemoveQnA(this)" title="Remove Q&A">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="mb-3">
-            <label class="form-label">Question:</label>
-            <textarea name="question_${newIndex}" class="form-control" rows="2" required placeholder="Enter your question here..."></textarea>
-        </div>
-        
-        <div class="mb-2">
-            <label class="form-label">Answer:</label>
-            <textarea name="answer_${newIndex}" class="form-control" rows="3" required placeholder="Enter your answer here..."></textarea>
+        <div class="qna-content">
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="fas fa-question me-1"></i>Question
+                </label>
+                <textarea 
+                    name="question_${newIndex}" 
+                    class="form-control-modern auto-resize" 
+                    rows="2" 
+                    required
+                    placeholder="Enter your question here..."
+                ></textarea>
+            </div>
+            
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="fas fa-comment me-1"></i>Answer
+                </label>
+                <textarea 
+                    name="answer_${newIndex}" 
+                    class="form-control-modern auto-resize" 
+                    rows="3" 
+                    required
+                    placeholder="Enter your answer here..."
+                ></textarea>
+            </div>
         </div>
     `;
     
-    container.appendChild(qnaItem);
+    container.appendChild(qnaCard);
     qnaCounter++;
+    
+    // Remove new-item class after animation
+    setTimeout(() => {
+        qnaCard.classList.remove('new-item');
+    }, 500);
+    
     updateQuestionNumbers();
+    updateQnaCount();
+    
+    // Focus on the first textarea
+    const firstTextarea = qnaCard.querySelector('textarea');
+    if (firstTextarea) {
+        firstTextarea.focus();
+    }
+    
+    showToast('New Q&A pair added successfully!', 'success');
 }
 
-function removeQnA(button) {
-    const qnaItem = button.closest('.qna-item');
-    qnaItem.remove();
-    updateQuestionNumbers();
-    updateFormNames();
+function confirmRemoveQnA(button) {
+    qnaToDelete = button.closest('.qna-card');
+    console.log('QnA to delete:', qnaToDelete); // Debug log
+    
+    if (qnaToDelete) {
+        // Check if we have less than 2 Q&As, ask for confirmation
+        const totalQnAs = document.querySelectorAll('.qna-card').length;
+        
+        if (totalQnAs <= 1) {
+            showToast('You must have at least one Q&A pair. Please add another Q&A before removing this one.', 'warning');
+            qnaToDelete = null;
+            return;
+        }
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    } else {
+        console.error('Could not find Q&A card to delete');
+        showToast('Error: Could not identify Q&A to delete', 'error');
+    }
+}
+
+// Alternative direct delete function (with confirmation)
+function directRemoveQnA(button) {
+    const qnaCard = button.closest('.qna-card');
+    
+    if (!qnaCard) {
+        showToast('Error: Could not identify Q&A to delete', 'error');
+        return;
+    }
+    
+    const totalQnAs = document.querySelectorAll('.qna-card').length;
+    
+    if (totalQnAs <= 1) {
+        showToast('You must have at least one Q&A pair. Please add another Q&A before removing this one.', 'warning');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to remove this Q&A pair? This action cannot be undone.')) {
+        removeQnA(qnaCard);
+    }
+}
+
+function removeQnA(qnaCard) {
+    if (!qnaCard) qnaCard = qnaToDelete;
+    
+    if (!qnaCard) {
+        console.error('No Q&A card specified for removal');
+        showToast('Error: No Q&A selected for deletion', 'error');
+        return;
+    }
+    
+    console.log('Removing Q&A card:', qnaCard); // Debug log
+    
+    // Add exit animation
+    qnaCard.style.animation = 'slideOutUp 0.3s ease-in';
+    
+    setTimeout(() => {
+        try {
+            qnaCard.remove();
+            updateQuestionNumbers();
+            updateFormNames();
+            updateQnaCount();
+            showToast('Q&A pair removed successfully!', 'success');
+            qnaToDelete = null; // Reset the reference
+        } catch (error) {
+            console.error('Error removing Q&A:', error);
+            showToast('Error removing Q&A pair', 'error');
+        }
+    }, 300);
 }
 
 function updateQuestionNumbers() {
-    const qnaItems = document.querySelectorAll('.qna-item');
-    qnaItems.forEach((item, index) => {
-        const questionLabel = item.querySelector('h6');
-        questionLabel.innerHTML = `<i class="fas fa-question-circle me-2"></i>Question ${index + 1}`;
+    const qnaCards = document.querySelectorAll('.qna-card');
+    qnaCards.forEach((card, index) => {
+        const numberBadge = card.querySelector('.number-badge');
+        const qnaTitle = card.querySelector('.qna-title');
+        
+        if (numberBadge) numberBadge.textContent = index + 1;
+        if (qnaTitle) qnaTitle.textContent = `Question ${index + 1}`;
     });
 }
 
 function updateFormNames() {
-    const qnaItems = document.querySelectorAll('.qna-item');
-    qnaItems.forEach((item, index) => {
-        const questionTextarea = item.querySelector('textarea[name^="question_"]');
-        const answerTextarea = item.querySelector('textarea[name^="answer_"]');
+    const qnaCards = document.querySelectorAll('.qna-card');
+    qnaCards.forEach((card, index) => {
+        const questionTextarea = card.querySelector('textarea[name^="question_"]');
+        const answerTextarea = card.querySelector('textarea[name^="answer_"]');
         
         if (questionTextarea) questionTextarea.name = `question_${index}`;
         if (answerTextarea) answerTextarea.name = `answer_${index}`;
         
-        item.setAttribute('data-index', index);
+        card.setAttribute('data-index', index);
     });
-    qnaCounter = qnaItems.length;
+    qnaCounter = qnaCards.length;
 }
 
-// Form validation
-document.getElementById('qnaForm').addEventListener('submit', function(e) {
-    const qnaItems = document.querySelectorAll('.qna-item');
-    if (qnaItems.length === 0) {
-        e.preventDefault();
-        alert('Please add at least one Q&A pair before proceeding.');
-        return;
+function updateQnaCount() {
+    const count = document.querySelectorAll('.qna-card').length;
+    const countElement = document.getElementById('qnaCount');
+    if (countElement) {
+        countElement.textContent = `${count} Q&A pairs configured`;
+    }
+}
+
+function validateForm() {
+    const qnaCards = document.querySelectorAll('.qna-card');
+    
+    if (qnaCards.length === 0) {
+        showToast('Please add at least one Q&A pair before proceeding.', 'warning');
+        return false;
     }
     
     let hasEmpty = false;
-    qnaItems.forEach(item => {
-        const question = item.querySelector('textarea[name^="question_"]').value.trim();
-        const answer = item.querySelector('textarea[name^="answer_"]').value.trim();
+    let emptyFields = [];
+    
+    qnaCards.forEach((card, index) => {
+        const questionTextarea = card.querySelector('textarea[name^="question_"]');
+        const answerTextarea = card.querySelector('textarea[name^="answer_"]');
         
-        if (!question || !answer) {
+        const question = questionTextarea ? questionTextarea.value.trim() : '';
+        const answer = answerTextarea ? answerTextarea.value.trim() : '';
+        
+        if (!question) {
             hasEmpty = true;
+            emptyFields.push(`Question ${index + 1}`);
+            questionTextarea.style.borderColor = 'var(--danger)';
+        } else {
+            questionTextarea.style.borderColor = 'var(--border)';
+        }
+        
+        if (!answer) {
+            hasEmpty = true;
+            emptyFields.push(`Answer ${index + 1}`);
+            answerTextarea.style.borderColor = 'var(--danger)';
+        } else {
+            answerTextarea.style.borderColor = 'var(--border)';
         }
     });
     
     if (hasEmpty) {
-        e.preventDefault();
-        alert('Please fill in all questions and answers before proceeding.');
+        showToast(`Please fill in all required fields: ${emptyFields.join(', ')}`, 'error');
+        return false;
     }
-});
+    
+    return true;
+}
 
-// Auto-resize textareas
-document.addEventListener('input', function(e) {
-    if (e.target.tagName === 'TEXTAREA') {
-        e.target.style.height = 'auto';
-        e.target.style.height = e.target.scrollHeight + 'px';
+function addEntranceAnimations() {
+    const elements = document.querySelectorAll('.stats-cards, .alert-modern, .card-modern');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, 200 * (index + 1));
+    });
+}
+
+// Enhanced toast notification function
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastSuccess');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    // Set message
+    toastMessage.textContent = message;
+    
+    // Set type-specific styles
+    toast.className = 'toast align-items-center text-white border-0';
+    
+    switch (type) {
+        case 'success':
+            toast.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+            break;
+        case 'error':
+            toast.style.background = 'linear-gradient(135deg, #EF4444, #DC2626)';
+            break;
+        case 'warning':
+            toast.style.background = 'linear-gradient(135deg, #F59E0B, #D97706)';
+            break;
+        case 'info':
+            toast.style.background = 'var(--gradient-primary)';
+            break;
+        default:
+            toast.style.background = 'var(--gradient-primary)';
     }
-});
+    
+    // Show toast
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// Loading state for buttons
+function setButtonLoading(button, loading = true) {
+    if (loading) {
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.setAttribute('data-original-text', originalText);
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving & Continuing...';
+        button.style.opacity = '0.8';
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.getAttribute('data-original-text');
+        button.style.opacity = '1';
+    }
+}
+
+// Add exit animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideOutUp {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 300px;
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
+            max-height: 0;
+            padding: 0;
+            margin: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
 {% endblock %}

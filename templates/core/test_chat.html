@@ -3,61 +3,91 @@
 {% block title %}Test Chat - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-3 px-md-4 py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card modern-card border-0 shadow-sm">
-                <div class="card-body py-3">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-                        <div class="d-flex align-items-center mb-2 mb-md-0">
-                            <div class="icon-circle me-3">
-                                <i class="fas fa-comments"></i>
-                            </div>
-                            <div>
-                                <h4 class="mb-1 text-dark-custom">Test Your AI Assistant</h4>
-                                <p class="mb-0 text-muted">Interact with your {{ assistant.business_type.name }} assistant</p>
-                            </div>
-                        </div>
-                        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-modern">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                        </a>
+<!-- Dashboard-style Hero Section -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-comments fs-3"></i>
                     </div>
+                    <div>
+                        <h1 class="mb-1 fw-bold">Test Your AI Assistant</h1>
+                        <p class="mb-0 opacity-75">Interact with your {{ assistant.business_type.name }} assistant</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <!-- Assistant Info Alert -->
+        <div class="alert alert-info glass-effect mt-4">
+            <div class="row g-2">
+                <div class="col-lg-3 col-md-6">
+                    <strong>Assistant:</strong> {{ assistant.business_type.name }} Customer Service
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Knowledge:</strong> {{ assistant.knowledge_base.count }} items
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Q&A:</strong> {{ assistant.qnas.count }} pairs
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>API Key:</strong> <code class="text-white bg-dark px-2 py-1 rounded">{{ assistant.api_key }}</code>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Status:</strong> <span class="badge bg-success">Online</span>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    
     <!-- Main Chat Interface -->
     <div class="row justify-content-center">
         <div class="col-12 col-xl-10">
-            <div class="card modern-card border-0 shadow-sm overflow-hidden">
-                <div class="card-header gradient-bg text-white border-0">
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <div class="avatar-circle me-3">
-                            <i class="fas fa-robot"></i>
+                        <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-robot text-white"></i>
                         </div>
                         <div>
-                            <h6 class="mb-1">{{ assistant.business_type.name }} Assistant</h6>
-                            <small class="opacity-75">Online and ready to help</small>
+                            <span class="fw-bold">{{ assistant.business_type.name }} Assistant</span>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success rounded-circle me-1" style="width: 8px; height: 8px;"></div>
+                                <small class="opacity-75">Online and ready to help</small>
+                            </div>
                         </div>
                     </div>
+                    <button class="btn btn-sm btn-outline-light" onclick="clearConversation()">
+                        <i class="fas fa-trash me-1"></i>Clear Chat
+                    </button>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body-modern p-0">
                     <!-- Chat Messages -->
-                    <div id="chatMessages" class="chat-container">
+                    <div id="chatMessages" class="chat-container p-3" style="height: 500px; overflow-y: auto; background: #f8f9fa;">
                         <div class="message assistant mb-3">
                             <div class="d-flex align-items-start">
-                                <div class="avatar-sm me-3">
-                                    <i class="fas fa-robot text-primary"></i>
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-robot text-white"></i>
                                 </div>
-                                <div class="message-content assistant-message">
-                                    <div class="message-header mb-1">
-                                        <strong>{{ assistant.business_type.name }} Assistant</strong>
-                                        <small class="text-muted ms-2">Just now</small>
+                                <div class="message-content bg-white p-3 rounded shadow-sm">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <strong class="text-primary-modern">{{ assistant.business_type.name }} Assistant</strong>
+                                        <span class="badge bg-primary ms-2">AI</span>
                                     </div>
-                                    <div class="message-text">
-                                        Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                                    Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                                    <div class="small text-muted mt-2">
+                                        <i class="fas fa-clock me-1"></i>Just now
+                                        <i class="fas fa-robot ms-2 me-1"></i>AI Assistant
                                     </div>
                                 </div>
                             </div>
@@ -65,55 +95,53 @@
                     </div>
                     
                     <!-- Chat Input Section -->
-                    <div class="chat-input-section">
+                    <div class="chat-input-section p-2 bg-white border-top">
                         <!-- Language Selection -->
-                        <div class="language-selector mb-3">
-                            <label class="form-label small text-muted mb-2">
+                        <div class="language-selector mb-2">
+                            <label class="form-label small text-muted mb-1">
                                 <i class="fas fa-language me-1"></i>Language / Bahasa:
                             </label>
-                            <select class="form-select form-select-sm modern-select" id="languageSelect" onchange="updateLanguagePlaceholder()">
+                            <select class="form-select form-select-sm" id="languageSelect" onchange="updateLanguagePlaceholder()" style="max-width: 250px;">
                                 <option value="auto">Auto-Detect / Kesan Automatik</option>
                                 <option value="en">English Only / Bahasa Inggeris</option>
                                 <option value="ms">Bahasa Malaysia Sahaja</option>
                             </select>
                         </div>
                         
-                        <!-- Message Input -->
-                        <div class="input-group input-group-modern mb-3">
+                        <!-- Message Input - WhatsApp Style -->
+                        <div class="input-group mb-2" style="width: 100%; display: flex; gap: 8px;">
                             <input 
                                 type="text" 
-                                class="form-control form-control-modern" 
+                                class="form-control-modern flex-grow-1" 
                                 placeholder="Type your message here..." 
                                 id="messageInput"
                                 onkeypress="handleKeyPress(event)"
+                                style="border: 2px solid var(--border); border-radius: 20px; padding: 0.75rem 1rem; font-size: 1rem; min-width: 0;"
                             >
-                            <button class="btn btn-primary btn-send" onclick="sendMessage()" id="sendBtn">
-                                <i class="fas fa-paper-plane"></i>
+                            <button class="btn-primary-modern btn-send-whatsapp" onclick="sendMessage()" id="sendBtn" style="border-radius: 50%; width: 45px; height: 45px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i class="fas fa-paper-plane" style="font-size: 0.9rem;"></i>
                             </button>
                         </div>
                         
                         <!-- Quick Test Buttons -->
                         <div class="quick-actions">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-                                <small class="text-muted mb-2 mb-md-0">
-                                    <i class="fas fa-bolt me-1"></i>Quick tests:
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-bolt me-1 text-primary-modern"></i>Quick tests:
                                 </small>
-                                <button class="btn btn-sm btn-outline-danger btn-modern" onclick="clearConversation()">
-                                    <i class="fas fa-trash me-1"></i>Clear Chat
-                                </button>
                             </div>
-                            <div id="quickButtons" class="quick-buttons">
+                            <div id="quickButtons" class="d-flex flex-wrap gap-1">
                                 <!-- English quick buttons (default) -->
-                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What are your business hours?')">
+                                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('What are your business hours?')">
                                     <i class="fas fa-clock me-1"></i>Business Hours
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What services do you offer?')">
+                                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('What services do you offer?')">
                                     <i class="fas fa-cogs me-1"></i>Services
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('How can I contact you?')">
+                                <button class="btn btn-sm btn-outline-modern" onclick="sendQuickMessage('How can I contact you?')">
                                     <i class="fas fa-phone me-1"></i>Contact Info
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Do you offer delivery?')">
+                                <button class="btn btn-sm btn-outline-modern" onclick="sendQuickMessage('Do you offer delivery?')">
                                     <i class="fas fa-truck me-1"></i>Delivery
                                 </button>
                             </div>
@@ -123,67 +151,355 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Assistant Information -->
-    <div class="row justify-content-center mt-4">
-        <div class="col-12 col-xl-10">
-            <div class="card modern-card border-0 shadow-sm">
-                <div class="card-header bg-light-custom border-0">
-                    <h6 class="mb-0 text-dark-custom">
-                        <i class="fas fa-info-circle me-2 text-primary"></i>Assistant Information
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-building text-primary me-2"></i>
-                                    <strong class="text-dark-custom">Business Type</strong>
-                                </div>
-                                <p class="text-muted mb-0">{{ assistant.business_type.name }}</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-question-circle text-primary me-2"></i>
-                                    <strong class="text-dark-custom">Q&As Configured</strong>
-                                </div>
-                                <p class="text-muted mb-0">{{ assistant.qnas.count }} items</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-database text-primary me-2"></i>
-                                    <strong class="text-dark-custom">Knowledge Base Items</strong>
-                                </div>
-                                <p class="text-muted mb-0">{{ assistant.knowledge_base.count }} items</p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-key text-primary me-2"></i>
-                                    <strong class="text-dark-custom">API Key</strong>
-                                </div>
-                                <code class="api-key-display">{{ assistant.api_key }}</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Toast Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="notification-toast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-comments me-2 text-primary-modern"></i>
+            <strong class="me-auto">Chat Assistant</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            <!-- Dynamic message content -->
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Chat-specific styling consistent with dashboard */
+.chat-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 173, 181, 0.8);
+}
+
+/* Message Styling */
+.message {
+    animation: messageSlideIn 0.5s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-content {
+    max-width: 85%;
+    word-wrap: break-word;
+    border-radius: 16px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.message-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Input styling */
+.form-control-modern:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+/* WhatsApp-style input group */
+.input-group {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.input-group .form-control-modern {
+    flex: 1 !important;
+    min-width: 0 !important;
+    border-radius: 20px !important;
+    border: 2px solid var(--border) !important;
+}
+
+.input-group .btn-send-whatsapp {
+    flex-shrink: 0 !important;
+    width: 45px !important;
+    height: 45px !important;
+    border-radius: 50% !important;
+    background: var(--gradient-primary) !important;
+    border: none !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.3s ease !important;
+}
+
+.input-group .btn-send-whatsapp:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 15px rgba(0, 173, 181, 0.3) !important;
+}
+
+.input-group .btn-send-whatsapp:active {
+    transform: scale(0.95) !important;
+}
+
+/* Extra small button size */
+.btn-xs {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    border-radius: 0.375rem !important;
+}
+
+/* Quick buttons */
+.quick-actions .btn-outline-modern:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Typing Animation */
+.typing-animation {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.typing-animation span {
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-animation span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-animation span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    30% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 992px) {
+    .message-content {
+        max-width: 90%;
+    }
+}
+
+@media (max-width: 768px) {
+    .chat-container {
+        height: 450px !important;
+    }
+    
+    .message-content {
+        max-width: 92%;
+    }
+    
+    .quick-actions #quickButtons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .quick-actions .btn {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    /* Hero section mobile adjustments */
+    .bg-gradient-dark .col-lg-8,
+    .bg-gradient-dark .col-lg-4 {
+        text-align: center;
+    }
+    
+    .bg-gradient-dark .col-lg-4 {
+        margin-top: 1rem;
+    }
+    
+    /* Alert responsive */
+    .alert.glass-effect .row .col-lg-3,
+    .alert.glass-effect .row .col-lg-2,
+    .alert.glass-effect .row .col-md-6 {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .chat-container {
+        height: 400px !important;
+        padding: 1rem !important;
+    }
+    
+    .message-content {
+        max-width: 95%;
+        padding: 0.75rem 1rem !important;
+    }
+    
+    .chat-input-section {
+        padding: 1rem !important;
+    }
+    
+    /* Smaller avatars on mobile */
+    .bg-gradient-primary.rounded-circle {
+        width: 30px !important;
+        height: 30px !important;
+    }
+    
+    .bg-gradient-primary.rounded-circle i {
+        font-size: 0.8rem !important;
+    }
+    
+    /* Mobile WhatsApp-style input */
+    .input-group {
+        gap: 6px !important;
+    }
+    
+    .form-control-modern {
+        font-size: 16px !important; /* Prevent zoom on iOS */
+        padding: 0.75rem 1rem !important;
+        border-radius: 18px !important;
+    }
+    
+    .btn-send-whatsapp {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .btn-send-whatsapp i {
+        font-size: 0.8rem !important;
+    }
+    
+    /* Hero section mobile */
+    .bg-gradient-dark {
+        padding: 2rem 0 !important;
+    }
+    
+    .bg-gradient-dark h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .bg-gradient-primary.rounded-circle.p-3 {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    /* Alert mobile responsive */
+    .alert.glass-effect {
+        font-size: 0.85rem;
+    }
+    
+    .alert.glass-effect code {
+        font-size: 0.7rem !important;
+        padding: 2px 4px !important;
+        word-break: break-all;
+    }
+    
+    /* Quick buttons mobile */
+    .quick-actions #quickButtons {
+        gap: 0.5rem !important;
+    }
+    
+    .quick-actions .btn-xs {
+        padding: 0.375rem 0.75rem !important;
+        font-size: 0.7rem !important;
+    }
+}
+
+/* Ultra small screens */
+@media (max-width: 400px) {
+    .message-content {
+        max-width: 98%;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.9rem;
+    }
+    
+    .chat-container {
+        height: 350px !important;
+        padding: 0.5rem !important;
+    }
+    
+    .chat-input-section {
+        padding: 0.75rem !important;
+    }
+    
+    /* Ultra small WhatsApp-style input */
+    .input-group {
+        gap: 4px !important;
+    }
+    
+    .form-control-modern {
+        padding: 0.6rem 0.8rem !important;
+        border-radius: 16px !important;
+        font-size: 14px !important;
+    }
+    
+    .btn-send-whatsapp {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    .btn-send-whatsapp i {
+        font-size: 0.7rem !important;
+    }
+    
+    /* Ultra small quick buttons */
+    .quick-actions #quickButtons {
+        flex-direction: column !important;
+        gap: 0.25rem !important;
+    }
+    
+    .quick-actions .btn-xs {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.65rem !important;
+    }
+}
+</style>
+{% endblock %}
 
 {% block extra_js %}
 <script>
 let sessionId = null;
 
 function handleKeyPress(event) {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
         sendMessage();
     }
 }
@@ -203,16 +519,16 @@ function updateLanguagePlaceholder() {
         case 'ms':
             messageInput.placeholder = 'Taip mesej anda di sini...';
             quickButtons.innerHTML = `
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
                     <i class="fas fa-clock me-1"></i>Waktu Operasi
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Apa perkhidmatan yang anda tawarkan?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('Apa perkhidmatan yang anda tawarkan?')">
                     <i class="fas fa-cogs me-1"></i>Perkhidmatan
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
                     <i class="fas fa-phone me-1"></i>Maklumat Hubungan
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Adakah anda menawarkan penghantaran?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('Adakah anda menawarkan penghantaran?')">
                     <i class="fas fa-truck me-1"></i>Penghantaran
                 </button>
             `;
@@ -220,16 +536,16 @@ function updateLanguagePlaceholder() {
         case 'en':
             messageInput.placeholder = 'Type your message here...';
             quickButtons.innerHTML = `
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What are your business hours?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('What are your business hours?')">
                     <i class="fas fa-clock me-1"></i>Business Hours
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What services do you offer?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('What services do you offer?')">
                     <i class="fas fa-cogs me-1"></i>Services
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('How can I contact you?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('How can I contact you?')">
                     <i class="fas fa-phone me-1"></i>Contact Info
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Do you offer delivery?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('Do you offer delivery?')">
                     <i class="fas fa-truck me-1"></i>Delivery
                 </button>
             `;
@@ -238,16 +554,16 @@ function updateLanguagePlaceholder() {
         default:
             messageInput.placeholder = 'Type your message here / Taip mesej anda di sini...';
             quickButtons.innerHTML = `
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What are your business hours?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('What are your business hours?')">
                     <i class="fas fa-clock me-1"></i>Business Hours
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('What services do you offer?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('What services do you offer?')">
                     <i class="fas fa-cogs me-1"></i>Services
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('Apa waktu operasi perniagaan?')">
                     <i class="fas fa-clock me-1"></i>Waktu Operasi
                 </button>
-                <button class="btn btn-sm btn-outline-secondary btn-modern me-2 mb-2" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
+                <button class="btn btn-xs btn-outline-modern" onclick="sendQuickMessage('Bagaimana saya boleh menghubungi anda?')">
                     <i class="fas fa-phone me-1"></i>Maklumat Hubungan
                 </button>
             `;
@@ -260,27 +576,31 @@ function clearConversation() {
     messagesContainer.innerHTML = `
         <div class="message assistant mb-3">
             <div class="d-flex align-items-start">
-                <div class="avatar-sm me-3">
-                    <i class="fas fa-robot text-primary"></i>
+                <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-robot text-white"></i>
                 </div>
-                <div class="message-content assistant-message">
-                    <div class="message-header mb-1">
-                        <strong>{{ assistant.business_type.name }} Assistant</strong>
-                        <small class="text-muted ms-2">Just now</small>
+                <div class="message-content bg-white p-3 rounded shadow-sm">
+                    <div class="d-flex align-items-center mb-2">
+                        <strong class="text-primary-modern">{{ assistant.business_type.name }} Assistant</strong>
+                        <span class="badge bg-primary ms-2">AI</span>
                     </div>
-                    <div class="message-text">
-                        Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                    Hello! I'm your AI assistant. I can help answer questions about your business. Try asking me something!
+                    <div class="small text-muted mt-2">
+                        <i class="fas fa-clock me-1"></i>Just now
+                        <i class="fas fa-robot ms-2 me-1"></i>AI Assistant
                     </div>
                 </div>
             </div>
         </div>
     `;
     sessionId = null;
+    showToast('Conversation cleared successfully!', 'success');
 }
 
 async function sendMessage() {
     const input = document.getElementById('messageInput');
     const languageSelect = document.getElementById('languageSelect');
+    const sendBtn = document.getElementById('sendBtn');
     const message = input.value.trim();
     const selectedLanguage = languageSelect.value;
     
@@ -288,7 +608,8 @@ async function sendMessage() {
     
     // Disable input while processing
     input.disabled = true;
-    document.getElementById('sendBtn').disabled = true;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     // Add user message to chat
     addMessage(message, 'user');
@@ -316,19 +637,23 @@ async function sendMessage() {
         if (data.status === 'success') {
             sessionId = data.session_id;
             addMessage(data.response, 'assistant');
+            showToast('Message sent successfully!', 'success');
         } else {
             addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+            showToast('Sorry, I encountered an error. Please try again.', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
         addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+        showToast('Connection error. Please try again.', 'error');
     }
     
     hideTyping();
     
     // Re-enable input
     input.disabled = false;
-    document.getElementById('sendBtn').disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
     input.focus();
 }
 
@@ -342,33 +667,33 @@ function addMessage(content, type) {
     if (type === 'user') {
         messageDiv.innerHTML = `
             <div class="d-flex align-items-start justify-content-end">
-                <div class="message-content user-message me-3" style="background: linear-gradient(135deg, #00ADB5, #00ADB5); color: #EEEEEE !important;">
-                    <div class="message-header mb-1 text-end" style="color: rgba(238, 238, 238, 0.9) !important;">
-                        <small class="me-2" style="color: rgba(238, 238, 238, 0.8) !important;">${currentTime}</small>
-                        <strong style="color: #EEEEEE !important;">You</strong>
+                <div class="message-content p-3 rounded shadow-sm me-3" style="background: var(--gradient-primary); color: white; max-width: 85%;">
+                    <div class="d-flex align-items-center justify-content-end mb-2">
+                        <small class="me-2" style="color: rgba(255,255,255,0.8);">${currentTime}</small>
+                        <strong>You</strong>
                     </div>
-                    <div class="message-text" style="color: #EEEEEE !important; font-weight: 500;">
-                        ${content}
-                    </div>
+                    <div>${content}</div>
                 </div>
-                <div class="avatar-sm">
-                    <i class="fas fa-user text-secondary"></i>
+                <div class="bg-light rounded-circle p-2 d-flex align-items-center justify-content-center border border-primary" style="width: 35px; height: 35px;">
+                    <i class="fas fa-user text-primary"></i>
                 </div>
             </div>
         `;
     } else {
         messageDiv.innerHTML = `
             <div class="d-flex align-items-start">
-                <div class="avatar-sm me-3">
-                    <i class="fas fa-robot text-primary"></i>
+                <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-robot text-white"></i>
                 </div>
-                <div class="message-content assistant-message">
-                    <div class="message-header mb-1">
-                        <strong>{{ assistant.business_type.name }} Assistant</strong>
-                        <small class="text-muted ms-2">${currentTime}</small>
+                <div class="message-content bg-white p-3 rounded shadow-sm" style="max-width: 85%;">
+                    <div class="d-flex align-items-center mb-2">
+                        <strong class="text-primary-modern">{{ assistant.business_type.name }} Assistant</strong>
+                        <span class="badge bg-primary ms-2">AI</span>
                     </div>
-                    <div class="message-text">
-                        ${content}
+                    <div>${content}</div>
+                    <div class="small text-muted mt-2">
+                        <i class="fas fa-clock me-1"></i>${currentTime}
+                        <i class="fas fa-robot ms-2 me-1"></i>AI Assistant
                     </div>
                 </div>
             </div>
@@ -377,8 +702,11 @@ function addMessage(content, type) {
     
     messagesContainer.appendChild(messageDiv);
     
-    // Scroll to bottom
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // Scroll to bottom smoothly
+    messagesContainer.scrollTo({
+        top: messagesContainer.scrollHeight,
+        behavior: 'smooth'
+    });
 }
 
 function showTyping() {
@@ -389,12 +717,12 @@ function showTyping() {
     
     typingDiv.innerHTML = `
         <div class="d-flex align-items-start">
-            <div class="avatar-sm me-3">
-                <i class="fas fa-robot text-primary"></i>
+            <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-robot text-white"></i>
             </div>
-            <div class="message-content assistant-message">
-                <div class="message-header mb-1">
-                    <strong>{{ assistant.business_type.name }} Assistant</strong>
+            <div class="message-content bg-white p-3 rounded shadow-sm">
+                <div class="d-flex align-items-center mb-2">
+                    <strong class="text-primary-modern">{{ assistant.business_type.name }} Assistant</strong>
                     <small class="text-muted ms-2">typing...</small>
                 </div>
                 <div class="typing-animation">
@@ -407,7 +735,10 @@ function showTyping() {
     `;
     
     messagesContainer.appendChild(typingDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    messagesContainer.scrollTo({
+        top: messagesContainer.scrollHeight,
+        behavior: 'smooth'
+    });
 }
 
 function hideTyping() {
@@ -415,6 +746,17 @@ function hideTyping() {
     if (typingIndicator) {
         typingIndicator.remove();
     }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('notification-toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    toastMessage.textContent = message;
+    toast.className = `toast ${type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}`;
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
 }
 
 function getCookie(name) {
@@ -431,371 +773,11 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('messageInput').focus();
+    updateLanguagePlaceholder();
+});
 </script>
-
-<style>
-/* Modern Chat Interface Styling */
-.icon-circle {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.2rem;
-}
-
-.avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.1rem;
-}
-
-.avatar-sm {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    background: var(--light-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    border: 2px solid rgba(0, 173, 181, 0.1);
-}
-
-.chat-container {
-    height: 500px;
-    overflow-y: auto;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    position: relative;
-}
-
-.chat-input-section {
-    padding: 1.5rem;
-    background: white;
-    border-top: 1px solid rgba(0, 173, 181, 0.1);
-}
-
-.language-selector .form-label {
-    font-weight: 600;
-    color: var(--medium-color);
-}
-
-.modern-select {
-    border: 2px solid rgba(0, 173, 181, 0.1);
-    border-radius: 12px;
-    padding: 0.6rem 1rem;
-    transition: all 0.3s ease;
-}
-
-.modern-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 173, 181, 0.25);
-}
-
-.input-group-modern {
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.form-control-modern {
-    border: none;
-    padding: 1rem 1.5rem;
-    font-size: 1rem;
-    background: white;
-}
-
-.form-control-modern:focus {
-    box-shadow: none;
-    border: none;
-}
-
-.btn-send {
-    border: none;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    padding: 1rem 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-send:hover {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-    transform: translateY(-2px);
-}
-
-.quick-actions {
-    background: rgba(0, 173, 181, 0.05);
-    border-radius: 15px;
-    padding: 1rem;
-}
-
-.quick-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.btn-modern {
-    border-radius: 25px;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border: 2px solid;
-}
-
-.btn-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.btn-outline-secondary.btn-modern {
-    border-color: rgba(0, 173, 181, 0.3);
-    color: var(--medium-color);
-}
-
-.btn-outline-secondary.btn-modern:hover {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    color: white;
-}
-
-.btn-outline-danger.btn-modern {
-    border-color: rgba(220, 53, 69, 0.3);
-    color: #dc3545;
-}
-
-.btn-outline-danger.btn-modern:hover {
-    background: #dc3545;
-    border-color: #dc3545;
-    color: white;
-}
-
-.btn-outline-primary.btn-modern {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-.btn-outline-primary.btn-modern:hover {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-/* Message Styling */
-.message {
-    animation: fadeInUp 0.3s ease;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.message-content {
-    max-width: 75%;
-    word-wrap: break-word;
-    border-radius: 18px;
-    padding: 1rem 1.25rem;
-    position: relative;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.assistant-message {
-    background: white;
-    border: 1px solid rgba(0, 173, 181, 0.1);
-    color: var(--dark-color) !important;
-}
-
-.assistant-message .message-header {
-    color: var(--medium-color) !important;
-}
-
-.assistant-message .message-text {
-    color: var(--dark-color) !important;
-}
-
-.user-message {
-    background: linear-gradient(135deg, #00ADB5, #00ADB5) !important;
-    color: #EEEEEE !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-.user-message .message-header {
-    color: rgba(238, 238, 238, 0.9) !important;
-}
-
-.user-message .message-header strong {
-    color: #EEEEEE !important;
-}
-
-.user-message .message-header small {
-    color: rgba(238, 238, 238, 0.8) !important;
-}
-
-.user-message .message-text {
-    color: #EEEEEE !important;
-    font-weight: 500 !important;
-}
-
-.user-message * {
-    color: #EEEEEE !important;
-}
-
-.message-header {
-    font-size: 0.85rem;
-}
-
-.message-text {
-    font-size: 0.95rem;
-    line-height: 1.4;
-}
-
-/* Typing Animation */
-.typing-animation {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    padding: 0.5rem 0;
-}
-
-.typing-animation span {
-    width: 8px;
-    height: 8px;
-    background: var(--primary-color);
-    border-radius: 50%;
-    animation: typing 1.4s infinite;
-}
-
-.typing-animation span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.typing-animation span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-@keyframes typing {
-    0%, 60%, 100% {
-        transform: translateY(0);
-        opacity: 0.5;
-    }
-    30% {
-        transform: translateY(-10px);
-        opacity: 1;
-    }
-}
-
-/* Info Section */
-.info-item {
-    padding: 1rem;
-    border-radius: 12px;
-    background: rgba(0, 173, 181, 0.05);
-    border: 1px solid rgba(0, 173, 181, 0.1);
-    transition: all 0.3s ease;
-}
-
-.info-item:hover {
-    background: rgba(0, 173, 181, 0.1);
-    transform: translateY(-2px);
-}
-
-.api-key-display {
-    background: var(--dark-color);
-    color: var(--primary-color);
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    display: inline-block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .chat-container {
-        height: 400px;
-    }
-    
-    .message-content {
-        max-width: 85%;
-    }
-    
-    .quick-buttons {
-        justify-content: center;
-    }
-    
-    .btn-modern {
-        font-size: 0.85rem;
-        padding: 0.4rem 0.8rem;
-    }
-    
-    .icon-circle {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .chat-container {
-        height: 350px;
-        padding: 1rem;
-    }
-    
-    .chat-input-section {
-        padding: 1rem;
-    }
-    
-    .message-content {
-        max-width: 90%;
-        padding: 0.8rem 1rem;
-    }
-    
-    .quick-buttons {
-        flex-direction: column;
-        gap: 0.3rem;
-    }
-    
-    .btn-modern {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* Scrollbar Styling */
-.chat-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.chat-container::-webkit-scrollbar-track {
-    background: rgba(0, 173, 181, 0.1);
-    border-radius: 10px;
-}
-
-.chat-container::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 10px;
-}
-
-.chat-container::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-color);
-}
-</style>
-{% endblock %}
 {% endblock %}

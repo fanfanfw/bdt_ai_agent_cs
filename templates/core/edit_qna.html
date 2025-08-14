@@ -3,98 +3,168 @@
 {% block title %}Edit Q&As - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-edit me-2"></i>Edit Q&As for {{ assistant.business_type.name }}
-                    </h5>
-                    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                    </a>
-                </div>
-                <div class="card-body p-4">
-                    <div class="alert alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Edit your Q&As:</strong> You can modify existing questions and answers, delete unwanted ones, or add new Q&As. 
-                        Changes will automatically update your AI assistant's knowledge.
+<!-- Dashboard-style Hero Section -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-edit text-white fs-4"></i>
                     </div>
+                    <div>
+                        <h1 class="mb-1 fs-2 fw-bold">Edit Q&As</h1>
+                        <p class="mb-0 opacity-75">Manage knowledge base for {{ assistant.business_type.name }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <!-- Assistant Info Alert -->
+        <div class="alert alert-info glass-effect mt-4">
+            <div class="row g-2">
+                <div class="col-lg-4 col-md-6">
+                    <strong>Business Type:</strong> {{ assistant.business_type.name }}
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>Current Q&As:</strong> {{ qnas.count }} pairs
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>Knowledge Base:</strong> {{ assistant.knowledge_base.count }} items
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <strong>Status:</strong> <span class="badge bg-success">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <!-- Info Card -->
+            <div class="card-modern mb-4">
+                <div class="card-body-modern">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-info-circle text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 fw-semibold">Q&A Management</h6>
+                            <p class="mb-0 text-muted small">Modify existing questions and answers, delete unwanted ones, or add new Q&As</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Form Card -->
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-list me-2 text-primary-modern"></i>
+                        <h5 class="mb-0 fw-semibold">Q&A Editor</h5>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="regenerateQnAs()">
+                        <i class="fas fa-sync-alt me-1"></i>Regenerate All
+                    </button>
+                </div>
+                <div class="card-body-modern">
                     
                     <form method="post" id="qnaEditForm">
                         {% csrf_token %}
                         
-                        <!-- Existing Q&As -->
-                        <div id="existingQnas">
-                            <h6 class="mb-3">
-                                <i class="fas fa-list me-2"></i>Current Q&As ({{ qnas.count }})
-                            </h6>
+                        <!-- Existing Q&As Section -->
+                        {% if qnas %}
+                        <div id="existingQnas" class="mb-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="mb-0 fw-semibold text-primary-modern">
+                                    <i class="fas fa-question-circle me-2"></i>Current Q&As ({{ qnas.count }})
+                                </h6>
+                                <span class="badge bg-primary">{{ qnas.count }} items</span>
+                            </div>
                             
-                            {% for qna in qnas %}
-                            <div class="qna-item existing-qna mb-4 p-3 border rounded" data-qna-id="{{ qna.id }}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-question-circle me-2"></i>
-                                        Q&A #{{ forloop.counter }}
-                                    </h6>
-                                    <div>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="markForDeletion({{ qna.id }})">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
+                            <div class="qna-list">
+                                {% for qna in qnas %}
+                                <div class="qna-item existing-qna mb-3" data-qna-id="{{ qna.id }}">
+                                    <div class="qna-card p-3 border rounded-3 bg-light position-relative">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                                    <span class="text-white fw-bold small">{{ forloop.counter }}</span>
+                                                </div>
+                                                <h6 class="mb-0 fw-semibold">Q&A #{{ forloop.counter }}</h6>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="markForDeletion({{ qna.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold text-primary-modern">
+                                                    <i class="fas fa-question me-1"></i>Question:
+                                                </label>
+                                                <textarea name="question_{{ qna.id }}" class="form-control-modern" rows="3" required placeholder="Enter the question...">{{ qna.question }}</textarea>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold text-primary-modern">
+                                                    <i class="fas fa-comment-dots me-1"></i>Answer:
+                                                </label>
+                                                <textarea name="answer_{{ qna.id }}" class="form-control-modern" rows="3" required placeholder="Enter the answer...">{{ qna.answer }}</textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <input type="hidden" name="delete_qna" value="" class="delete-marker" disabled>
                                     </div>
                                 </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Question:</label>
-                                    <textarea name="question_{{ qna.id }}" class="form-control" rows="2" required>{{ qna.question }}</textarea>
-                                </div>
-                                
-                                <div class="mb-2">
-                                    <label class="form-label">Answer:</label>
-                                    <textarea name="answer_{{ qna.id }}" class="form-control" rows="3" required>{{ qna.answer }}</textarea>
-                                </div>
-                                
-                                <input type="hidden" name="delete_qna" value="" class="delete-marker" disabled>
+                                {% endfor %}
                             </div>
-                            {% empty %}
-                            <div class="text-center text-muted py-4">
-                                <i class="fas fa-question-circle fa-3x mb-3"></i>
-                                <p>No Q&As found. Add some below!</p>
-                            </div>
-                            {% endfor %}
                         </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <div class="bg-gradient-primary rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-question-circle text-white fs-1"></i>
+                            </div>
+                            <h5 class="text-muted mb-2">No Q&As Found</h5>
+                            <p class="text-muted">Add your first Q&A below to get started!</p>
+                        </div>
+                        {% endif %}
                         
                         <!-- New Q&As Section -->
-                        <div class="card mt-4">
-                            <div class="card-header">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-plus me-2"></i>Add New Q&As
+                        <div class="new-qna-section">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="mb-0 fw-semibold text-primary-modern">
+                                    <i class="fas fa-plus-circle me-2"></i>Add New Q&As
                                 </h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="newQnasContainer">
-                                    <!-- New Q&As will be added here -->
-                                </div>
-                                
-                                <button type="button" class="btn btn-outline-primary" onclick="addNewQnA()">
-                                    <i class="fas fa-plus me-2"></i>Add New Q&A
+                                <button type="button" class="btn btn-sm btn-primary-modern" onclick="addNewQnA()">
+                                    <i class="fas fa-plus me-1"></i>Add Q&A
                                 </button>
+                            </div>
+                            
+                            <div id="newQnasContainer" class="mb-4">
+                                <!-- New Q&As will be added here -->
                             </div>
                         </div>
                         
                         <!-- Action Buttons -->
-                        <div class="row mt-4">
-                            <div class="col-md-6">
+                        <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-center pt-4 border-top">
+                            <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-outline-warning" onclick="regenerateQnAs()">
                                     <i class="fas fa-sync-alt me-2"></i>Regenerate All Q&As
                                 </button>
                             </div>
-                            <div class="col-md-6 text-end">
-                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary me-2">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
                                     <i class="fas fa-times me-2"></i>Cancel
                                 </a>
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary-modern">
                                     <i class="fas fa-save me-2"></i>Save Changes
                                 </button>
                             </div>
@@ -103,21 +173,61 @@
                 </div>
             </div>
             
-            <!-- Help Section -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-lightbulb me-2"></i>Tips for Better Q&As
-                    </h6>
+            <!-- Tips Card -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>
+                        <h6 class="mb-0 fw-semibold">Tips for Better Q&As</h6>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="mb-0">
-                        <li><strong>Be Specific:</strong> Write clear, specific questions that customers would actually ask</li>
-                        <li><strong>Complete Answers:</strong> Provide comprehensive answers that fully address the question</li>
-                        <li><strong>Use Keywords:</strong> Include relevant keywords that customers might use when searching</li>
-                        <li><strong>Update Regularly:</strong> Keep your Q&As current with business changes</li>
-                        <li><strong>Test Often:</strong> Use the test chat feature to verify your Q&As work correctly</li>
-                    </ul>
+                <div class="card-body-modern">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-bullseye text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Be Specific</h6>
+                                    <p class="mb-0 text-muted small">Write clear, specific questions that customers would actually ask</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-check-circle text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Complete Answers</h6>
+                                    <p class="mb-0 text-muted small">Provide comprehensive answers that fully address the question</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-key text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Use Keywords</h6>
+                                    <p class="mb-0 text-muted small">Include relevant keywords that customers might use when searching</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tip-item d-flex align-items-start">
+                                <div class="bg-gradient-primary rounded-circle p-2 me-3 flex-shrink-0" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-rocket text-white small"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-semibold">Test Regularly</h6>
+                                    <p class="mb-0 text-muted small">Use the test chat feature to verify your Q&As work correctly</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -126,23 +236,37 @@
 
 <!-- Regenerate Q&As Modal -->
 <div class="modal fade" id="regenerateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-dark text-white border-0">
+                <h5 class="modal-title fw-semibold">
                     <i class="fas fa-sync-alt me-2"></i>Regenerate Q&As
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Warning:</strong> This will replace ALL existing Q&As with new auto-generated ones for your {{ assistant.business_type.name }} business. This action cannot be undone.
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-exclamation-triangle text-white fs-1"></i>
+                    </div>
                 </div>
-                <p>Are you sure you want to regenerate all Q&As?</p>
+                
+                <div class="alert alert-warning border-0 glass-effect">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-exclamation-triangle me-3 text-warning"></i>
+                        <div>
+                            <h6 class="fw-semibold mb-2">Important Warning</h6>
+                            <p class="mb-0">This will replace ALL existing Q&As with new auto-generated ones for your <strong>{{ assistant.business_type.name }}</strong> business. This action cannot be undone.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-center text-muted">Are you sure you want to regenerate all Q&As?</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
                 <button type="button" class="btn btn-warning" onclick="confirmRegenerate()">
                     <i class="fas fa-sync-alt me-2"></i>Yes, Regenerate
                 </button>
@@ -150,6 +274,207 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Q&A Editor specific styling */
+.qna-item {
+    transition: all 0.3s ease;
+}
+
+.qna-card {
+    transition: all 0.3s ease;
+    border: 2px solid var(--border) !important;
+}
+
+.qna-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 173, 181, 0.1);
+    border-color: var(--primary) !important;
+}
+
+.qna-item.marked-for-deletion .qna-card {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: var(--danger) !important;
+    opacity: 0.7;
+}
+
+.qna-item.marked-for-deletion .qna-card:hover {
+    transform: none;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+}
+
+/* New Q&A styling */
+.new-qna-item {
+    background: rgba(0, 173, 181, 0.05) !important;
+    border: 2px dashed var(--primary) !important;
+    animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+/* Form controls */
+.form-control-modern {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-control-modern:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+/* Tips section styling */
+.tip-item {
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 12px;
+}
+
+.tip-item:hover {
+    background: rgba(0, 173, 181, 0.05);
+    transform: translateX(5px);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .qna-card .row.g-3 {
+        flex-direction: column;
+    }
+    
+    .qna-card .col-md-6 {
+        width: 100%;
+    }
+    
+    .d-flex.flex-column.flex-md-row {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .d-flex.flex-column.flex-md-row .d-flex {
+        justify-content: center !important;
+    }
+    
+    /* Hero section mobile */
+    .bg-gradient-dark .col-lg-8,
+    .bg-gradient-dark .col-lg-4 {
+        text-align: center;
+    }
+    
+    .bg-gradient-dark .col-lg-4 {
+        margin-top: 1rem;
+    }
+    
+    /* Alert responsive */
+    .alert.glass-effect .row .col-lg-4,
+    .alert.glass-effect .row .col-lg-3,
+    .alert.glass-effect .row .col-lg-2,
+    .alert.glass-effect .row .col-md-6 {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .bg-gradient-dark {
+        padding: 2rem 0 !important;
+    }
+    
+    .bg-gradient-dark h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .bg-gradient-primary.rounded-circle.p-3 {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .qna-card {
+        padding: 1rem !important;
+    }
+    
+    .qna-card .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .tip-item {
+        margin-bottom: 1rem;
+    }
+    
+    .tip-item .d-flex {
+        align-items: center !important;
+    }
+    
+    /* Modal mobile adjustments */
+    .modal-dialog {
+        margin: 1rem;
+    }
+}
+
+/* Animation for button interactions */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Loading animation for regenerate */
+.regenerating {
+    position: relative;
+    overflow: hidden;
+}
+
+.regenerating::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+</style>
+{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -160,28 +485,38 @@ function addNewQnA() {
     const newIndex = newQnACounter;
     
     const qnaItem = document.createElement('div');
-    qnaItem.className = 'qna-item new-qna mb-4 p-3 border rounded bg-light';
+    qnaItem.className = 'qna-item new-qna mb-3';
     qnaItem.setAttribute('data-new-index', newIndex);
     
     qnaItem.innerHTML = `
-        <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="mb-0">
-                <i class="fas fa-plus-circle me-2 text-success"></i>
-                New Q&A #${newIndex + 1}
-            </h6>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeNewQnA(this)">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
-        
-        <div class="mb-3">
-            <label class="form-label">Question:</label>
-            <textarea name="new_question" class="form-control" rows="2" required placeholder="Enter your question here..."></textarea>
-        </div>
-        
-        <div class="mb-2">
-            <label class="form-label">Answer:</label>
-            <textarea name="new_answer" class="form-control" rows="3" required placeholder="Enter your answer here..."></textarea>
+        <div class="qna-card new-qna-item p-3 border rounded-3 position-relative">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-plus text-white small"></i>
+                    </div>
+                    <h6 class="mb-0 fw-semibold text-primary-modern">New Q&A #${newIndex + 1}</h6>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeNewQnA(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold text-primary-modern">
+                        <i class="fas fa-question me-1"></i>Question:
+                    </label>
+                    <textarea name="new_question" class="form-control-modern" rows="3" required placeholder="Enter your question here..."></textarea>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold text-primary-modern">
+                        <i class="fas fa-comment-dots me-1"></i>Answer:
+                    </label>
+                    <textarea name="new_answer" class="form-control-modern" rows="3" required placeholder="Enter your answer here..."></textarea>
+                </div>
+            </div>
         </div>
     `;
     
@@ -189,34 +524,44 @@ function addNewQnA() {
     newQnACounter++;
     
     // Auto-focus on new question field
-    qnaItem.querySelector('textarea[name="new_question"]').focus();
+    setTimeout(() => {
+        qnaItem.querySelector('textarea[name="new_question"]').focus();
+    }, 100);
 }
 
 function removeNewQnA(button) {
     const qnaItem = button.closest('.qna-item');
-    qnaItem.remove();
+    qnaItem.style.animation = 'slideOutUp 0.3s ease-in';
+    setTimeout(() => {
+        qnaItem.remove();
+    }, 300);
 }
 
 function markForDeletion(qnaId) {
     const qnaItem = document.querySelector(`[data-qna-id="${qnaId}"]`);
     const deleteMarker = qnaItem.querySelector('.delete-marker');
+    const deleteBtn = qnaItem.querySelector('.btn-outline-danger');
     
     if (qnaItem.classList.contains('marked-for-deletion')) {
         // Unmark for deletion
         qnaItem.classList.remove('marked-for-deletion');
-        qnaItem.style.opacity = '1';
-        qnaItem.style.background = '';
         deleteMarker.value = '';
         deleteMarker.disabled = true;
-        qnaItem.querySelector('.btn-outline-danger').innerHTML = '<i class="fas fa-trash"></i> Delete';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        deleteBtn.className = 'btn btn-sm btn-outline-danger';
+        
+        // Show success toast
+        showToast('Q&A unmarked for deletion', 'info');
     } else {
         // Mark for deletion
         qnaItem.classList.add('marked-for-deletion');
-        qnaItem.style.opacity = '0.5';
-        qnaItem.style.background = '#f8d7da';
         deleteMarker.value = qnaId;
         deleteMarker.disabled = false;
-        qnaItem.querySelector('.btn-outline-danger').innerHTML = '<i class="fas fa-undo"></i> Undo';
+        deleteBtn.innerHTML = '<i class="fas fa-undo"></i>';
+        deleteBtn.className = 'btn btn-sm btn-outline-success';
+        
+        // Show warning toast
+        showToast('Q&A marked for deletion', 'warning');
     }
 }
 
@@ -226,6 +571,12 @@ function regenerateQnAs() {
 }
 
 function confirmRegenerate() {
+    // Show loading state
+    const regenerateBtn = document.querySelector('button[onclick="confirmRegenerate()"]');
+    const originalHTML = regenerateBtn.innerHTML;
+    regenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Regenerating...';
+    regenerateBtn.disabled = true;
+    
     // Create a form to regenerate Q&As
     const form = document.createElement('form');
     form.method = 'POST';
@@ -244,7 +595,14 @@ function confirmRegenerate() {
     form.appendChild(csrfToken);
     form.appendChild(regenerateField);
     document.body.appendChild(form);
-    form.submit();
+    
+    // Close modal and submit
+    const modal = bootstrap.Modal.getInstance(document.getElementById('regenerateModal'));
+    modal.hide();
+    
+    setTimeout(() => {
+        form.submit();
+    }, 500);
 }
 
 // Form validation
@@ -254,7 +612,7 @@ document.getElementById('qnaEditForm').addEventListener('submit', function(e) {
     
     if (existingQnas.length === 0 && newQnas.length === 0) {
         e.preventDefault();
-        alert('You must have at least one Q&A. Please add a new Q&A or unmark existing ones for deletion.');
+        showToast('You must have at least one Q&A. Please add a new Q&A or unmark existing ones for deletion.', 'error');
         return;
     }
     
@@ -282,8 +640,17 @@ document.getElementById('qnaEditForm').addEventListener('submit', function(e) {
     
     if (hasEmptyExisting || hasEmptyNew) {
         e.preventDefault();
-        alert('Please fill in all questions and answers before saving.');
+        showToast('Please fill in all questions and answers before saving.', 'error');
+        return;
     }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+    submitBtn.disabled = true;
+    
+    showToast('Saving changes...', 'info');
 });
 
 // Auto-resize textareas
@@ -293,6 +660,79 @@ document.addEventListener('input', function(e) {
         e.target.style.height = e.target.scrollHeight + 'px';
     }
 });
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Create toast if it doesn't exist
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast align-items-center border-0`;
+    toast.setAttribute('role', 'alert');
+    
+    // Set toast color based on type
+    let bgClass = 'bg-primary text-white';
+    let icon = 'fas fa-info-circle';
+    
+    switch(type) {
+        case 'success':
+            bgClass = 'bg-success text-white';
+            icon = 'fas fa-check-circle';
+            break;
+        case 'warning':
+            bgClass = 'bg-warning text-dark';
+            icon = 'fas fa-exclamation-triangle';
+            break;
+        case 'error':
+            bgClass = 'bg-danger text-white';
+            icon = 'fas fa-exclamation-circle';
+            break;
+    }
+    
+    toast.className += ` ${bgClass}`;
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center">
+                <i class="${icon} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: type === 'error' ? 5000 : 3000
+    });
+    
+    bsToast.show();
+    
+    // Remove toast element after it's hidden
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize existing textareas
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    });
+    
+    showToast('Q&A Editor loaded successfully!', 'success');
+});
 </script>
-{% endblock %}
 {% endblock %}

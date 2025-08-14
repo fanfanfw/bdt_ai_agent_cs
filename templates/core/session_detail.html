@@ -3,105 +3,188 @@
 {% block title %}Session Detail - AI Agent{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2>💬 Session Detail</h2>
-                    <div class="d-flex gap-2 mt-2">
-                        {% if session.source == 'test_chat' %}
-                            <span class="badge bg-info">💬 Test Chat</span>
-                        {% elif session.source == 'test_voice_realtime' %}
-                            <span class="badge bg-primary">🎤 Test Voice Realtime</span>
-                        {% elif session.source == 'widget_chat' %}
-                            <span class="badge bg-success">🔗 Widget Chat</span>
-                        {% elif session.source == 'widget_voice' %}
-                            <span class="badge bg-warning">🔊 Widget Voice</span>
-                        {% endif %}
-                        <small class="text-muted">{{ session.messages|length }} messages</small>
+<!-- Dashboard-style Hero Section -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-comments text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h1 class="mb-1 fs-2 fw-bold">Session Detail</h1>
+                        <p class="mb-0 opacity-75">View conversation messages and export options</p>
                     </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="{% url 'session_history' %}" class="btn btn-outline-secondary">
-                        ⬅️ Back to History
+                <div class="d-flex gap-2 flex-wrap">
+                    {% if session.source == 'test_chat' %}
+                        <span class="badge bg-info px-3 py-2">
+                            <i class="fas fa-vial me-1"></i>Test Chat
+                        </span>
+                    {% elif session.source == 'test_voice_realtime' %}
+                        <span class="badge bg-primary px-3 py-2">
+                            <i class="fas fa-microphone me-1"></i>Test Voice Realtime
+                        </span>
+                    {% elif session.source == 'widget_chat' %}
+                        <span class="badge bg-success px-3 py-2">
+                            <i class="fas fa-globe me-1"></i>Widget Chat
+                        </span>
+                    {% elif session.source == 'widget_voice' %}
+                        <span class="badge bg-warning px-3 py-2">
+                            <i class="fas fa-volume-up me-1"></i>Widget Voice
+                        </span>
+                    {% endif %}
+                    <span class="badge bg-secondary px-3 py-2">
+                        <i class="fas fa-envelope me-1"></i>{{ session.messages|length }} messages
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <div class="d-flex gap-2 justify-content-lg-end justify-content-center">
+                    <a href="{% url 'session_history' %}" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i>Back to History
                     </a>
                     <button type="button" 
-                            class="btn btn-outline-danger"
+                            class="btn btn-sm btn-outline-danger"
                             onclick="deleteSession('{{ session.session_id }}')">
-                        🗑️ Delete Session
+                        <i class="fas fa-trash me-1"></i>Delete Session
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Session Info -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <strong>Session ID:</strong><br>
-                            <code class="text-muted">{{ session.session_id }}</code>
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+
+            
+            <!-- Session Info Card -->
+            <div class="card-modern mb-4">
+                <div class="card-header-modern">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2 text-primary-modern"></i>
+                        <h5 class="mb-0 fw-semibold">Session Information</h5>
+                    </div>
+                </div>
+                <div class="card-body-modern">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item p-3 bg-light rounded-3 position-relative">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-gradient-primary rounded-circle p-2 me-2" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-id-card text-white small"></i>
+                                    </div>
+                                    <strong class="small">Session ID</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-auto" 
+                                            onclick="copySessionId('{{ session.session_id }}')"
+                                            title="Copy full Session ID">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="session-id-container">
+                                    <code class="text-muted small d-block d-md-none">{{ session.session_id|slice:":8" }}...</code>
+                                    <code class="text-muted small d-none d-md-block" style="word-break: break-all; font-size: 0.8rem;">{{ session.session_id }}</code>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <strong>Created:</strong><br>
-                            <span class="text-muted">{{ session.created_at|date:"M d, Y H:i:s" }}</span>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-success rounded-circle p-2 me-2" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-calendar text-white small"></i>
+                                    </div>
+                                    <strong class="small">Created</strong>
+                                </div>
+                                <span class="text-muted small">{{ session.created_at|date:"M d, Y H:i:s" }}</span>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <strong>Last Updated:</strong><br>
-                            <span class="text-muted">{{ session.updated_at|date:"M d, Y H:i:s" }}</span>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-warning rounded-circle p-2 me-2" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-clock text-white small"></i>
+                                    </div>
+                                    <strong class="small">Last Updated</strong>
+                                </div>
+                                <span class="text-muted small">{{ session.updated_at|date:"M d, Y H:i:s" }}</span>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <strong>Duration:</strong><br>
-                            <span class="text-muted">{{ session.updated_at|timesince:session.created_at }}</span>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="info-item p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-info rounded-circle p-2 me-2" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-hourglass text-white small"></i>
+                                    </div>
+                                    <strong class="small">Duration</strong>
+                                </div>
+                                <span class="text-muted small">{{ session.updated_at|timesince:session.created_at }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Messages -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">💬 Conversation</h5>
+            
+            <!-- Messages Card -->
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-comments me-2 text-primary-modern"></i>
+                        <h5 class="mb-0 fw-semibold">Conversation Messages</h5>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body-modern">
                     {% if session.messages %}
-                        <div class="chat-container" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="chat-container" style="max-height: 70vh; overflow-y: auto; padding: 1rem;">
                             {% for message in session.messages %}
-                                <div class="message-wrapper mb-3">
+                                <div class="message-wrapper mb-4">
                                     <div class="d-flex {% if message.type == 'user' %}justify-content-end{% endif %}">
                                         <div class="message-bubble 
                                                     {% if message.type == 'user' %}
-                                                        bg-primary text-white ms-5
+                                                        bg-gradient-primary text-white ms-4
                                                     {% else %}
-                                                        bg-light me-5
+                                                        bg-light border me-4
                                                     {% endif %} 
-                                                    p-3 rounded" 
-                                             style="max-width: 80%;">
+                                                    p-3 rounded-3 position-relative" 
+                                             style="max-width: 75%;">
                                             
                                             <!-- Message Header -->
                                             <div class="message-header mb-2 d-flex justify-content-between align-items-center">
                                                 <div class="d-flex align-items-center gap-2">
                                                     {% if message.type == 'user' %}
-                                                        <span class="badge bg-light text-dark">👤 You</span>
+                                                        <div class="bg-white rounded-circle p-1" style="width: 25px; height: 25px; display: flex; align-items: center; justify-content: center;">
+                                                            <i class="fas fa-user text-primary small"></i>
+                                                        </div>
+                                                        <span class="fw-semibold small">You</span>
                                                     {% else %}
-                                                        <span class="badge bg-dark">🤖 Assistant</span>
+                                                        <div class="bg-gradient-primary rounded-circle p-1" style="width: 25px; height: 25px; display: flex; align-items: center; justify-content: center;">
+                                                            <i class="fas fa-robot text-white small"></i>
+                                                        </div>
+                                                        <span class="fw-semibold small text-primary">AI Assistant</span>
                                                     {% endif %}
                                                     
                                                     {% if message.is_voice %}
-                                                        <span class="badge bg-warning text-dark">🎤 Voice</span>
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-microphone small me-1"></i>Voice
+                                                        </span>
                                                     {% else %}
-                                                        <span class="badge bg-secondary">💬 Text</span>
+                                                        <span class="badge bg-secondary">
+                                                            <i class="fas fa-keyboard small me-1"></i>Text
+                                                        </span>
                                                     {% endif %}
                                                 </div>
                                                 
-                                                <small class="text-muted">
+                                                <small class="{% if message.type == 'user' %}text-white-50{% else %}text-muted{% endif %}">
                                                     {{ message.timestamp|date:"H:i:s" }}
                                                 </small>
                                             </div>
                                             
                                             <!-- Message Content -->
                                             <div class="message-content">
-                                                <div style="white-space: pre-wrap; word-wrap: break-word;">{{ message.content }}</div>
+                                                <div style="white-space: pre-wrap; word-wrap: break-word; line-height: 1.5;">{{ message.content }}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -110,27 +193,37 @@
                         </div>
                         
                         <!-- Export Options -->
-                        <div class="mt-4 border-top pt-3">
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportSession('txt')">
-                                    📄 Export as TXT
-                                </button>
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="exportSession('json')">
-                                    📋 Export as JSON
-                                </button>
-                                <button type="button" class="btn btn-outline-info btn-sm" onclick="copyToClipboard()">
-                                    📋 Copy to Clipboard
-                                </button>
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h6 class="mb-2 fw-semibold text-primary-modern">
+                                        <i class="fas fa-download me-1"></i>Export Options
+                                    </h6>
+                                    <p class="text-muted small mb-0">Download this conversation in different formats or copy to clipboard</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex gap-2 justify-content-md-end mt-3 mt-md-0">
+                                        <button type="button" class="btn btn-primary-modern" onclick="exportSession('txt')">
+                                            <i class="fas fa-file-alt me-2"></i>Export as TXT
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="exportSession('json')">
+                                            <i class="fas fa-code me-2"></i>Export as JSON
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
                     {% else %}
                         <div class="text-center py-5">
-                            <div class="mb-3">
-                                <i class="fas fa-comments fa-3x text-muted"></i>
+                            <div class="bg-gradient-primary rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-comments text-white fs-1"></i>
                             </div>
-                            <h5 class="text-muted">No Messages</h5>
-                            <p class="text-muted">This session doesn't have any messages yet.</p>
+                            <h5 class="text-muted mb-2">No Messages</h5>
+                            <p class="text-muted mb-4">This session doesn't have any messages yet.</p>
+                            <a href="{% url 'test_chat' %}" class="btn btn-primary-modern">
+                                <i class="fas fa-plus me-2"></i>Start New Conversation
+                            </a>
                         </div>
                     {% endif %}
                 </div>
@@ -139,119 +232,286 @@
     </div>
 </div>
 
+{% block extra_css %}
+<style>
+/* Session Detail specific styling */
+.info-item {
+    transition: all 0.3s ease;
+}
+
+.info-item:hover {
+    background: rgba(0, 173, 181, 0.05) !important;
+    transform: translateY(-2px);
+}
+
+.message-bubble {
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.message-bubble:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Chat specific styling */
+.chat-container {
+    background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+}
+
+.message-wrapper {
+    animation: messageSlideIn 0.5s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* User message styling */
+.message-bubble.bg-gradient-primary {
+    background: var(--gradient-primary) !important;
+    border: none;
+}
+
+.message-bubble.bg-gradient-primary::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 15px;
+    border: 10px solid transparent;
+    border-left-color: var(--primary);
+}
+
+/* Assistant message styling */
+.message-bubble.bg-light {
+    background: white !important;
+    border: 2px solid var(--border) !important;
+}
+
+.message-bubble.bg-light::after {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 15px;
+    border: 10px solid transparent;
+    border-right-color: white;
+}
+
+.message-bubble.bg-light::before {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 15px;
+    border: 10px solid transparent;
+    border-right-color: var(--border);
+}
+
+/* Button styling */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .message-bubble {
+        max-width: 90% !important;
+        margin-left: 0.5rem !important;
+        margin-right: 0.5rem !important;
+    }
+    
+    .message-bubble::after,
+    .message-bubble::before {
+        display: none;
+    }
+    
+    .info-item {
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    /* Hero section mobile */
+    .bg-gradient-dark .col-lg-8,
+    .bg-gradient-dark .col-lg-4 {
+        text-align: center;
+    }
+    
+    .d-flex.gap-2 {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .d-flex.gap-2.justify-content-md-end {
+        justify-content: center !important;
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .bg-gradient-dark {
+        padding: 2rem 0 !important;
+    }
+    
+    .bg-gradient-dark h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .bg-gradient-primary.rounded-circle.p-3 {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .chat-container {
+        padding: 0.5rem !important;
+    }
+    
+    .message-bubble {
+        padding: 1rem !important;
+    }
+    
+    .d-flex.gap-2.justify-content-md-end .btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Session ID mobile responsive */
+    .info-item .d-flex .btn {
+        display: none;
+    }
+    
+    .session-id-container .d-block.d-md-none {
+        display: block !important;
+    }
+    
+    .session-id-container .d-none.d-md-block {
+        display: none !important;
+    }
+    
+    /* Copy notification mobile */
+    .copy-toast {
+        min-width: 250px !important;
+        font-size: 1rem !important;
+        padding: 1rem 1.5rem !important;
+    }
+    
+    /* Mobile export buttons */
+    .d-flex.gap-2.justify-content-md-end {
+        flex-direction: column !important;
+    }
+    
+    .d-flex.gap-2.justify-content-md-end .btn {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Scrollbar styling */
+.chat-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+    background: #008a94;
+}
+
+/* Animation for cards */
+.card-modern {
+    animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Toast notification animation */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+</style>
+{% endblock %}
+
 <script>
 function deleteSession(sessionId) {
     if (confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
+        // Show loading notification
+        showNotification('⏳ Deleting session...', 'info');
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
         fetch(`/delete-session/${sessionId}/`, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-CSRFToken': csrfToken,
                 'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.href = '/session-history/';
+                showNotification('✅ Session deleted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/session-history/';
+                }, 1000);
             } else {
-                alert('Error: ' + data.message);
+                showNotification('❌ Error: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
-            alert('Error deleting session: ' + error);
+            console.error('Delete session error:', error);
+            showNotification('❌ Error deleting session. Please try again.', 'error');
         });
     }
 }
 
 function exportSession(format) {
-    const messages = {{ session.messages|safe|escapejs }};
-    const sessionInfo = {
-        session_id: '{{ session.session_id }}',
-        source: '{{ session.source }}',
-        created_at: '{{ session.created_at|date:"c" }}',
-        updated_at: '{{ session.updated_at|date:"c" }}'
-    };
+    // Get data from DOM elements
+    const messagesElement = document.getElementById('session-messages');
+    const sessionElement = document.getElementById('session-data');
     
-    let content = '';
-    let filename = `session_${sessionInfo.session_id.substring(0, 8)}_${sessionInfo.source}`;
-    
-    if (format === 'txt') {
-        content = `Session Export\n`;
-        content += `=================\n`;
-        content += `Session ID: ${sessionInfo.session_id}\n`;
-        content += `Source: ${sessionInfo.source}\n`;
-        content += `Created: ${sessionInfo.created_at}\n`;
-        content += `Updated: ${sessionInfo.updated_at}\n`;
-        content += `Messages: ${messages.length}\n\n`;
-        
-        messages.forEach(msg => {
-            const timestamp = new Date(msg.timestamp).toLocaleString();
-            const type = msg.type === 'user' ? 'You' : 'Assistant';
-            const voice = msg.is_voice ? ' (Voice)' : '';
-            content += `[${timestamp}] ${type}${voice}:\n${msg.content}\n\n`;
-        });
-        
-        filename += '.txt';
-    } else if (format === 'json') {
-        content = JSON.stringify({
-            session: sessionInfo,
-            messages: messages
-        }, null, 2);
-        filename += '.json';
+    if (!messagesElement || !sessionElement) {
+        showNotification('❌ Unable to export - session data not found', 'error');
+        return;
     }
     
-    downloadFile(content, filename);
-}
-
-function copyToClipboard() {
-    const messages = {{ session.messages|safe|escapejs }};
-    let content = '';
+    const messages = JSON.parse(messagesElement.textContent);
+    const sessionData = JSON.parse(sessionElement.textContent);
     
-    messages.forEach(msg => {
-        const timestamp = new Date(msg.timestamp).toLocaleString();
-        const type = msg.type === 'user' ? 'You' : 'Assistant';
-        const voice = msg.is_voice ? ' (Voice)' : '';
-        content += `[${timestamp}] ${type}${voice}:\n${msg.content}\n\n`;
-    });
-    
-    navigator.clipboard.writeText(content).then(() => {
-        alert('Conversation copied to clipboard!');
-    }).catch(err => {
-        alert('Failed to copy to clipboard: ' + err);
-    });
-}
-
-function downloadFile(content, filename) {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-// Auto scroll to bottom on load
-document.addEventListener('DOMContentLoaded', function() {
-    const chatContainer = document.querySelector('.chat-container');
-    if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-});
-</script>
-
-{{ session.messages|json_script:"session-messages" }}
-{{ session|json_script:"session-data" }}
-
-<script>
-// Get data from Django template safely
-const sessionMessages = JSON.parse(document.getElementById('session-messages').textContent);
-const sessionData = JSON.parse(document.getElementById('session-data').textContent);
-
-function exportSession(format) {
-    const messages = sessionMessages;
     const sessionInfo = {
         session_id: sessionData.session_id,
         source: sessionData.source,
@@ -317,57 +577,6 @@ function exportSession(format) {
     }
 }
 
-function copyToClipboard() {
-    const messages = sessionMessages;
-    let content = `AI Agent Session Export\n`;
-    content += `==========================\n`;
-    content += `Session: ${sessionData.session_id}\n`;
-    content += `Source: ${getSourceLabel(sessionData.source)}\n`;
-    content += `Date: ${new Date(sessionData.created_at).toLocaleString()}\n`;
-    content += `Messages: ${messages.length}\n`;
-    content += `==========================\n\n`;
-    
-    messages.forEach((msg, index) => {
-        const timestamp = new Date(msg.timestamp).toLocaleString();
-        const type = msg.type === 'user' ? 'You' : 'AI Assistant';
-        const voice = msg.is_voice ? ' 🎤' : ' 💬';
-        content += `[${index + 1}] ${timestamp}\n`;
-        content += `${type}${voice}: ${msg.content}\n\n`;
-    });
-    
-    navigator.clipboard.writeText(content).then(() => {
-        showNotification('✅ Conversation copied to clipboard!', 'success');
-    }).catch(err => {
-        console.error('Clipboard error:', err);
-        // Fallback for older browsers
-        fallbackCopyToClipboard(content);
-    });
-}
-
-function fallbackCopyToClipboard(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    textArea.style.top = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-            showNotification('✅ Conversation copied to clipboard!', 'success');
-        } else {
-            showNotification('❌ Failed to copy to clipboard', 'error');
-        }
-    } catch (err) {
-        showNotification('❌ Copy not supported by browser', 'error');
-    } finally {
-        document.body.removeChild(textArea);
-    }
-}
-
 function downloadFile(content, filename, mimeType = 'text/plain') {
     const blob = new Blob([content], { type: mimeType });
     const url = window.URL.createObjectURL(blob);
@@ -393,44 +602,203 @@ function getSourceLabel(source) {
     return labels[source] || source;
 }
 
+function copySessionId(sessionId) {
+    navigator.clipboard.writeText(sessionId).then(() => {
+        showNotification('✅ Session ID copied to clipboard!', 'success');
+    }).catch(err => {
+        console.error('Clipboard error:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = sessionId;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showNotification('✅ Session ID copied to clipboard!', 'success');
+            } else {
+                showNotification('❌ Failed to copy Session ID', 'error');
+            }
+        } catch (err) {
+            showNotification('❌ Copy not supported by browser', 'error');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    });
+}
+
 function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} position-fixed`;
-    notification.style.cssText = `
+    // Remove any existing toasts
+    const existingToast = document.querySelector('.toast-container');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create toast container
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container';
+    toastContainer.style.cssText = `
+        position: fixed;
         top: 20px;
         right: 20px;
         z-index: 9999;
-        min-width: 300px;
-        animation: slideInRight 0.3s ease-out;
     `;
-    notification.innerHTML = `
+    
+    // Create toast
+    const toast = document.createElement('div');
+    const alertType = type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info';
+    const bgColor = type === 'success' ? 'linear-gradient(135deg, #28a745, #20c997)' : 
+                   type === 'error' ? 'linear-gradient(135deg, #dc3545, #fd7e14)' : 
+                   'linear-gradient(135deg, #17a2b8, #6f42c1)';
+    const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle';
+    
+    toast.className = `alert alert-${alertType} toast`;
+    toast.style.cssText = `
+        margin: 0;
+        min-width: 300px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border-radius: 10px;
+        border: none;
+        animation: slideInRight 0.3s ease-out;
+        background: ${bgColor};
+        color: white;
+        font-weight: 500;
+    `;
+    toast.innerHTML = `
         <div class="d-flex align-items-center">
-            <span class="me-2">${message}</span>
-            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+            <i class="fas fa-${icon} me-2"></i>
+            <span class="flex-grow-1">${message}</span>
+            <button type="button" class="btn-close btn-close-white ms-2" onclick="this.closest('.toast-container').remove()"></button>
         </div>
     `;
     
-    document.body.appendChild(notification);
+    toastContainer.appendChild(toast);
+    document.body.appendChild(toastContainer);
     
-    // Auto remove after 5 seconds
+    // Auto remove after 4 seconds
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
+        if (toastContainer.parentNode) {
+            toastContainer.style.animation = 'slideOutRight 0.3s ease-out forwards';
+            setTimeout(() => toastContainer.remove(), 300);
         }
-    }, 5000);
+    }, 4000);
 }
 
-// Add CSS for notification animation
+// Initialize enhanced interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Scroll to bottom on page load
+    const chatContainer = document.querySelector('.chat-container');
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Add click handlers for session info items
+    document.querySelectorAll('.info-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    icon.style.transform = 'scale(1)';
+                }, 200);
+            }
+        });
+    });
+    
+    // Add smooth hover effects for messages
+    document.querySelectorAll('.message-bubble').forEach(bubble => {
+        bubble.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        bubble.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Show welcome notification
+    setTimeout(() => {
+        showNotification('✨ Session loaded successfully!', 'success');
+    }, 500);
+    
+    // Add intersection observer for message animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animationDelay = '0.1s';
+                entry.target.style.animation = 'slideInLeft 0.5s ease-out forwards';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all message bubbles
+    document.querySelectorAll('.message-bubble').forEach(bubble => {
+        observer.observe(bubble);
+    });
+});
+
+// Add CSS for enhanced animations
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
+    
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    /* Enhanced message bubble animations */
+    .message-bubble {
+        transition: all 0.3s ease;
+    }
+    
+    .message-bubble:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Info item hover effects */
+    .info-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .info-item:hover {
+        background: rgba(0, 173, 181, 0.05);
+        transform: translateY(-2px);
+    }
+    
+    /* Button enhancements */
+    .btn {
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn:active {
+        transform: translateY(0);
+    }
 `;
 document.head.appendChild(style);
 </script>
+
+{{ session.messages|json_script:"session-messages" }}
+{{ session|json_script:"session-data" }}
 
 {% csrf_token %}
 {% endblock %}

@@ -338,31 +338,127 @@
     <!-- Widget Integration Section (Full Width) -->
     <div class="row">
         <div class="col-12">
-            <div class="card-modern">
-                <div class="card-header-modern">
-                    <i class="fas fa-code me-2"></i>
-                    <span>Widget Integration</span>
+            <div class="card-modern widget-integration-section">
+                <div class="card-header-modern d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-code me-2 text-primary"></i>
+                        <span class="fw-bold">Widget Integration</span>
+                    </div>
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Live & Ready
+                    </span>
                 </div>
                 <div class="card-body-modern">
-                    <div class="row align-items-center">
+                    <div class="row align-items-center g-4">
                         <div class="col-lg-8">
-                            <h6 class="mb-3">Embed AI Chat Widget</h6>
-                            <p class="text-muted mb-3">Copy and paste this code into your website to add the AI chat widget:</p>
+                            <div class="mb-4">
+                                <h5 class="mb-2 d-flex align-items-center">
+                                    <i class="fas fa-puzzle-piece me-2 text-primary"></i>
+                                    Embed AI Chat Widget
+                                </h5>
+                                <p class="text-muted mb-3">Simply copy and paste this code snippet before the closing <code>&lt;/body&gt;</code> tag of your website:</p>
+                            </div>
                             
-                            <div class="bg-light rounded-3 p-3 position-relative">
-                                <code class="small d-block text-wrap" style="white-space: pre-wrap;" id="widgetCode">&lt;script src="{{ request.scheme }}://{{ request.get_host }}/widget.js?key={{ assistant.api_key }}&amp;id={{ assistant.id }}"&gt;&lt;/script&gt;</code>
-                                <button class="btn btn-outline-modern btn-sm position-absolute top-0 end-0 m-2" onclick="copyToClipboard(document.getElementById('widgetCode').textContent, this)">
-                                    <i class="fas fa-copy me-1"></i>Copy
-                                </button>
+                            <div class="code-container p-4 position-relative">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                                            <i class="fas fa-code text-white" style="font-size: 10px;"></i>
+                                        </div>
+                                        <span class="fw-medium small text-muted">HTML Code Snippet</span>
+                                    </div>
+                                    <button class="btn copy-btn-enhanced btn-sm" onclick="copyWidgetCodeSafe(this)" id="copyWidgetBtn">
+                                        <i class="fas fa-copy me-1"></i>Copy Code
+                                    </button>
+                                </div>
+                                <div class="bg-dark rounded-2 p-3">
+                                    <code class="text-light d-block text-wrap" style="white-space: pre-wrap; font-family: 'Courier New', monospace;" id="widgetCode">&lt;script src="{{ request.scheme }}://{{ request.get_host }}/widget.js?key={{ assistant.api_key }}&amp;id={{ assistant.id }}"&gt;&lt;/script&gt;</code>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <div class="d-flex align-items-center text-success">
+                                                <i class="fas fa-shield-alt me-2"></i>
+                                                <small>Secure & Privacy-focused</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="d-flex align-items-center text-success">
+                                                <i class="fas fa-mobile-alt me-2"></i>
+                                                <small>Mobile-responsive design</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="d-flex align-items-center text-success">
+                                                <i class="fas fa-rocket me-2"></i>
+                                                <small>Lightweight & fast loading</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="d-flex align-items-center text-success">
+                                                <i class="fas fa-cogs me-2"></i>
+                                                <small>Auto-updates with improvements</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-lg-4 text-center">
-                            <div class="bg-light rounded-3 p-4">
-                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiByeD0iMjAiIGZpbGw9InVybCgjZ3JhZGllbnQwXzEyM180NTYpIi8+CjxwYXRoIGQ9Ik03MCAzNUg0MEMzNi42ODYzIDM1IDM0IDM3LjY4NjMgMzQgNDFWNTlDMzQgNjIuMzEzNyAzNi42ODYzIDY1IDQwIDY1SDcwQzczLjMxMzcgNjUgNzYgNjIuMzEzNyA3NiA1OVY0MUM3NiAzNy42ODYzIDczLjMxMzcgMzUgNzAgMzVaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI0NiIgY3k9IjQ4IiByPSIzIiBmaWxsPSIjMDBBREI1Ii8+CjxjaXJjbGUgY3g9IjU1IiBjeT0iNDgiIHI9IjMiIGZpbGw9IiMwMEFEQjUiLz4KPGNpcmNsZSBjeD0iNjQiIGN5PSI0OCIgcj0iMyIgZmlsbD0iIzAwQURCNSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudDBfMTIzXzQ1NiIgeDE9IjAiIHkxPSIwIiB4Mj0iMTAwIiB5Mj0iMTAwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiMwMEFEQjUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMzkzRTQ2Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPHN2Zz4K" alt="Widget Preview" class="img-fluid mb-3" style="max-width: 100px;">
-                                <p class="text-muted small mb-0">AI Chat Widget</p>
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Appears instantly on your website
+                        <div class="col-lg-4">
+                            <div class="text-center">
+                                <h6 class="mb-3">Widget Preview</h6>
+                                <div class="widget-preview-container position-relative bg-gradient-to-br from-teal-400 to-blue-600 rounded-4 p-4 mb-3" style="background: linear-gradient(135deg, #00ADB5 0%, #393E46 100%); min-height: 200px;">
+                                    <div class="widget-mockup position-absolute bottom-0 end-0 m-3">
+                                        <div class="chat-bubble bg-white rounded-4 shadow-lg p-3" style="max-width: 250px; animation: float 3s ease-in-out infinite;">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="bg-primary rounded-circle p-1 me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-robot text-white" style="font-size: 12px;"></i>
+                                                </div>
+                                                <span class="fw-medium small">AI Assistant</span>
+                                                <div class="ms-auto">
+                                                    <div class="bg-success rounded-circle" style="width: 8px; height: 8px;"></div>
+                                                </div>
+                                            </div>
+                                            <p class="small mb-2 text-muted">Hello! How can I help you today?</p>
+                                            <div class="typing-indicator">
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                            </div>
+                                        </div>
+                                        <div class="chat-button bg-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; cursor: pointer; animation: pulse 2s infinite;">
+                                            <i class="fas fa-comment text-white fs-5"></i>
+                                        </div>
+                                    </div>
+                                    <div class="browser-mockup position-absolute top-0 start-0 m-3 bg-white rounded-2 p-2" style="width: 200px;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="browser-dots d-flex gap-1">
+                                                <div class="bg-danger rounded-circle" style="width: 8px; height: 8px;"></div>
+                                                <div class="bg-warning rounded-circle" style="width: 8px; height: 8px;"></div>
+                                                <div class="bg-success rounded-circle" style="width: 8px; height: 8px;"></div>
+                                            </div>
+                                            <div class="ms-2 bg-light rounded-pill px-2 py-1 flex-grow-1">
+                                                <small class="text-muted">yourwebsite.com</small>
+                                            </div>
+                                        </div>
+                                        <div class="bg-light rounded-1" style="height: 80px;">
+                                            <div class="p-2">
+                                                <div class="bg-secondary rounded-1 mb-1" style="height: 8px; width: 80%;"></div>
+                                                <div class="bg-secondary rounded-1 mb-1" style="height: 8px; width: 60%;"></div>
+                                                <div class="bg-secondary rounded-1" style="height: 8px; width: 90%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <div class="text-success">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <span class="small fw-medium text-success">Ready to deploy</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Responsive design works on all devices
                                 </small>
                             </div>
                         </div>
@@ -397,17 +493,85 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Safe clipboard copy function to prevent conflicts
+function copyToClipboardSafe(text, button = null) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).then(() => {
+            if (button) {
+                updateCopyButtonState(button, true);
+            }
+            return true;
+        }).catch((err) => {
+            console.error('Failed to copy using Clipboard API:', err);
+            return fallbackCopyTextToClipboard(text, button);
+        });
+    } else {
+        return fallbackCopyTextToClipboard(text, button);
+    }
+}
+
+function fallbackCopyTextToClipboard(text, button = null) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful && button) {
+            updateCopyButtonState(button, true);
+        }
+        return successful;
+    } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+        if (button) {
+            updateCopyButtonState(button, false);
+        }
+        return false;
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
+
+function updateCopyButtonState(button, success) {
+    const originalContent = button.innerHTML;
+    if (success) {
+        button.innerHTML = '<i class="fas fa-check me-1 text-success"></i>Copied!';
+        button.classList.add('btn-success');
+        button.classList.remove('btn-outline-modern');
+        showToast('Widget code copied to clipboard!', 'success');
+    } else {
+        button.innerHTML = '<i class="fas fa-times me-1 text-danger"></i>Failed';
+        button.classList.add('btn-danger');
+        button.classList.remove('btn-outline-modern');
+        showToast('Failed to copy widget code!', 'danger');
+    }
+    
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.classList.remove('btn-success', 'btn-danger');
+        button.classList.add('btn-outline-modern');
+    }, 2000);
+}
+
 // Enhanced copy functions with modern UI feedback
 function copyApiKey() {
     const apiKey = '{{ assistant.api_key }}';
-    copyToClipboard(apiKey);
-    showToast('API Key copied to clipboard!', 'success');
+    copyToClipboardSafe(apiKey);
 }
 
 function copyWidgetCode() {
     const widgetCode = document.getElementById('widgetCode').textContent;
-    copyToClipboard(widgetCode);
-    showToast('Widget code copied to clipboard!', 'success');
+    copyToClipboardSafe(widgetCode);
+}
+
+function copyWidgetCodeSafe(button) {
+    const widgetCode = document.getElementById('widgetCode').textContent;
+    copyToClipboardSafe(widgetCode, button);
 }
 
 // Modern toast notification
@@ -645,6 +809,128 @@ function setButtonLoading(button, loading = true) {
         opacity: 1;
         transform: translateX(0);
     }
+}
+
+/* Widget Preview Animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.chat-bubble {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.chat-button {
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.chat-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0, 123, 255, 0.4);
+}
+
+.widget-preview-container {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.widget-preview-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.browser-mockup {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+/* Typing indicator animation */
+.typing-indicator {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { 
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Enhanced widget integration section */
+.widget-integration-section {
+    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.widget-integration-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #00ADB5 0%, #393E46 100%);
+}
+
+.code-container {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.code-container:hover {
+    border-color: #00ADB5;
+    box-shadow: 0 4px 20px rgba(0, 173, 181, 0.1);
+}
+
+.copy-btn-enhanced {
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 173, 181, 0.2);
+}
+
+.copy-btn-enhanced:hover {
+    background: rgba(0, 173, 181, 0.1);
+    border-color: #00ADB5;
+    transform: translateY(-1px);
 }
 </style>
 {% endblock %}

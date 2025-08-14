@@ -1,76 +1,767 @@
 {% extends 'base.html' %}
 
-{% block title %}Business Type - AI Agent Customer Service{% endblock %}
+{% block title %}Business Type Selection - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="hero-content">
+                    <div class="hero-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <h1 class="hero-title">Select Your Business Type</h1>
+                    <p class="hero-subtitle">Choose the category that best describes your business to generate tailored Q&As</p>
+                    
+                    <!-- Modern Step Indicator -->
+                    <div class="step-indicator-modern">
+                        <div class="step-item active">
+                            <div class="step-circle">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <span class="step-label">Business Type</span>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step-item">
+                            <div class="step-circle">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                            <span class="step-label">Q&A Setup</span>
+                        </div>
+                        <div class="step-connector"></div>
+                        <div class="step-item">
+                            <div class="step-circle">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <span class="step-label">Knowledge Base</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <!-- Step Indicator -->
-            <div class="step-indicator">
-                <div class="step active">1</div>
-                <div class="step">2</div>
-                <div class="step">3</div>
+        <div class="col-lg-8">
+            <!-- Info Alert -->
+            <div class="alert-modern info">
+                <div class="alert-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="alert-content">
+                    <h6 class="alert-title">Smart Q&A Generation</h6>
+                    <p class="alert-text">We'll automatically generate 10 common customer service questions and answers tailored to your industry. You can customize these to match your specific business needs.</p>
+                </div>
             </div>
             
-            <div class="card">
-                <div class="card-header text-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-store me-2"></i>Select Your Business Type
-                    </h4>
-                    <p class="mb-0 mt-2 text-light">Choose the category that best describes your business</p>
-                </div>
-                <div class="card-body p-4">
-                    <form method="post">
+            <!-- Business Type Selection Form -->
+            <div class="card-modern">
+                <div class="card-body-modern">
+                    <form method="post" id="businessTypeForm">
                         {% csrf_token %}
-                        <div class="mb-4">
-                            <label for="{{ form.business_type.id_for_label }}" class="form-label">
-                                <i class="fas fa-building me-1"></i>Business Category
-                            </label>
-                            {{ form.business_type }}
-                            {% if form.business_type.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.business_type.errors.0 }}
+                        
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="fas fa-building me-2 text-primary-modern"></i>
+                                Business Category
+                            </h5>
+                            <p class="section-description">
+                                Select the category that best matches your business to get the most relevant Q&As.
+                            </p>
+                            
+                            <div class="form-group-modern">
+                                <label for="{{ form.business_type.id_for_label }}" class="form-label-modern">
+                                    Choose Your Business Type
+                                </label>
+                                <div class="select-wrapper">
+                                    {{ form.business_type }}
+                                    <i class="fas fa-chevron-down select-arrow"></i>
                                 </div>
-                            {% endif %}
-                            <div class="form-text">
-                                We'll generate relevant customer service Q&As based on your selection.
+                                {% if form.business_type.errors %}
+                                    <div class="form-error">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {{ form.business_type.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-help">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    This helps us generate relevant customer service scenarios for your industry.
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>What happens next?</strong><br>
-                            After selecting your business type, we'll automatically generate 10 common customer service questions and answers tailored to your industry. You can then customize these to match your specific business needs.
+                        <!-- Features Preview -->
+                        <div class="features-preview">
+                            <h6 class="features-title">
+                                <i class="fas fa-magic me-2"></i>What You'll Get
+                            </h6>
+                            <div class="features-grid">
+                                <div class="feature-item">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="feature-content">
+                                        <h6>Smart Q&A Generation</h6>
+                                        <p>10 industry-specific questions and answers</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <div class="feature-content">
+                                        <h6>Customizable Content</h6>
+                                        <p>Edit, add, or remove any Q&As to fit your needs</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-brain"></i>
+                                    </div>
+                                    <div class="feature-content">
+                                        <h6>AI-Powered Assistant</h6>
+                                        <p>Intelligent responses based on your business type</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="feature-content">
+                                        <h6>Quick Setup</h6>
+                                        <p>Get your AI assistant ready in just a few minutes</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-arrow-right me-2"></i>Generate Q&As
+                        <!-- Action Section -->
+                        <div class="action-section">
+                            <button type="submit" class="btn-primary-modern btn-lg" id="submitBtn">
+                                <i class="fas fa-rocket me-2"></i>Generate Q&As & Continue
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
             
-            <div class="text-center mt-3">
-                <small class="text-muted">
-                    <i class="fas fa-shield-alt me-1"></i>
-                    Your data is secure and will only be used for your AI assistant
-                </small>
+            <!-- Security Notice -->
+            <div class="security-notice">
+                <div class="security-content">
+                    <div class="security-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="security-text">
+                        <h6>Your Data is Secure</h6>
+                        <p>All information is processed securely and used exclusively for your AI assistant setup.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toastSuccess" class="toast align-items-center text-white border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="toastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hero Section */
+.hero-section {
+    background: var(--gradient-primary);
+    color: var(--white);
+    padding: 4rem 0 2rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="20" fill="url(%23grid)"/></svg>') repeat;
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+    backdrop-filter: blur(20px);
+}
+
+.hero-icon i {
+    font-size: 2rem;
+    color: var(--white);
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    font-weight: 400;
+}
+
+/* Modern Step Indicator */
+.step-indicator-modern {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.step-item.active .step-circle {
+    background: var(--white);
+    color: var(--primary);
+    border-color: var(--white);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.step-item.active .step-label {
+    opacity: 1;
+    font-weight: 600;
+}
+
+.step-connector {
+    width: 60px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 0 1rem;
+}
+
+/* Alert Modern */
+.alert-modern {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    box-shadow: 0 4px 20px var(--shadow);
+}
+
+.alert-modern.info {
+    border-left: 4px solid var(--primary);
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(0, 173, 181, 0.1);
+    color: var(--primary);
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.alert-text {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Card Modern */
+.card-modern {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px var(--shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    width: 100%;
+}
+
+.card-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(57, 62, 70, 0.2);
+}
+
+.card-body-modern {
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 2rem;
+    width: 100%;
+}
+
+.section-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.section-description {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.form-group-modern {
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.form-label-modern {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    display: block;
+    width: 100%;
+}
+
+/* Select Wrapper */
+.select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.select-wrapper select {
+    width: 100% !important;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: var(--white);
+    appearance: none;
+    cursor: pointer;
+}
+
+.select-wrapper select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+.select-arrow {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.select-wrapper:hover .select-arrow {
+    color: var(--primary);
+}
+
+.form-error {
+    margin-top: 0.5rem;
+    color: var(--danger);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+}
+
+/* Features Preview */
+.features-preview {
+    background: rgba(0, 173, 181, 0.02);
+    border: 1px solid rgba(0, 173, 181, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.features-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 173, 181, 0.1);
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 173, 181, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.feature-content h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.feature-content p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Action Section */
+.action-section {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    min-width: 250px;
+}
+
+/* Security Notice */
+.security-notice {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(16, 185, 129, 0.02);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.security-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.security-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--success);
+    flex-shrink: 0;
+}
+
+.security-text h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.security-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Toast Styles */
+.toast {
+    background: var(--gradient-primary);
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 8px 32px rgba(0, 173, 181, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .step-indicator-modern {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .step-connector {
+        width: 2px;
+        height: 40px;
+        margin: 0.5rem 0;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .btn-lg {
+        min-width: 100%;
+    }
+    
+    .security-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 3rem 0 1.5rem 0;
+    }
+    
+    .hero-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+    
+    .features-preview {
+        padding: 1rem;
+    }
+}
+</style>
+
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectElement = document.querySelector('select');
-        if (selectElement) {
-            selectElement.classList.add('form-select');
+document.addEventListener('DOMContentLoaded', function() {
+    const selectElement = document.querySelector('select');
+    const form = document.getElementById('businessTypeForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Add modern class to select element
+    if (selectElement) {
+        selectElement.classList.add('form-select-modern');
+    }
+    
+    // Form submission with loading state
+    form.addEventListener('submit', function(e) {
+        if (!selectElement.value) {
+            e.preventDefault();
+            showToast('Please select a business type to continue.', 'warning');
+            return;
+        }
+        
+        // Show loading state
+        setButtonLoading(submitBtn, true);
+        showToast('Generating Q&As for your business type...', 'info');
+    });
+    
+    // Select change handler
+    selectElement.addEventListener('change', function() {
+        if (this.value) {
+            // Add visual feedback
+            this.style.borderColor = 'var(--primary)';
+            this.style.boxShadow = '0 0 0 3px rgba(0, 173, 181, 0.1)';
+            
+            // Show preview of what will be generated
+            showBusinessTypePreview(this.value);
+        } else {
+            this.style.borderColor = 'var(--border)';
+            this.style.boxShadow = 'none';
         }
     });
+});
+
+function showBusinessTypePreview(businessType) {
+    // You can add specific preview logic here based on business type
+    const previewTexts = {
+        'restaurant': 'restaurant and food service',
+        'retail': 'retail and e-commerce',
+        'healthcare': 'healthcare and medical services',
+        'technology': 'technology and software',
+        'education': 'education and training',
+        'finance': 'finance and banking',
+        'real_estate': 'real estate and property',
+        'automotive': 'automotive and transportation',
+        'beauty': 'beauty and wellness',
+        'consulting': 'consulting and professional services'
+    };
+    
+    const businessName = previewTexts[businessType] || 'your selected business';
+    showToast(`Great choice! We'll generate Q&As specifically for ${businessName}.`, 'success');
+}
+
+// Enhanced toast notification function
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastSuccess');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    // Set message
+    toastMessage.textContent = message;
+    
+    // Set type-specific styles
+    toast.className = 'toast align-items-center text-white border-0';
+    
+    switch (type) {
+        case 'success':
+            toast.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+            break;
+        case 'error':
+            toast.style.background = 'linear-gradient(135deg, #EF4444, #DC2626)';
+            break;
+        case 'warning':
+            toast.style.background = 'linear-gradient(135deg, #F59E0B, #D97706)';
+            break;
+        case 'info':
+            toast.style.background = 'var(--gradient-primary)';
+            break;
+        default:
+            toast.style.background = 'var(--gradient-primary)';
+    }
+    
+    // Show toast
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// Loading state for buttons
+function setButtonLoading(button, loading = true) {
+    if (loading) {
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.setAttribute('data-original-text', originalText);
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating Q&As...';
+        button.style.opacity = '0.8';
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.getAttribute('data-original-text');
+        button.style.opacity = '1';
+    }
+}
+
+// Add entrance animations
+document.addEventListener('DOMContentLoaded', function() {
+    const elements = document.querySelectorAll('.card-modern, .alert-modern, .features-preview');
+    elements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, 200 * (index + 1));
+    });
+});
 </script>
 {% endblock %}
 {% endblock %}

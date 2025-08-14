@@ -1,207 +1,1171 @@
 {% extends 'base.html' %}
 
-{% block title %}Knowledge Base - AI Agent Customer Service{% endblock %}
+{% block title %}Knowledge Base Setup - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="hero-content">
+                    <div class="hero-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h1 class="hero-title">Knowledge Base Setup</h1>
+                    <p class="hero-subtitle">Enhance your AI assistant with additional knowledge and documentation</p>
+                    
+                    <!-- Modern Step Indicator -->
+                    <div class="step-indicator-modern">
+                        <div class="step-item completed">
+                            <div class="step-circle">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span class="step-label">Business Type</span>
+                        </div>
+                        <div class="step-connector completed"></div>
+                        <div class="step-item completed">
+                            <div class="step-circle">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span class="step-label">Q&A Setup</span>
+                        </div>
+                        <div class="step-connector active"></div>
+                        <div class="step-item active">
+                            <div class="step-circle">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <span class="step-label">Knowledge Base</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-10">
-            <!-- Step Indicator -->
-            <div class="step-indicator">
-                <div class="step completed">1</div>
-                <div class="step completed">2</div>
-                <div class="step active">3</div>
+        <div class="col-lg-10">
+            <!-- Info Alert -->
+            <div class="alert-modern info">
+                <div class="alert-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="alert-content">
+                    <h6 class="alert-title">Optional Enhancement Step</h6>
+                    <p class="alert-text">Add additional knowledge to make your AI assistant more comprehensive. Include company policies, product information, FAQs, or any relevant documentation.</p>
+                </div>
             </div>
             
-            <div class="card">
-                <div class="card-header text-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-database me-2"></i>Knowledge Base Setup
-                    </h4>
-                    <p class="mb-0 mt-2 text-light">Add additional knowledge for your AI assistant</p>
+            <form method="post" enctype="multipart/form-data" id="knowledgeForm">
+                {% csrf_token %}
+                
+                <!-- Navigation Pills -->
+                <div class="nav-pills-container">
+                    <ul class="nav nav-pills-modern" id="knowledgeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link-pill active" id="manual-tab" data-bs-toggle="pill" data-bs-target="#manual-content-tab" type="button" role="tab">
+                                <i class="fas fa-keyboard me-2"></i>Manual Entry
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link-pill" id="file-tab" data-bs-toggle="pill" data-bs-target="#file-upload-tab" type="button" role="tab">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>File Upload
+                            </button>
+                        </li>
+                    </ul>
                 </div>
-                <div class="card-body p-4">
-                    <div class="alert alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Optional Step:</strong> You can add additional knowledge to make your AI assistant more helpful. 
-                        This can include company policies, product information, FAQs, or any relevant documentation.
+                
+                <!-- Tab Content -->
+                <div class="tab-content" id="knowledgeTabContent">
+                    <!-- Manual Content Tab -->
+                    <div class="tab-pane fade show active" id="manual-content-tab" role="tabpanel">
+                        <div class="card-modern">
+                            <div class="card-body-modern">
+                                <div class="form-section">
+                                    <h5 class="section-title">
+                                        <i class="fas fa-edit me-2 text-primary-modern"></i>
+                                        Add Text Content Directly
+                                    </h5>
+                                    <p class="section-description">
+                                        Enter your business information, policies, product details, or any other relevant content.
+                                    </p>
+                                    
+                                    <div class="form-group-modern">
+                                        <label for="manual_content" class="form-label-modern">Knowledge Content</label>
+                                        <textarea 
+                                            id="manual_content" 
+                                            name="manual_content" 
+                                            class="form-control-modern auto-resize" 
+                                            rows="8" 
+                                            placeholder="Enter your business information here...
+
+Example content:
+• Store hours: Monday-Friday 9AM-8PM, Saturday 9AM-6PM, Sunday 10AM-5PM
+• Free delivery for orders over $50 within 5 miles
+• Return policy: 30 days with receipt
+• Payment methods: Cash, credit cards, PayPal
+• Customer service: (555) 123-4567
+• Product warranty: 1 year manufacturer warranty
+• Special services: Installation, technical support, product training"
+                                        ></textarea>
+                                        <div class="form-help">
+                                            <i class="fas fa-lightbulb me-1"></i>
+                                            This content will help your AI answer customer questions beyond your Q&As.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <!-- Manual Content Section -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-keyboard me-2"></i>Manual Content
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="manual_content" class="form-label">
-                                        Add text content directly:
-                                    </label>
-                                    <textarea 
-                                        id="manual_content" 
-                                        name="manual_content" 
-                                        class="form-control" 
-                                        rows="8" 
-                                        placeholder="Enter your business information, policies, product details, or any other relevant content here...
-
-Example:
-- Our store hours are Monday-Friday 9AM-8PM, Saturday 9AM-6PM, Sunday 10AM-5PM
-- We offer free delivery for orders over $50 within 5 miles
-- Return policy: 30 days with receipt
-- We accept cash, credit cards, and PayPal
-- Customer service phone: (555) 123-4567"
-                                    ></textarea>
-                                    <div class="form-text">
-                                        This content will be used to answer customer questions not covered in your Q&As.
+                    <!-- File Upload Tab -->
+                    <div class="tab-pane fade" id="file-upload-tab" role="tabpanel">
+                        <div class="card-modern">
+                            <div class="card-body-modern">
+                                <div class="form-section">
+                                    <h5 class="section-title">
+                                        <i class="fas fa-file-upload me-2 text-primary-modern"></i>
+                                        Upload Documents
+                                    </h5>
+                                    <p class="section-description">
+                                        Upload PDF, TXT, or DOCX files containing your business documentation.
+                                    </p>
+                                    
+                                    <!-- Drag & Drop Upload Area -->
+                                    <div class="upload-area" id="uploadArea">
+                                        <div class="upload-content">
+                                            <div class="upload-icon">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                            </div>
+                                            <h6 class="upload-title">Drag & Drop Files Here</h6>
+                                            <p class="upload-text">or click to browse files</p>
+                                            <button type="button" class="btn-upload" onclick="document.getElementById('knowledge_files').click()">
+                                                <i class="fas fa-folder-open me-2"></i>Choose Files
+                                            </button>
+                                            <input 
+                                                type="file" 
+                                                class="d-none" 
+                                                id="knowledge_files" 
+                                                name="knowledge_files" 
+                                                multiple 
+                                                accept=".pdf,.txt,.docx,.doc"
+                                            >
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- File Preview Area -->
+                                    <div id="filePreviewArea" class="file-preview-area" style="display: none;">
+                                        <h6 class="preview-title">
+                                            <i class="fas fa-file-alt me-2"></i>Selected Files
+                                        </h6>
+                                        <div id="fileList" class="file-list"></div>
+                                    </div>
+                                    
+                                    <!-- Upload Guidelines -->
+                                    <div class="upload-guidelines">
+                                        <h6 class="guidelines-title">
+                                            <i class="fas fa-info-circle me-2"></i>Upload Guidelines
+                                        </h6>
+                                        <ul class="guidelines-list">
+                                            <li>Supported formats: PDF, TXT, DOCX</li>
+                                            <li>Maximum file size: 10MB per file</li>
+                                            <li>Multiple files can be uploaded</li>
+                                            <li>Content will be processed automatically</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- File Upload Section -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-file-upload me-2"></i>File Upload
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="knowledge_files" class="form-label">
-                                        Upload documents (PDF, TXT, DOCX):
-                                    </label>
-                                    <input 
-                                        type="file" 
-                                        class="form-control" 
-                                        id="knowledge_files" 
-                                        name="knowledge_files" 
-                                        multiple 
-                                        accept=".pdf,.txt,.docx,.doc"
-                                    >
-                                    <div class="form-text">
-                                        You can upload multiple files. Supported formats: PDF, TXT, DOCX.
-                                        Maximum file size: 10MB each.
-                                    </div>
-                                </div>
-                                
-                                <div id="filePreview" class="mt-3"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Info Section -->
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Important:</strong> The content you provide will be processed and used to train your AI assistant. 
-                            Make sure all information is accurate and up-to-date.
-                        </div>
-                        
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <button type="button" class="btn btn-outline-primary" onclick="skipKnowledgeBase()">
-                                    <i class="fas fa-forward me-2"></i>Skip This Step
-                                </button>
-                            </div>
-                            <div class="col-md-6 text-end">
-                                <a href="{% url 'qna_customization' %}" class="btn btn-outline-secondary me-2">
-                                    <i class="fas fa-arrow-left me-2"></i>Back
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-rocket me-2"></i>Create AI Assistant
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-section">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <button type="button" class="btn-outline-modern" onclick="skipKnowledgeBase()">
+                                <i class="fas fa-forward me-2"></i>Skip This Step
+                            </button>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <a href="{% url 'qna_customization' %}" class="btn-outline-modern me-3">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </a>
+                            <button type="submit" class="btn-primary-modern" id="submitBtn">
+                                <i class="fas fa-rocket me-2"></i>Create AI Assistant
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
             
-            <div class="text-center mt-3">
-                <small class="text-muted">
-                    <i class="fas fa-shield-alt me-1"></i>
-                    Your files are processed securely and used only for your AI assistant
-                </small>
+            <!-- Security Notice -->
+            <div class="security-notice">
+                <div class="security-content">
+                    <div class="security-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="security-text">
+                        <h6>Your Data is Secure</h6>
+                        <p>All files are processed securely and used exclusively for your AI assistant. We respect your privacy and data security.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toastSuccess" class="toast align-items-center text-white border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>
+                <span id="toastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hero Section */
+.hero-section {
+    background: var(--gradient-primary);
+    color: var(--white);
+    padding: 4rem 0 2rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="20" fill="url(%23grid)"/></svg>') repeat;
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+    backdrop-filter: blur(20px);
+}
+
+.hero-icon i {
+    font-size: 2rem;
+    color: var(--white);
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    font-weight: 400;
+}
+
+/* Modern Step Indicator */
+.step-indicator-modern {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.step-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.step-item.completed .step-circle {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--primary);
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+.step-item.active .step-circle {
+    background: var(--white);
+    color: var(--primary);
+    border-color: var(--white);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.step-item.completed .step-label,
+.step-item.active .step-label {
+    opacity: 1;
+    font-weight: 600;
+}
+
+.step-connector {
+    width: 60px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 0 1rem;
+}
+
+.step-connector.completed,
+.step-connector.active {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+/* Alert Modern */
+.alert-modern {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    box-shadow: 0 4px 20px var(--shadow);
+}
+
+.alert-modern.info {
+    border-left: 4px solid var(--primary);
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(0, 173, 181, 0.1);
+    color: var(--primary);
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.alert-text {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Navigation Pills */
+.nav-pills-container {
+    margin-bottom: 2rem;
+}
+
+.nav-pills-modern {
+    background: var(--light-bg);
+    border-radius: 12px;
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-link-pill {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+}
+
+.nav-link-pill:hover {
+    background: rgba(0, 173, 181, 0.1);
+    color: var(--primary);
+}
+
+.nav-link-pill.active {
+    background: var(--gradient-primary);
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(0, 173, 181, 0.3);
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 2rem;
+    width: 100%;
+}
+
+.section-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.section-description {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.form-group-modern {
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.form-label-modern {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    display: block;
+    width: 100%;
+}
+
+.auto-resize {
+    min-height: 200px;
+    resize: vertical;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+#manual_content {
+    width: 100% !important;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    line-height: 1.6;
+}
+
+#manual_content:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+}
+
+/* Upload Area */
+.upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: var(--light-bg);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: var(--primary);
+    background: rgba(0, 173, 181, 0.02);
+}
+
+.upload-area.dragover {
+    border-color: var(--primary);
+    background: rgba(0, 173, 181, 0.05);
+    transform: scale(1.02);
+}
+
+.upload-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.upload-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 173, 181, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem auto;
+}
+
+.upload-icon i {
+    font-size: 2rem;
+    color: var(--primary);
+}
+
+.upload-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.upload-text {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.btn-upload {
+    background: var(--gradient-primary);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 173, 181, 0.4);
+}
+
+/* File Preview */
+.file-preview-area {
+    margin-top: 2rem;
+}
+
+.preview-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.file-item {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.file-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0, 173, 181, 0.1);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.file-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.file-icon.pdf {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.file-icon.txt {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.file-icon.doc {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.file-details h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.file-size {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.file-remove {
+    background: none;
+    border: none;
+    color: var(--danger);
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-remove:hover {
+    background: rgba(220, 53, 69, 0.1);
+}
+
+/* Upload Guidelines */
+.upload-guidelines {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(0, 173, 181, 0.02);
+    border: 1px solid rgba(0, 173, 181, 0.1);
+    border-radius: 12px;
+}
+
+.guidelines-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.guidelines-list {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.guidelines-list li {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+/* Action Section */
+.action-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Security Notice */
+.security-notice {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(16, 185, 129, 0.02);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.security-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.security-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--success);
+    flex-shrink: 0;
+}
+
+.security-text h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.security-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Toast Styles */
+.toast {
+    background: var(--gradient-primary);
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 8px 32px rgba(0, 173, 181, 0.3);
+}
+
+/* Enhanced Full Width Styles */
+.card-modern {
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+.card-body-modern {
+    width: 100% !important;
+    box-sizing: border-box;
+    padding: 2rem;
+}
+
+.tab-content {
+    width: 100%;
+}
+
+.tab-pane {
+    width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .step-indicator-modern {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .step-connector {
+        width: 2px;
+        height: 40px;
+        margin: 0.5rem 0;
+    }
+    
+    .nav-pills-modern {
+        flex-direction: column;
+    }
+    
+    .upload-area {
+        padding: 2rem 1rem;
+    }
+    
+    .action-section .row {
+        text-align: center;
+    }
+    
+    .action-section .col-md-6:first-child {
+        margin-bottom: 1rem;
+    }
+    
+    /* Full width for mobile */
+    .card-modern,
+    .card-body-modern,
+    .form-group-modern,
+    #manual_content {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 3rem 0 1.5rem 0;
+    }
+    
+    .hero-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .step-circle {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .upload-area {
+        padding: 1.5rem 1rem;
+    }
+    
+    .upload-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .upload-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .security-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .security-text h6 {
+        font-size: 0.95rem;
+    }
+    
+    .security-text p {
+        font-size: 0.85rem;
+    }
+    
+    /* Enhanced full width for small screens */
+    .container,
+    .col-lg-10,
+    .card-modern,
+    .card-body-modern,
+    .form-section,
+    .form-group-modern,
+    #manual_content {
+        width: 100% !important;
+        max-width: none !important;
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .card-body-modern {
+        padding: 1.5rem 1rem;
+    }
+}
+</style>
+
 {% block extra_js %}
 <script>
-// File preview functionality
-document.getElementById('knowledge_files').addEventListener('change', function(e) {
-    const filePreview = document.getElementById('filePreview');
-    filePreview.innerHTML = '';
+// Enhanced file handling functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('knowledge_files');
+    const uploadArea = document.getElementById('uploadArea');
+    const filePreviewArea = document.getElementById('filePreviewArea');
+    const fileList = document.getElementById('fileList');
+    const manualContent = document.getElementById('manual_content');
+    const form = document.getElementById('knowledgeForm');
     
-    if (e.target.files.length > 0) {
-        const fileList = document.createElement('div');
-        fileList.className = 'file-list';
+    let selectedFiles = [];
+    
+    // Auto-resize textarea
+    function autoResize() {
+        manualContent.style.height = 'auto';
+        manualContent.style.height = manualContent.scrollHeight + 'px';
+    }
+    
+    manualContent.addEventListener('input', autoResize);
+    autoResize(); // Initial resize
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+    
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function(e) {
+        handleFiles(e.target.files);
+    });
+    
+    function handleFiles(files) {
+        for (let file of files) {
+            if (validateFile(file)) {
+                selectedFiles.push(file);
+            }
+        }
+        updateFilePreview();
+    }
+    
+    function validateFile(file) {
+        const allowedTypes = ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+        const maxSize = 10 * 1024 * 1024; // 10MB
         
-        for (let i = 0; i < e.target.files.length; i++) {
-            const file = e.target.files[i];
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item d-flex align-items-center justify-content-between p-2 mb-2 border rounded';
-            
-            const fileInfo = document.createElement('div');
-            fileInfo.innerHTML = `
-                <i class="fas fa-file me-2"></i>
-                <strong>${file.name}</strong>
-                <span class="text-muted ms-2">(${formatFileSize(file.size)})</span>
-            `;
-            
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'btn btn-sm btn-outline-danger';
-            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-            removeBtn.onclick = function() {
-                // Remove file from input (this is a simplified approach)
-                fileItem.remove();
-            };
-            
-            fileItem.appendChild(fileInfo);
-            fileItem.appendChild(removeBtn);
+        if (!allowedTypes.includes(file.type)) {
+            showToast('Invalid file type. Please upload PDF, TXT, or DOCX files.', 'error');
+            return false;
+        }
+        
+        if (file.size > maxSize) {
+            showToast('File too large. Maximum size is 10MB.', 'error');
+            return false;
+        }
+        
+        // Check for duplicates
+        const isDuplicate = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+        if (isDuplicate) {
+            showToast('File already selected.', 'warning');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function updateFilePreview() {
+        if (selectedFiles.length === 0) {
+            filePreviewArea.style.display = 'none';
+            return;
+        }
+        
+        filePreviewArea.style.display = 'block';
+        fileList.innerHTML = '';
+        
+        selectedFiles.forEach((file, index) => {
+            const fileItem = createFileItem(file, index);
             fileList.appendChild(fileItem);
+        });
+        
+        // Update the actual file input
+        updateFileInput();
+    }
+    
+    function createFileItem(file, index) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.style.animation = 'slideInUp 0.3s ease-out';
+        
+        const fileExtension = getFileExtension(file.name);
+        const fileIcon = getFileIcon(fileExtension);
+        
+        fileItem.innerHTML = `
+            <div class="file-info">
+                <div class="file-icon ${fileExtension}">
+                    <i class="fas ${fileIcon}"></i>
+                </div>
+                <div class="file-details">
+                    <h6>${file.name}</h6>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                </div>
+            </div>
+            <button type="button" class="file-remove" onclick="removeFile(${index})" title="Remove file">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        return fileItem;
+    }
+    
+    function getFileExtension(filename) {
+        return filename.split('.').pop().toLowerCase();
+    }
+    
+    function getFileIcon(extension) {
+        switch (extension) {
+            case 'pdf': return 'fa-file-pdf';
+            case 'txt': return 'fa-file-alt';
+            case 'doc':
+            case 'docx': return 'fa-file-word';
+            default: return 'fa-file';
+        }
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function updateFileInput() {
+        const dt = new DataTransfer();
+        selectedFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+    }
+    
+    // Global function for removing files
+    window.removeFile = function(index) {
+        selectedFiles.splice(index, 1);
+        updateFilePreview();
+        showToast('File removed successfully', 'success');
+    };
+    
+    // Skip knowledge base function
+    window.skipKnowledgeBase = function() {
+        if (confirm('Are you sure you want to skip adding knowledge base content? You can always add this later from the Knowledge Base manager.')) {
+            const submitBtn = document.getElementById('submitBtn');
+            setButtonLoading(submitBtn, true);
+            form.submit();
+        }
+    };
+    
+    // Form validation and submission
+    form.addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        const manualContentValue = manualContent.value.trim();
+        const hasFiles = selectedFiles.length > 0;
+        
+        if (!manualContentValue && !hasFiles) {
+            e.preventDefault();
+            if (confirm('You haven\'t added any knowledge base content. Your AI assistant will only use the Q&As you configured. Continue anyway?')) {
+                setButtonLoading(submitBtn, true);
+                form.submit();
+            }
+            return;
         }
         
-        filePreview.appendChild(fileList);
-    }
-});
-
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-function skipKnowledgeBase() {
-    if (confirm('Are you sure you want to skip adding knowledge base content? You can always add this later.')) {
-        // Submit form without any content
-        document.querySelector('form').submit();
-    }
-}
-
-// Auto-resize textarea
-document.getElementById('manual_content').addEventListener('input', function(e) {
-    e.target.style.height = 'auto';
-    e.target.style.height = e.target.scrollHeight + 'px';
-});
-
-// Form validation
-document.querySelector('form').addEventListener('submit', function(e) {
-    const manualContent = document.getElementById('manual_content').value.trim();
-    const filesSelected = document.getElementById('knowledge_files').files.length > 0;
+        // Show loading state
+        setButtonLoading(submitBtn, true);
+    });
     
-    if (!manualContent && !filesSelected) {
-        if (!confirm('You haven\'t added any knowledge base content. Your AI assistant will only use the Q&As you configured. Continue anyway?')) {
-            e.preventDefault();
+    // Tab switching with validation
+    const tabButtons = document.querySelectorAll('.nav-link-pill');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all tabs
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked tab
+            this.classList.add('active');
+        });
+    });
+});
+
+// Enhanced toast notification function
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastSuccess');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    // Set message
+    toastMessage.textContent = message;
+    
+    // Set type-specific styles
+    toast.className = 'toast align-items-center text-white border-0';
+    
+    switch (type) {
+        case 'success':
+            toast.style.background = 'linear-gradient(135deg, #10B981, #059669)';
+            break;
+        case 'error':
+            toast.style.background = 'linear-gradient(135deg, #EF4444, #DC2626)';
+            break;
+        case 'warning':
+            toast.style.background = 'linear-gradient(135deg, #F59E0B, #D97706)';
+            break;
+        default:
+            toast.style.background = 'var(--gradient-primary)';
+    }
+    
+    // Show toast
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// Loading state for buttons (enhanced)
+function setButtonLoading(button, loading = true) {
+    if (loading) {
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.setAttribute('data-original-text', originalText);
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        button.style.opacity = '0.7';
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.getAttribute('data-original-text');
+        button.style.opacity = '1';
+    }
+}
+
+// Add slide animation keyframes
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
-});
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    .file-item {
+        animation: slideInUp 0.3s ease-out;
+    }
+    
+    .alert-modern {
+        animation: fadeIn 0.5s ease-out;
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
 {% endblock %}

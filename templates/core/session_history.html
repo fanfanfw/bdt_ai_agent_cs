@@ -3,335 +3,634 @@
 {% block title %}Session History - AI Agent{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>📋 Session History</h2>
-                <div class="d-flex gap-2">
-                    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
-                        ⬅️ Back to Dashboard
-                    </a>
-                </div>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card text-center bg-primary text-white">
-                        <div class="card-body">
-                            <h5>{{ stats.total_sessions }}</h5>
-                            <small>Total Sessions</small>
-                        </div>
+<!-- Dashboard-style Hero Section -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-history text-white fs-4"></i>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center bg-info text-white">
-                        <div class="card-body">
-                            <h5>{{ stats.by_source.test_chat.count }}</h5>
-                            <small>Test Chat</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center bg-success text-white">
-                        <div class="card-body">
-                            <h5>{{ stats.by_source.widget_chat.count }}</h5>
-                            <small>Widget Chat</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center bg-warning text-white">
-                        <div class="card-body">
-                            <h5>{{ stats.total_messages }}</h5>
-                            <small>Total Messages</small>
-                        </div>
+                    <div>
+                        <h1 class="mb-1 fs-2 fw-bold">Session History</h1>
+                        <p class="mb-0 opacity-75">View and manage all your AI conversation sessions</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Filter Form -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <form method="GET" class="row g-3">
-                        <div class="col-md-6">
-                            <label for="source" class="form-label">Filter by Source</label>
-                            <select name="source" id="source" class="form-select">
-                                {% for value, label in source_choices %}
-                                    <option value="{{ value }}" {% if current_filter == value %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="limit" class="form-label">Limit</label>
-                            <select name="limit" id="limit" class="form-select">
-                                <option value="25" {% if current_limit == 25 %}selected{% endif %}>25</option>
-                                <option value="50" {% if current_limit == 50 %}selected{% endif %}>50</option>
-                                <option value="100" {% if current_limit == 100 %}selected{% endif %}>100</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100">Filter</button>
-                        </div>
-                    </form>
-                </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
             </div>
-
-            <!-- Sessions List -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        💬 Sessions
-                        {% if current_filter %}
-                            <span class="badge bg-secondary">{{ current_filter|title }}</span>
-                        {% endif %}
-                    </h5>
+        </div>
+        
+        <!-- Session Stats Alert -->
+        <div class="alert alert-info glass-effect mt-4">
+            <div class="row g-2">
+                <div class="col-lg-3 col-md-6">
+                    <strong>Total Sessions:</strong> {{ stats.total_sessions }}
                 </div>
-                <div class="card-body">
-                    {% if sessions %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Source</th>
-                                        <th>Messages</th>
-                                        <th>Last Activity</th>
-                                        <th>Created</th>
-                                        <th>Last Message</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for session in sessions %}
-                                        <tr>
-                                            <td>
-                                                {% if session.source == 'test_chat' %}
-                                                    <span class="badge bg-info">💬 Test Chat</span>
-                                                {% elif session.source == 'test_voice_realtime' %}
-                                                    <span class="badge bg-primary">🎤 Test Voice</span>
-                                                {% elif session.source == 'widget_chat' %}
-                                                    <span class="badge bg-success">🔗 Widget Chat</span>
-                                                {% elif session.source == 'widget_voice' %}
-                                                    <span class="badge bg-warning">🔊 Widget Voice</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-secondary">{{ session.message_count }}</span>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">
-                                                    {{ session.updated_at|timesince }} ago
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">
-                                                    {{ session.created_at|date:"M d, Y H:i" }}
-                                                </small>
-                                            </td>
-                                            <td>
-                                                {% if session.last_message %}
-                                                    <div class="text-truncate" style="max-width: 200px;">
-                                                        <small>
-                                                            <strong>{{ session.last_message.type|capfirst }}:</strong>
-                                                            {{ session.last_message.content }}
-                                                        </small>
-                                                    </div>
-                                                {% else %}
-                                                    <small class="text-muted">No messages</small>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="{% url 'session_detail' session.session_id %}" 
-                                                       class="btn btn-outline-primary btn-sm">
-                                                        👁️ View
-                                                    </a>
-                                                    <div class="btn-group" role="group">
-                                                        <button type="button" 
-                                                                class="btn btn-outline-info btn-sm dropdown-toggle" 
-                                                                data-bs-toggle="dropdown" 
-                                                                aria-expanded="false">
-                                                            📥 Export
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item" href="#" onclick="quickExport('{{ session.session_id }}', 'txt')">📄 TXT</a></li>
-                                                            <li><a class="dropdown-item" href="#" onclick="quickExport('{{ session.session_id }}', 'json')">📋 JSON</a></li>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li><a class="dropdown-item" href="{% url 'session_detail' session.session_id %}">👁️ View & Copy</a></li>
-                                                        </ul>
-                                                    </div>
-                                                    <button type="button" 
-                                                            class="btn btn-outline-danger btn-sm"
-                                                            onclick="deleteSession('{{ session.session_id }}')">
-                                                        🗑️ Delete
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <div class="mb-3">
-                                <i class="fas fa-inbox fa-3x text-muted"></i>
-                            </div>
-                            <h5 class="text-muted">No Sessions Found</h5>
-                            <p class="text-muted">
-                                {% if current_filter %}
-                                    No sessions found for the selected filter.
-                                {% else %}
-                                    You haven't started any conversations yet.
-                                {% endif %}
-                            </p>
-                        </div>
-                    {% endif %}
+                <div class="col-lg-3 col-md-6">
+                    <strong>Test Chat:</strong> {{ stats.by_source.test_chat.count }}
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>Widget Chat:</strong> {{ stats.by_source.widget_chat.count }}
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <strong>Total Messages:</strong> {{ stats.total_messages }}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-11">
+            <!-- Statistics Cards -->
+                        <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card-modern h-100">
+                        <div class="card-body-modern text-center">
+                            <div class="bg-gradient-primary rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-database text-white fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold text-primary-modern mb-1">{{ stats.total_sessions }}</h4>
+                            <p class="text-muted mb-0 small">Total Sessions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card-modern h-100">
+                        <div class="card-body-modern text-center">
+                            <div class="bg-info rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-microphone text-white fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold text-info mb-1">{{ stats.voice_sessions }}</h4>
+                            <p class="text-muted mb-0 small">Voice Sessions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card-modern h-100">
+                        <div class="card-body-modern text-center">
+                            <div class="bg-success rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-globe text-white fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold text-success mb-1">{{ stats.widget_sessions }}</h4>
+                            <p class="text-muted mb-0 small">Widget Sessions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card-modern h-100">
+                        <div class="card-body-modern text-center">
+                            <div class="bg-warning rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-envelope text-white fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold text-warning mb-1">{{ stats.total_messages }}</h4>
+                            <p class="text-muted mb-0 small">Total Messages</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <!-- Filter Section -->
+            <div class="card-modern mb-4">
+                <div class="card-header-modern">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-filter me-2 text-primary-modern"></i>
+                        <h5 class="mb-0 fw-semibold">Filter & Search Sessions</h5>
+                    </div>
+                </div>
+                <div class="card-body-modern">
+                                    <div class="card-body-modern">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="source" class="form-label fw-semibold text-primary-modern">
+                                <i class="fas fa-tag me-1"></i>Filter by Source
+                            </label>
+                            <select name="source" id="source" class="form-control-modern">
+                                <option value="">All Sources</option>
+                                <option value="test_chat" {% if current_filter == 'test_chat' %}selected{% endif %}>Test Chat</option>
+                                <option value="test_voice_realtime" {% if current_filter == 'test_voice_realtime' %}selected{% endif %}>Test Voice Realtime</option>
+                                <option value="widget_chat" {% if current_filter == 'widget_chat' %}selected{% endif %}>Widget Chat</option>
+                                <option value="widget_voice" {% if current_filter == 'widget_voice' %}selected{% endif %}>Widget Voice</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="per_page" class="form-label fw-semibold text-primary-modern">
+                                <i class="fas fa-list-ol me-1"></i>Items per Page
+                            </label>
+                            <select name="per_page" id="per_page" class="form-control-modern">
+                                <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 sessions</option>
+                                <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 sessions</option>
+                                <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 sessions</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary-modern w-100">
+                                <i class="fas fa-search me-1"></i>Apply Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                </div>
+            </div>
+            
+            <!-- Sessions List -->
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-comments me-2 text-primary-modern"></i>
+                        <h5 class="mb-0 fw-semibold">Conversation Sessions</h5>
+                        {% if current_filter %}
+                            <span class="badge bg-primary ms-2">{{ current_filter|title }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="badge bg-secondary">{{ page_obj|length }} of {{ paginator.count }} sessions</span>
+                </div>
+                <div class="card-body-modern">
+                    {% if sessions %}
+                        <div class="sessions-list">
+                            {% for session in sessions %}
+                                <div class="session-item p-3 mb-3 border rounded-3 bg-light position-relative">
+                                    <div class="row align-items-center">
+                                        <div class="col-lg-2 col-md-3 mb-2 mb-md-0">
+                                            <div class="d-flex align-items-center">
+                                                {% if session.source == 'test_chat' %}
+                                                    <div class="bg-info rounded-circle p-2 me-2" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fas fa-vial text-white small"></i>
+                                                    </div>
+                                                    <span class="badge bg-info">Test Chat</span>
+                                                {% elif session.source == 'test_voice_realtime' %}
+                                                    <div class="bg-primary rounded-circle p-2 me-2" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fas fa-microphone text-white small"></i>
+                                                    </div>
+                                                    <span class="badge bg-primary">Test Voice</span>
+                                                {% elif session.source == 'widget_chat' %}
+                                                    <div class="bg-success rounded-circle p-2 me-2" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fas fa-globe text-white small"></i>
+                                                    </div>
+                                                    <span class="badge bg-success">Widget Chat</span>
+                                                {% elif session.source == 'widget_voice' %}
+                                                    <div class="bg-warning rounded-circle p-2 me-2" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fas fa-volume-up text-white small"></i>
+                                                    </div>
+                                                    <span class="badge bg-warning">Widget Voice</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-lg-2 col-md-3 mb-2 mb-md-0">
+                                            <div class="text-center">
+                                                <div class="bg-gradient-primary rounded-circle mx-auto mb-1" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-envelope text-white small"></i>
+                                                </div>
+                                                <span class="badge bg-secondary">{{ session.message_count }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+                                            <div>
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <i class="fas fa-clock me-1 text-muted"></i>
+                                                    <small class="text-muted">{{ session.updated_at|timesince }} ago</small>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-calendar me-1 text-muted"></i>
+                                                    <small class="text-muted">{{ session.created_at|date:"M d, Y H:i" }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+                                            {% if session.last_message %}
+                                                <div class="last-message p-2 bg-white rounded-2 border">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        {% if session.last_message.type == 'user' %}
+                                                            <i class="fas fa-user me-1 text-primary"></i>
+                                                        {% else %}
+                                                            <i class="fas fa-robot me-1 text-primary"></i>
+                                                        {% endif %}
+                                                        <small class="fw-semibold">{{ session.last_message.type|capfirst }}:</small>
+                                                    </div>
+                                                    <div class="text-truncate">
+                                                        <small class="text-muted">{{ session.last_message.content|truncatechars:50 }}</small>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="text-center p-2 bg-white rounded-2 border">
+                                                    <small class="text-muted">No messages</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="col-lg-2 col-md-12">
+                                            <div class="d-flex gap-1 justify-content-center">
+                                                <a href="{% url 'session_detail' session.session_id %}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        onclick="deleteSession('{{ session.session_id }}')" title="Delete Session">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if paginator.num_pages > 1 %}
+                            <div class="mt-4 pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                    <div class="mb-2 mb-md-0">
+                                        <small class="text-muted">
+                                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} sessions
+                                        </small>
+                                    </div>
+                                    <nav aria-label="Session pagination">
+                                        <ul class="pagination pagination-sm mb-0">
+                                            <!-- First Page -->
+                                            {% if page_obj.has_previous %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?{% if current_filter %}source={{ current_filter }}&{% endif %}{% if current_per_page %}per_page={{ current_per_page }}&{% endif %}page=1" 
+                                                       aria-label="First">
+                                                        <i class="fas fa-angle-double-left"></i>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?{% if current_filter %}source={{ current_filter }}&{% endif %}{% if current_per_page %}per_page={{ current_per_page }}&{% endif %}page={{ page_obj.previous_page_number }}" 
+                                                       aria-label="Previous">
+                                                        <i class="fas fa-angle-left"></i>
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                                                </li>
+                                                <li class="page-item disabled">
+                                                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                                                </li>
+                                            {% endif %}
+                                            
+                                            <!-- Page Numbers -->
+                                            {% for i in paginator.page_range %}
+                                                {% if page_obj.number == i %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ i }}</span>
+                                                    </li>
+                                                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="?{% if current_filter %}source={{ current_filter }}&{% endif %}{% if current_per_page %}per_page={{ current_per_page }}&{% endif %}page={{ i }}">{{ i }}</a>
+                                                    </li>
+                                                {% elif i == 1 or i == paginator.num_pages %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="?{% if current_filter %}source={{ current_filter }}&{% endif %}{% if current_per_page %}per_page={{ current_per_page }}&{% endif %}page={{ i }}">{{ i }}</a>
+                                                    </li>
+                                                {% elif i == page_obj.number|add:'-4' or i == page_obj.number|add:'4' %}
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            <!-- Next/Last Page -->
+                                            {% if page_obj.has_next %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?{% if current_filter %}source={{ current_filter }}&{% endif %}{% if current_per_page %}per_page={{ current_per_page }}&{% endif %}page={{ page_obj.next_page_number }}" 
+                                                       aria-label="Next">
+                                                        <i class="fas fa-angle-right"></i>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?{% if current_filter %}source={{ current_filter }}&{% endif %}{% if current_per_page %}per_page={{ current_per_page }}&{% endif %}page={{ paginator.num_pages }}" 
+                                                       aria-label="Last">
+                                                        <i class="fas fa-angle-double-right"></i>
+                                                    </a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                                                </li>
+                                                <li class="page-item disabled">
+                                                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="bg-gradient-primary rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-comments text-white fs-1"></i>
+                            </div>
+                            <h5 class="text-muted mb-2">No Sessions Found</h5>
+                            <p class="text-muted">
+                                {% if current_filter %}
+                                    No sessions found for the selected filter. Try adjusting your search criteria.
+                                {% else %}
+                                    You haven't started any conversations yet. Begin chatting to see your session history here.
+                                {% endif %}
+                            </p>
+                            <a href="{% url 'test_chat' %}" class="btn btn-primary-modern">
+                                <i class="fas fa-plus me-2"></i>Start New Conversation
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+/* Session History specific styling */
+.session-item {
+    transition: all 0.3s ease;
+    border: 2px solid var(--border) !important;
+}
+
+.session-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 173, 181, 0.1);
+    border-color: var(--primary) !important;
+}
+
+.last-message {
+    transition: all 0.3s ease;
+}
+
+.last-message:hover {
+    background: rgba(0, 173, 181, 0.05) !important;
+}
+
+/* Statistics cards */
+.card-modern .card-body-modern {
+    transition: all 0.3s ease;
+}
+
+.card-modern:hover .card-body-modern {
+    transform: translateY(-2px);
+}
+
+/* Form controls */
+.form-control-modern {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-control-modern:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+/* Button styling */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Dropdown improvements */
+.btn-group .dropdown-menu {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 0.5rem 0;
+    min-width: 200px;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin: 0 0.5rem;
+}
+
+.dropdown-item:hover {
+    background: rgba(0, 173, 181, 0.1);
+    transform: translateX(5px);
+}
+
+.dropdown-item i {
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover i {
+    transform: scale(1.2);
+}
+
+/* Pagination styling */
+.pagination .page-link {
+    border: 2px solid var(--border);
+    color: var(--primary);
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    margin: 0 2px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    background: var(--gradient-primary);
+    border-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 173, 181, 0.3);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--gradient-primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 173, 181, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+    background: transparent;
+    border-color: var(--border);
+    color: #6c757d;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .session-item .row {
+        text-align: center;
+    }
+    
+    .session-item .col-lg-2,
+    .session-item .col-lg-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .d-flex.gap-1 {
+        justify-content: center !important;
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+    
+    /* Dropdown mobile fixes */
+    .btn-group.dropstart .dropdown-menu {
+        left: auto !important;
+        right: 0 !important;
+        transform: none !important;
+    }
+    
+    /* Hero section mobile */
+    .bg-gradient-dark .col-lg-8,
+    .bg-gradient-dark .col-lg-4 {
+        text-align: center;
+    }
+    
+    .bg-gradient-dark .col-lg-4 {
+        margin-top: 1rem;
+    }
+    
+    /* Alert responsive */
+    .alert.glass-effect .row .col-lg-3,
+    .alert.glass-effect .row .col-md-6 {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Pagination mobile */
+    .pagination {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .pagination .page-item {
+        margin-bottom: 0.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .bg-gradient-dark {
+        padding: 2rem 0 !important;
+    }
+    
+    .bg-gradient-dark h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .bg-gradient-primary.rounded-circle.p-3 {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .session-item {
+        padding: 1rem !important;
+    }
+    
+    .last-message {
+        margin-top: 1rem;
+    }
+    
+    .btn-group {
+        margin: 0.25rem;
+    }
+}
+
+/* Animation for session items */
+.session-item {
+    animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading animation */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Toast notification animation */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+</style>
+{% endblock %}
+
 <script>
 function deleteSession(sessionId) {
     if (confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
+        // Show loading notification
+        showToast('⏳ Deleting session...', 'warning');
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
         fetch(`/delete-session/${sessionId}/`, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-CSRFToken': csrfToken,
                 'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showNotification('✅ Session deleted successfully!', 'success');
+                showToast('✅ Session deleted successfully!', 'success');
                 setTimeout(() => location.reload(), 1000);
             } else {
-                showNotification('❌ Error: ' + data.message, 'error');
+                showToast('❌ Error: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
-            showNotification('❌ Error deleting session: ' + error, 'error');
+            console.error('Delete session error:', error);
+            showToast('❌ Error deleting session. Please try again.', 'error');
         });
     }
 }
 
-function quickExport(sessionId, format) {
-    // Show loading notification
-    showNotification('⏳ Preparing export...', 'info');
-    
-    // Fetch session data for export
-    fetch(`/session-detail/${sessionId}/`)
-        .then(response => response.text())
-        .then(html => {
-            // Parse the HTML to extract session data
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Try to get JSON data from the parsed HTML
-            const messagesScript = doc.getElementById('session-messages');
-            const sessionScript = doc.getElementById('session-data');
-            
-            if (messagesScript && sessionScript) {
-                const messages = JSON.parse(messagesScript.textContent);
-                const sessionData = JSON.parse(sessionScript.textContent);
-                
-                performExport(sessionData, messages, format);
-            } else {
-                showNotification('❌ Unable to extract session data for export', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching session data:', error);
-            showNotification('❌ Error preparing export. Please try again.', 'error');
-        });
-}
-
-function performExport(sessionData, messages, format) {
-    const sessionInfo = {
-        session_id: sessionData.session_id,
-        source: sessionData.source,
-        created_at: sessionData.created_at,
-        updated_at: sessionData.updated_at
-    };
-    
-    let content = '';
-    let filename = `session_${sessionInfo.session_id.substring(0, 8)}_${sessionInfo.source}`;
-    
-    if (format === 'txt') {
-        content = `AI Agent Session Export\n`;
-        content += `==========================\n`;
-        content += `Session ID: ${sessionInfo.session_id}\n`;
-        content += `Source: ${getSourceLabel(sessionInfo.source)}\n`;
-        content += `Created: ${new Date(sessionInfo.created_at).toLocaleString()}\n`;
-        content += `Updated: ${new Date(sessionInfo.updated_at).toLocaleString()}\n`;
-        content += `Total Messages: ${messages.length}\n`;
-        content += `==========================\n\n`;
-        
-        messages.forEach((msg, index) => {
-            const timestamp = new Date(msg.timestamp).toLocaleString();
-            const type = msg.type === 'user' ? 'You' : 'AI Assistant';
-            const voice = msg.is_voice ? ' 🎤' : ' 💬';
-            content += `[${index + 1}] ${timestamp}\n`;
-            content += `${type}${voice}:\n`;
-            content += `${msg.content}\n`;
-            content += `${'='.repeat(50)}\n\n`;
-        });
-        
-        filename += '.txt';
-        downloadFile(content, filename, 'text/plain');
-        
-    } else if (format === 'json') {
-        const exportData = {
-            export_info: {
-                export_date: new Date().toISOString(),
-                format: 'JSON',
-                source: 'AI Agent Session Export'
-            },
-            session: sessionInfo,
-            statistics: {
-                total_messages: messages.length,
-                user_messages: messages.filter(m => m.type === 'user').length,
-                assistant_messages: messages.filter(m => m.type === 'assistant').length,
-                voice_messages: messages.filter(m => m.is_voice).length,
-                text_messages: messages.filter(m => !m.is_voice).length
-            },
-            messages: messages.map((msg, index) => ({
-                index: index + 1,
-                id: msg.id,
-                type: msg.type,
-                content: msg.content,
-                is_voice: msg.is_voice,
-                timestamp: msg.timestamp,
-                formatted_timestamp: new Date(msg.timestamp).toLocaleString()
-            }))
-        };
-        
-        content = JSON.stringify(exportData, null, 2);
-        filename += '.json';
-        downloadFile(content, filename, 'application/json');
-    }
-}
-
-function downloadFile(content, filename, mimeType = 'text/plain') {
-    const blob = new Blob([content], { type: mimeType });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    showNotification(`📥 ${filename} downloaded successfully!`, 'success');
-}
 
 function getSourceLabel(source) {
     const labels = {
@@ -343,40 +642,214 @@ function getSourceLabel(source) {
     return labels[source] || source;
 }
 
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} position-fixed`;
-    notification.style.cssText = `
+
+function showToast(message, type = 'info') {
+    // Remove any existing toasts
+    const existingToast = document.querySelector('.toast-container');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create toast container
+    const toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container';
+    toastContainer.style.cssText = `
+        position: fixed;
         top: 20px;
         right: 20px;
         z-index: 9999;
-        min-width: 300px;
-        animation: slideInRight 0.3s ease-out;
     `;
-    notification.innerHTML = `
+    
+    // Create toast
+    const toast = document.createElement('div');
+    const alertType = type === 'success' ? 'success' : 
+                     type === 'error' ? 'danger' : 
+                     type === 'warning' ? 'warning' : 'info';
+    const bgColor = type === 'success' ? 'linear-gradient(135deg, #28a745, #20c997)' : 
+                   type === 'error' ? 'linear-gradient(135deg, #dc3545, #fd7e14)' : 
+                   type === 'warning' ? 'linear-gradient(135deg, #ffc107, #fd7e14)' :
+                   'linear-gradient(135deg, #17a2b8, #6f42c1)';
+    const icon = type === 'success' ? 'check-circle' : 
+                type === 'error' ? 'exclamation-circle' : 
+                type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    
+    toast.className = `alert alert-${alertType} toast`;
+    toast.style.cssText = `
+        margin: 0;
+        min-width: 300px;
+        max-width: 400px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border-radius: 10px;
+        border: none;
+        animation: slideInRight 0.3s ease-out;
+        background: ${bgColor};
+        color: white;
+        font-weight: 500;
+    `;
+    toast.innerHTML = `
         <div class="d-flex align-items-center">
-            <span class="me-2">${message}</span>
-            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+            <i class="fas fa-${icon} me-2"></i>
+            <span class="flex-grow-1">${message}</span>
+            <button type="button" class="btn-close btn-close-white ms-2" onclick="this.closest('.toast-container').remove()"></button>
         </div>
     `;
     
-    document.body.appendChild(notification);
+    toastContainer.appendChild(toast);
+    document.body.appendChild(toastContainer);
     
-    // Auto remove after 5 seconds
+    // Auto remove after 4 seconds (except for warnings)
+    const autoRemoveTime = type === 'warning' ? 6000 : 4000;
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
+        if (toastContainer.parentNode) {
+            toastContainer.style.animation = 'slideOutRight 0.3s ease-out forwards';
+            setTimeout(() => toastContainer.remove(), 300);
         }
-    }, 5000);
+    }, autoRemoveTime);
 }
 
-// Add CSS for notification animation
+// Enhanced form interactions and animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Add change listeners to filters
+    const sourceSelect = document.getElementById('source');
+    const limitSelect = document.getElementById('limit');
+    
+    if (sourceSelect) {
+        sourceSelect.addEventListener('change', function() {
+            const selectedText = this.options[this.selectedIndex].text;
+            showToast(`📊 Filter changed to: ${selectedText}`, 'info');
+        });
+    }
+    
+    const perPageSelect = document.getElementById('per_page');
+    if (perPageSelect) {
+        perPageSelect.addEventListener('change', function() {
+            showToast(`📄 Items per page: ${this.value}`, 'info');
+        });
+    }
+    
+    // Add hover effects to session items
+    document.querySelectorAll('.session-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.15)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        });
+    });
+    
+    // Add hover effects to filter cards
+    document.querySelectorAll('.filter-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.background = 'rgba(255, 255, 255, 0.95)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.background = 'rgba(255, 255, 255, 0.9)';
+        });
+    });
+    
+    // Add hover effects to statistics cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.style.transform = 'scale(1.1)';
+            }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.style.transform = 'scale(1)';
+            }
+        });
+    });
+    
+    // Show welcome message
+    setTimeout(() => {
+        showToast('✨ Session History loaded successfully!', 'success');
+    }, 500);
+});
+
+// Add CSS for enhanced animations
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    /* Enhanced card transitions */
+    .session-item, .filter-card, .stat-card {
+        transition: all 0.3s ease;
+    }
+    
+    .session-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .filter-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.95) !important;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-card:hover i {
+        transform: scale(1.1);
+    }
+    
+    /* Button enhancements */
+    .btn {
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Pagination enhancements */
+    .pagination .page-link {
+        transition: all 0.3s ease;
+    }
+    
+    .pagination .page-link:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .session-item {
+            margin-bottom: 1rem;
+        }
+        
+        .filter-card {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .stat-card {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
     }
 `;
 document.head.appendChild(style);
