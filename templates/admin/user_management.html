@@ -1,91 +1,112 @@
 {% extends 'admin_base.html' %}
 
-{% block title %}User Management{% endblock %}
+{% block title %}User Management - Admin Panel{% endblock %}
 
 {% block content %}
+<!-- Modern Page Header -->
 <div class="page-header">
-    <h1 class="h2 mb-0">
-        <i class="fas fa-users me-3"></i>User Management
-    </h1>
-    <p class="text-muted mt-2">Manage regular users, subscriptions, and approvals</p>
+    <div class="d-flex align-items-center">
+        <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-users text-white fs-3"></i>
+        </div>
+        <div>
+            <h1 class="h2 mb-0 fw-bold" style="color: var(--text-primary);">User Management</h1>
+            <p class="text-muted mt-1 mb-0">Manage regular users, subscriptions, and approvals</p>
+        </div>
+    </div>
 </div>
 
-<!-- Filters -->
+<!-- Modern Filters Section -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="admin-card">
-            <div class="card-body">
-                <form method="get" class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-select">
-                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
-                                {% for choice in status_choices %}
-                                <option value="{{ choice.0 }}" {% if status_filter == choice.0 %}selected{% endif %}>
-                                    {{ choice.1 }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <label class="form-label">Subscription</label>
-                            <select name="subscription" class="form-select">
-                                <option value="all" {% if subscription_filter == 'all' %}selected{% endif %}>All Plans</option>
-                                {% for choice in subscription_choices %}
-                                <option value="{{ choice.0 }}" {% if subscription_filter == choice.0 %}selected{% endif %}>
-                                    {{ choice.1 }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label">Search</label>
-                            <input type="text" name="search" class="form-control" 
-                                   placeholder="Username, email, or name..." value="{{ search_query }}">
-                        </div>
-                        
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <button type="submit" class="btn btn-admin-primary d-block w-100">
-                                <i class="fas fa-search"></i> Filter
-                            </button>
-                        </div>
-                    </form>
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-filter me-2"></i>
+                    <h5 class="mb-0">Filter Options</h5>
                 </div>
+            </div>
+            <div class="card-body-modern">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-user-check me-2 text-primary-modern"></i>Status
+                        </label>
+                        <select name="status" class="form-control-modern">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                            {% for choice in status_choices %}
+                            <option value="{{ choice.0 }}" {% if status_filter == choice.0 %}selected{% endif %}>
+                                {{ choice.1 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-credit-card me-2 text-primary-modern"></i>Subscription
+                        </label>
+                        <select name="subscription" class="form-control-modern">
+                            <option value="all" {% if subscription_filter == 'all' %}selected{% endif %}>All Plans</option>
+                            {% for choice in subscription_choices %}
+                            <option value="{{ choice.0 }}" {% if subscription_filter == choice.0 %}selected{% endif %}>
+                                {{ choice.1 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-search me-2 text-primary-modern"></i>Search
+                        </label>
+                        <input type="text" name="search" class="form-control-modern" 
+                               placeholder="Username, email, or name..." value="{{ search_query }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn-primary-modern w-100">
+                            <i class="fas fa-search me-2"></i>Filter
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
-<!-- Bulk Actions for Pending Users -->
+<!-- Modern Bulk Actions for Pending Users -->
 {% with pending_users=users|dictsort:"profile.status" %}
 {% if pending_users %}
 <div class="row mb-4">
     <div class="col-12">
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-clock me-2"></i>Bulk Actions for Pending Users
-                </h5>
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-clock me-2"></i>
+                    <h5 class="mb-0">Bulk Actions for Pending Users</h5>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body-modern">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div class="d-flex flex-wrap gap-2">
                             <button type="submit" formaction="{% url 'admin_bulk_approve' %}" 
-                                    class="btn btn-success me-2" id="bulk-approve-btn" disabled>
-                                <i class="fas fa-check"></i> Approve Selected
+                                    class="btn-modern" style="background: linear-gradient(135deg, var(--success), #34D399); color: white;" 
+                                    id="bulk-approve-btn" disabled>
+                                <i class="fas fa-check me-2"></i>Approve Selected
                             </button>
                             <button type="submit" formaction="{% url 'admin_bulk_reject' %}" 
-                                    class="btn btn-danger" id="bulk-reject-btn" disabled>
-                                <i class="fas fa-times"></i> Reject Selected
+                                    class="btn-modern" style="background: linear-gradient(135deg, var(--danger), #F87171); color: white;" 
+                                    id="bulk-reject-btn" disabled>
+                                <i class="fas fa-times me-2"></i>Reject Selected
                             </button>
                         </div>
-                        <div>
-                            <label class="form-check-label">
-                                <input type="checkbox" id="select-all-pending" class="form-check-input">
+                        <div class="form-check">
+                            <input type="checkbox" id="select-all-pending" class="form-check-input">
+                            <label class="form-check-label fw-semibold" for="select-all-pending">
                                 Select All Pending
                             </label>
                         </div>
@@ -98,177 +119,316 @@
 {% endif %}
 {% endwith %}
 
-<!-- User List -->
+<!-- Modern User List -->
 <div class="row">
     <div class="col-12">
-        <div class="admin-card">
-            <div class="admin-card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Users (Regular Users Only)</h5>
-                <div>
-                    <a href="{% url 'admin_dashboard' %}" class="btn btn-light btn-sm">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
-                    </a>
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-list me-2"></i>
+                        <h5 class="mb-0">Users (Regular Users Only)</h5>
+                    </div>
+                    <div>
+                        <a href="{% url 'admin_dashboard' %}" class="btn-outline-modern">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body-modern p-0">
                 <div class="table-responsive">
-                    <table class="table admin-table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="50">
-                                        <input type="checkbox" id="select-all-table" class="form-check-input">
-                                    </th>
-                                    <th>User</th>
-                                    <th>Email</th>
-                                    <th>Status</th>
-                                    <th>Subscription</th>
-                                    <th>Usage</th>
-                                    <th>Last Activity</th>
-                                    <th>Registered</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in users %}
-                                <tr>
-                                    <td>
+                    <table class="table table-hover mb-0" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);">
+                        <thead style="background: var(--gradient-dark); color: white;">
+                            <tr>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;" width="50">
+                                    <input type="checkbox" id="select-all-table" class="form-check-input">
+                                </th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">User</th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">Email</th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">Status</th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">Subscription</th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">Usage</th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">Last Activity</th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">Registered</th>
+                                <th style="border: none; padding: 1rem; font-weight: 600; font-size: 0.875rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr style="transition: all 0.3s ease;">
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    {% if user.profile.status == 'pending' %}
+                                    <input type="checkbox" name="user_ids" value="{{ user.id }}" 
+                                           class="form-check-input user-checkbox">
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    <div>
+                                        <strong style="color: var(--text-primary);">{{ user.username }}</strong>
+                                        {% if user.first_name or user.last_name %}
+                                        <br><small class="text-muted">{{ user.first_name }} {{ user.last_name }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    <span style="color: var(--text-secondary);">{{ user.email }}</span>
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    {% if user.profile.status == 'pending' %}
+                                        <span class="badge-modern pending">Pending</span>
+                                    {% elif user.profile.status == 'approved' %}
+                                        <span class="badge-modern approved">Approved</span>
+                                    {% elif user.profile.status == 'suspended' %}
+                                        <span class="badge-modern suspended">Suspended</span>
+                                    {% elif user.profile.status == 'rejected' %}
+                                        <span class="badge bg-secondary">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    <span class="badge text-capitalize" style="background: var(--gradient-primary); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">{{ user.profile.subscription_plan }}</span>
+                                    {% if not user.profile.validate_subscription_consistency %}
+                                        <br><small class="text-danger">⚠️ Inconsistent limits</small>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    <small style="color: var(--text-secondary);">
+                                        <div><i class="fas fa-api me-1 text-primary-modern"></i>API: {{ user.profile.current_month_api_requests }}/{{ user.profile.monthly_api_limit|default:"∞" }}</div>
+                                        <div><i class="fas fa-coins me-1 text-primary-modern"></i>Tokens: {{ user.profile.current_month_tokens|floatformat:0 }}/{{ user.profile.monthly_token_limit|default:"∞" }}</div>
+                                    </small>
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    {% if user.profile.last_activity %}
+                                        <span style="color: var(--text-secondary);">{{ user.profile.last_activity|timesince }} ago</span>
+                                    {% else %}
+                                        <span class="text-muted">Never</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    <span style="color: var(--text-secondary);">{{ user.date_joined|date:"M d, Y" }}</span>
+                                </td>
+                                <td style="padding: 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5); vertical-align: middle;">
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <a href="{% url 'admin_user_detail' user.id %}" 
+                                           class="btn btn-sm" style="background: rgba(0, 173, 181, 0.1); color: var(--primary); border: 1px solid rgba(0, 173, 181, 0.2); border-radius: 8px; padding: 0.25rem 0.5rem;" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        
                                         {% if user.profile.status == 'pending' %}
-                                        <input type="checkbox" name="user_ids" value="{{ user.id }}" 
-                                               class="form-check-input user-checkbox">
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <strong>{{ user.username }}</strong>
-                                            {% if user.first_name or user.last_name %}
-                                            <br><small class="text-muted">{{ user.first_name }} {{ user.last_name }}</small>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                    <td>{{ user.email }}</td>
-                                    <td>
-                                        {% if user.profile.status == 'pending' %}
-                                            <span class="admin-badge pending">Pending</span>
-                                        {% elif user.profile.status == 'approved' %}
-                                            <span class="admin-badge approved">Approved</span>
-                                        {% elif user.profile.status == 'suspended' %}
-                                            <span class="admin-badge suspended">Suspended</span>
-                                        {% elif user.profile.status == 'rejected' %}
-                                            <span class="badge bg-secondary">Rejected</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info text-capitalize">{{ user.profile.subscription_plan }}</span>
-                                        {% if not user.profile.validate_subscription_consistency %}
-                                            <br><small class="text-danger">⚠️ Inconsistent limits</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <small>
-                                            API: {{ user.profile.current_month_api_requests }}/{{ user.profile.monthly_api_limit|default:"∞" }}<br>
-                                            Tokens: {{ user.profile.current_month_tokens|floatformat:0 }}/{{ user.profile.monthly_token_limit|default:"∞" }}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        {% if user.profile.last_activity %}
-                                            {{ user.profile.last_activity|timesince }} ago
-                                        {% else %}
-                                            <span class="text-muted">Never</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'admin_user_detail' user.id %}" 
-                                               class="btn btn-outline-primary btn-sm" title="View Details">
-                                                <i class="fas fa-eye"></i>
+                                            <a href="{% url 'admin_approve_user' user.id %}" 
+                                               class="btn btn-sm" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 0.25rem 0.5rem;" 
+                                               title="Approve">
+                                                <i class="fas fa-check"></i>
                                             </a>
-                                            
-                                            {% if user.profile.status == 'pending' %}
-                                                <a href="{% url 'admin_approve_user' user.id %}" 
-                                                   class="btn btn-outline-success btn-sm" title="Approve">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                                <a href="{% url 'admin_reject_user' user.id %}" 
-                                                   class="btn btn-outline-danger btn-sm" title="Reject">
-                                                    <i class="fas fa-times"></i>
-                                                </a>
-                                            {% elif user.profile.status == 'approved' %}
-                                                <a href="{% url 'admin_suspend_user' user.id %}" 
-                                                   class="btn btn-outline-warning btn-sm" title="Suspend">
-                                                    <i class="fas fa-ban"></i>
-                                                </a>
-                                            {% elif user.profile.status == 'suspended' %}
-                                                <a href="{% url 'admin_reactivate_user' user.id %}" 
-                                                   class="btn btn-outline-success btn-sm" title="Reactivate">
-                                                    <i class="fas fa-undo"></i>
-                                                </a>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">
-                                        No users found matching the current filters.
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                            <a href="{% url 'admin_reject_user' user.id %}" 
+                                               class="btn btn-sm" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 0.25rem 0.5rem;" 
+                                               title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                        {% elif user.profile.status == 'approved' %}
+                                            <a href="{% url 'admin_suspend_user' user.id %}" 
+                                               class="btn btn-sm" style="background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; padding: 0.25rem 0.5rem;" 
+                                               title="Suspend">
+                                                <i class="fas fa-ban"></i>
+                                            </a>
+                                        {% elif user.profile.status == 'suspended' %}
+                                            <a href="{% url 'admin_reactivate_user' user.id %}" 
+                                               class="btn btn-sm" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 0.25rem 0.5rem;" 
+                                               title="Reactivate">
+                                                <i class="fas fa-undo"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-5" style="padding: 3rem 1rem; border-color: var(--border); background: rgba(255, 255, 255, 0.5);">
+                                    <div>
+                                        <i class="fas fa-users fs-1 mb-3 text-primary-modern" style="opacity: 0.3;"></i>
+                                        <h5 style="color: var(--text-secondary);">No users found</h5>
+                                        <p class="mb-0">No users found matching the current filters.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modern CSS Styling -->
 <style>
-.table th {
-    border-top: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #5a6c7d;
+/* Enhanced responsive design for mobile */
+@media (max-width: 768px) {
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .table thead {
+        display: none;
+    }
+    
+    .table tbody tr {
+        display: block;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 4px 12px var(--shadow);
+    }
+    
+    .table tbody td {
+        display: block;
+        text-align: left !important;
+        border: none !important;
+        padding: 0.75rem 1rem !important;
+        background: transparent !important;
+        position: relative;
+        padding-left: 40% !important;
+    }
+    
+    .table tbody td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        width: 35%;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .table tbody td:first-child {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+    
+    .table tbody td:last-child {
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
 }
 
-.table td {
-    vertical-align: middle;
-    font-size: 0.9rem;
+/* Modern hover effects */
+.table tbody tr:hover {
+    background: rgba(0, 173, 181, 0.05) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 173, 181, 0.15);
 }
 
-.btn-group-sm > .btn {
-    padding: 0.25rem 0.4rem;
+/* Enhanced form styling */
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
 }
 
-.badge {
-    font-size: 0.75rem;
+.form-check-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0, 173, 181, 0.25);
 }
 
-.card {
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
-    border: none;
-}
-
+/* Custom checkbox styling */
 .form-check-input:indeterminate {
-    background-color: #007bff;
-    border-color: #007bff;
+    background-color: var(--primary);
+    border-color: var(--primary);
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
+}
+
+/* Loading state for buttons */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Enhanced card animations */
+.card-modern {
+    animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modern scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--light-bg);
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--medium-bg);
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
 }
 </style>
 
+<!-- Enhanced JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Elements
     const selectAllPending = document.getElementById('select-all-pending');
     const selectAllTable = document.getElementById('select-all-table');
     const userCheckboxes = document.querySelectorAll('.user-checkbox');
     const bulkApproveBtn = document.getElementById('bulk-approve-btn');
     const bulkRejectBtn = document.getElementById('bulk-reject-btn');
 
-    // Sync select all checkboxes
+    // Initialize tooltips if Bootstrap is available
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    // Sync select all checkboxes with enhanced UX
     if (selectAllPending && selectAllTable) {
         selectAllPending.addEventListener('change', function() {
             selectAllTable.checked = this.checked;
             toggleAllCheckboxes(this.checked);
+            
+            // Add visual feedback
+            if (this.checked) {
+                showToast('All pending users selected', 'success');
+            }
         });
 
         selectAllTable.addEventListener('change', function() {
@@ -277,50 +437,111 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Update bulk action button states
+    // Enhanced bulk button state management
     function updateBulkButtons() {
         const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
         const hasSelection = checkedBoxes.length > 0;
         
-        if (bulkApproveBtn) bulkApproveBtn.disabled = !hasSelection;
-        if (bulkRejectBtn) bulkRejectBtn.disabled = !hasSelection;
-    }
-
-    // Toggle all checkboxes
-    function toggleAllCheckboxes(checked) {
-        userCheckboxes.forEach(checkbox => {
-            checkbox.checked = checked;
+        // Update button states with smooth transitions
+        [bulkApproveBtn, bulkRejectBtn].forEach(btn => {
+            if (btn) {
+                btn.disabled = !hasSelection;
+                btn.style.opacity = hasSelection ? '1' : '0.6';
+                btn.style.transform = hasSelection ? 'scale(1)' : 'scale(0.95)';
+            }
         });
-        updateBulkButtons();
+        
+        // Update counter display
+        updateSelectionCounter(checkedBoxes.length);
     }
 
-    // Listen to individual checkbox changes
+    // Selection counter
+    function updateSelectionCounter(count) {
+        let counter = document.getElementById('selection-counter');
+        if (!counter && count > 0) {
+            counter = document.createElement('span');
+            counter.id = 'selection-counter';
+            counter.className = 'badge ms-2';
+            counter.style.background = 'var(--gradient-primary)';
+            counter.style.color = 'white';
+            counter.style.borderRadius = '20px';
+            counter.style.padding = '0.25rem 0.75rem';
+            counter.style.fontSize = '0.75rem';
+            
+            const header = document.querySelector('.card-header-modern h5');
+            if (header) header.appendChild(counter);
+        }
+        
+        if (counter) {
+            if (count > 0) {
+                counter.textContent = `${count} selected`;
+                counter.style.display = 'inline-block';
+            } else {
+                counter.style.display = 'none';
+            }
+        }
+    }
+
+    // Enhanced checkbox toggle with animation
+    function toggleAllCheckboxes(checked) {
+        userCheckboxes.forEach((checkbox, index) => {
+            setTimeout(() => {
+                checkbox.checked = checked;
+                // Add ripple effect
+                if (checked) {
+                    checkbox.parentElement.style.animation = 'pulse 0.3s ease-out';
+                }
+            }, index * 50); // Staggered animation
+        });
+        
+        setTimeout(() => {
+            updateBulkButtons();
+        }, userCheckboxes.length * 50 + 100);
+    }
+
+    // Enhanced individual checkbox handling
     userCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+            // Add smooth feedback
+            this.parentElement.style.transition = 'all 0.3s ease';
+            
             updateBulkButtons();
             
-            // Update select all checkbox state
+            // Update select all checkbox states with indeterminate support
             const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
             const someChecked = Array.from(userCheckboxes).some(cb => cb.checked);
             
-            if (selectAllPending) {
-                selectAllPending.checked = allChecked;
-                selectAllPending.indeterminate = someChecked && !allChecked;
-            }
-            
-            if (selectAllTable) {
-                selectAllTable.checked = allChecked;
-                selectAllTable.indeterminate = someChecked && !allChecked;
-            }
+            [selectAllPending, selectAllTable].forEach(selectAll => {
+                if (selectAll) {
+                    selectAll.checked = allChecked;
+                    selectAll.indeterminate = someChecked && !allChecked;
+                }
+            });
         });
     });
 
-    // Confirm bulk actions
+    // Enhanced bulk action confirmations with modern styling
     if (bulkApproveBtn) {
         bulkApproveBtn.addEventListener('click', function(e) {
             const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
-            if (!confirm(`Approve ${checkedCount} user(s)?`)) {
+            
+            if (checkedCount === 0) {
                 e.preventDefault();
+                showToast('Please select users to approve', 'warning');
+                return;
+            }
+            
+            // Custom confirmation dialog
+            if (!showConfirmDialog(
+                'Approve Users', 
+                `Are you sure you want to approve ${checkedCount} user${checkedCount > 1 ? 's' : ''}?`,
+                'Approve',
+                'success'
+            )) {
+                e.preventDefault();
+            } else {
+                // Add loading state
+                setButtonLoading(this, true);
             }
         });
     }
@@ -328,14 +549,137 @@ document.addEventListener('DOMContentLoaded', function() {
     if (bulkRejectBtn) {
         bulkRejectBtn.addEventListener('click', function(e) {
             const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
-            if (!confirm(`Reject ${checkedCount} user(s)? This action cannot be undone.`)) {
+            
+            if (checkedCount === 0) {
                 e.preventDefault();
+                showToast('Please select users to reject', 'warning');
+                return;
+            }
+            
+            if (!showConfirmDialog(
+                'Reject Users', 
+                `Are you sure you want to reject ${checkedCount} user${checkedCount > 1 ? 's' : ''}? This action cannot be undone.`,
+                'Reject',
+                'danger'
+            )) {
+                e.preventDefault();
+            } else {
+                setButtonLoading(this, true);
             }
         });
     }
 
-    // Initial state
+    // Modern toast notification system
+    function showToast(message, type = 'info') {
+        // Remove existing toasts
+        const existingToasts = document.querySelectorAll('.modern-toast');
+        existingToasts.forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = 'modern-toast';
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        `;
+        
+        // Set color based on type
+        const colors = {
+            success: 'linear-gradient(135deg, var(--success), #34D399)',
+            warning: 'linear-gradient(135deg, var(--warning), #FBBF24)',
+            danger: 'linear-gradient(135deg, var(--danger), #F87171)',
+            info: 'var(--gradient-primary)'
+        };
+        
+        toast.style.background = colors[type] || colors.info;
+        toast.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'info-circle'} me-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto remove
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Custom confirmation dialog
+    function showConfirmDialog(title, message, confirmText, type) {
+        return confirm(`${title}\n\n${message}`);
+    }
+
+    // Loading state for buttons
+    function setButtonLoading(button, loading = true) {
+        if (loading) {
+            button.disabled = true;
+            button.classList.add('btn-loading');
+            button.setAttribute('data-original-text', button.innerHTML);
+        } else {
+            button.disabled = false;
+            button.classList.remove('btn-loading');
+            button.innerHTML = button.getAttribute('data-original-text');
+        }
+    }
+
+    // Add mobile data labels for responsive table
+    if (window.innerWidth <= 768) {
+        const tableHeaders = ['', 'User', 'Email', 'Status', 'Subscription', 'Usage', 'Last Activity', 'Registered', 'Actions'];
+        document.querySelectorAll('.table tbody tr').forEach(row => {
+            row.querySelectorAll('td').forEach((cell, index) => {
+                if (tableHeaders[index]) {
+                    cell.setAttribute('data-label', tableHeaders[index]);
+                }
+            });
+        });
+    }
+
+    // Initialize with current state
     updateBulkButtons();
+    
+    // Add entrance animations with stagger
+    const cards = document.querySelectorAll('.card-modern');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+
+// Handle window resize for mobile responsiveness
+window.addEventListener('resize', function() {
+    const tableHeaders = ['', 'User', 'Email', 'Status', 'Subscription', 'Usage', 'Last Activity', 'Registered', 'Actions'];
+    
+    if (window.innerWidth <= 768) {
+        document.querySelectorAll('.table tbody tr').forEach(row => {
+            row.querySelectorAll('td').forEach((cell, index) => {
+                if (tableHeaders[index]) {
+                    cell.setAttribute('data-label', tableHeaders[index]);
+                }
+            });
+        });
+    } else {
+        document.querySelectorAll('.table tbody td').forEach(cell => {
+            cell.removeAttribute('data-label');
+        });
+    }
 });
 </script>
 {% endblock %}

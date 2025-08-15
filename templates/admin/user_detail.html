@@ -3,229 +3,96 @@
 {% block title %}User Details - {{ user.username }}{% endblock %}
 
 {% block content %}
+<!-- Modern Page Header -->
 <div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="h2 mb-0">
-                <i class="fas fa-user me-3"></i>{{ user.username }}
-            </h1>
-            <p class="text-muted mt-2">User details and analytics</p>
+    <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <div class="d-flex align-items-center">
+            <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-user text-white fs-3"></i>
+            </div>
+            <div>
+                <h1 class="h2 mb-0 fw-bold" style="color: var(--text-primary);">{{ user.username }}</h1>
+                <p class="text-muted mt-1 mb-0">User profile and analytics overview</p>
+            </div>
         </div>
-        <a href="{% url 'admin_user_management' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Users
-        </a>
+        <div class="header-actions mt-3 mt-md-0">
+            <a href="{% url 'admin_user_management' %}" class="btn-outline-modern">
+                <i class="fas fa-arrow-left me-2"></i>Back to Users
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- User Info Cards -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <h5 class="mb-0">User Information</h5>
-            </div>
-                <div class="card-body">
-                    <table class="table table-borderless mb-0">
-                        <tr>
-                            <td><strong>Username:</strong></td>
-                            <td>{{ user.username }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Email:</strong></td>
-                            <td>{{ user.email }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Name:</strong></td>
-                            <td>{{ user.first_name }} {{ user.last_name }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Registered:</strong></td>
-                            <td>{{ user.date_joined|date:"M d, Y H:i" }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Last Login:</strong></td>
-                            <td>
-                                {% if user.last_login %}
-                                    {{ user.last_login|date:"M d, Y H:i" }}
-                                {% else %}
-                                    Never
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Last Activity:</strong></td>
-                            <td>
-                                {% if profile.last_activity %}
-                                    {{ profile.last_activity|date:"M d, Y H:i" }}
-                                {% else %}
-                                    Never
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
+<!-- Modern User Info Cards -->
+<div class="row mb-4 g-4">
+    <div class="col-lg-4">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <div class="header-content">
+                    <h5 class="header-title">
+                        <i class="fas fa-id-card me-2"></i>User Information
+                    </h5>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Status & Subscription</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless mb-0">
-                        <tr>
-                            <td><strong>Status:</strong></td>
-                            <td>
-                                {% if profile.status == 'pending' %}
-                                    <span class="badge bg-warning text-dark">Pending</span>
-                                {% elif profile.status == 'approved' %}
-                                    <span class="badge bg-success">Approved</span>
-                                {% elif profile.status == 'suspended' %}
-                                    <span class="badge bg-danger">Suspended</span>
-                                {% elif profile.status == 'rejected' %}
-                                    <span class="badge bg-secondary">Rejected</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Subscription:</strong></td>
-                            <td>
-                                <span class="badge bg-info text-capitalize">{{ profile.subscription_plan }}</span>
-                                {% if not profile.validate_subscription_consistency %}
-                                    <br><small class="text-danger mt-1 d-block">
-                                        <i class="fas fa-exclamation-triangle"></i> 
-                                        Inconsistent limits detected! Please update subscription to fix.
-                                    </small>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>API Limit:</strong></td>
-                            <td>{{ profile.monthly_api_limit|default:"Unlimited" }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Token Limit:</strong></td>
-                            <td>{{ profile.monthly_token_limit|default:"Unlimited" }}</td>
-                        </tr>
-                        {% if profile.approved_at %}
-                        <tr>
-                            <td><strong>Approved:</strong></td>
-                            <td>{{ profile.approved_at|date:"M d, Y H:i" }}</td>
-                        </tr>
-                        {% endif %}
-                        {% if profile.suspended_at %}
-                        <tr>
-                            <td><strong>Suspended:</strong></td>
-                            <td>{{ profile.suspended_at|date:"M d, Y H:i" }}</td>
-                        </tr>
-                        {% endif %}
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Usage Statistics</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless mb-0">
-                        <tr>
-                            <td><strong>Total API Requests:</strong></td>
-                            <td>{{ profile.api_requests_count }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Total Tokens:</strong></td>
-                            <td>{{ profile.tokens_used|floatformat:0 }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>This Month API:</strong></td>
-                            <td>{{ profile.current_month_api_requests }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>This Month Tokens:</strong></td>
-                            <td>{{ profile.current_month_tokens|floatformat:0 }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Chat Sessions:</strong></td>
-                            <td>{{ total_chat_sessions }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Total Messages:</strong></td>
-                            <td>{{ total_messages }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Knowledge Items:</strong></td>
-                            <td>{{ total_knowledge_items }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Status Actions</h6>
-                            {% if profile.status == 'pending' %}
-                                <a href="{% url 'admin_approve_user' user.id %}" class="btn btn-success me-2"
-                                   onclick="return confirm('Approve {{ user.username }}?')">
-                                    <i class="fas fa-check"></i> Approve User
-                                </a>
-                                <a href="{% url 'admin_reject_user' user.id %}" class="btn btn-danger"
-                                   onclick="return confirm('Reject {{ user.username }}?')">
-                                    <i class="fas fa-times"></i> Reject User
-                                </a>
-                            {% elif profile.status == 'approved' %}
-                                <a href="{% url 'admin_suspend_user' user.id %}" class="btn btn-warning"
-                                   onclick="return confirm('Suspend {{ user.username }}?')">
-                                    <i class="fas fa-ban"></i> Suspend User
-                                </a>
-                            {% elif profile.status == 'suspended' %}
-                                <a href="{% url 'admin_reactivate_user' user.id %}" class="btn btn-success"
-                                   onclick="return confirm('Reactivate {{ user.username }}?')">
-                                    <i class="fas fa-undo"></i> Reactivate User
-                                </a>
+            <div class="card-body-modern">
+                <div class="info-list">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-user info-icon"></i>
+                            Username
+                        </div>
+                        <div class="info-value">{{ user.username }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-envelope info-icon"></i>
+                            Email
+                        </div>
+                        <div class="info-value">{{ user.email }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-signature info-icon"></i>
+                            Full Name
+                        </div>
+                        <div class="info-value">
+                            {% if user.first_name or user.last_name %}
+                                {{ user.first_name }} {{ user.last_name }}
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
                             {% endif %}
                         </div>
-                        
-                        <div class="col-md-6">
-                            <h6>Subscription Management</h6>
-                            <form method="post" action="{% url 'admin_update_subscription' user.id %}" class="d-flex gap-2">
-                                {% csrf_token %}
-                                <select name="subscription_plan" class="form-select">
-                                    {% for plan in available_plans %}
-                                        <option value="{{ plan.name }}" 
-                                                {% if profile.subscription_plan == plan.name %}selected{% endif %}>
-                                            {{ plan.name|title }}{% if plan.price > 0 %} - ${{ plan.price }}/month{% else %} - Free{% endif %}
-                                        </option>
-                                    {% empty %}
-                                        <option value="free" {% if profile.subscription_plan == 'free' %}selected{% endif %}>Free (Fallback)</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="submit" class="btn btn-primary"
-                                        onclick="return confirm('Update subscription for {{ user.username }}?')">
-                                    <i class="fas fa-save"></i> Update
-                                </button>
-                            </form>
-                            
-                            {% if available_plans %}
-                                <small class="text-muted mt-2 d-block">
-                                    Available plans: 
-                                    {% for plan in available_plans %}
-                                        <span class="badge bg-light text-dark">{{ plan.name }}</span>{% if not forloop.last %}, {% endif %}
-                                    {% endfor %}
-                                </small>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-plus info-icon"></i>
+                            Registered
+                        </div>
+                        <div class="info-value">{{ user.date_joined|date:"M d, Y H:i" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-sign-in-alt info-icon"></i>
+                            Last Login
+                        </div>
+                        <div class="info-value">
+                            {% if user.last_login %}
+                                {{ user.last_login|date:"M d, Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-clock info-icon"></i>
+                            Last Activity
+                        </div>
+                        <div class="info-value">
+                            {% if profile.last_activity %}
+                                {{ profile.last_activity|date:"M d, Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
                             {% endif %}
                         </div>
                     </div>
@@ -233,32 +100,368 @@
             </div>
         </div>
     </div>
+    
+    <div class="col-lg-4">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <div class="header-content">
+                    <h5 class="header-title">
+                        <i class="fas fa-crown me-2"></i>Status & Subscription
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body-modern">
+                <div class="info-list">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-check-circle info-icon"></i>
+                            Status
+                        </div>
+                        <div class="info-value">
+                            {% if profile.status == 'pending' %}
+                                <span class="status-badge warning">
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                </span>
+                            {% elif profile.status == 'approved' %}
+                                <span class="status-badge success">
+                                    <i class="fas fa-check me-1"></i>Approved
+                                </span>
+                            {% elif profile.status == 'suspended' %}
+                                <span class="status-badge danger">
+                                    <i class="fas fa-ban me-1"></i>Suspended
+                                </span>
+                            {% elif profile.status == 'rejected' %}
+                                <span class="status-badge secondary">
+                                    <i class="fas fa-times me-1"></i>Rejected
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-gem info-icon"></i>
+                            Subscription
+                        </div>
+                        <div class="info-value">
+                            <span class="subscription-badge">{{ profile.subscription_plan|title }}</span>
+                            {% if not profile.validate_subscription_consistency %}
+                                <div class="mt-2">
+                                    <div class="alert-mini danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Inconsistent limits detected! Please update subscription.
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-api info-icon"></i>
+                            API Limit
+                        </div>
+                        <div class="info-value">
+                            {% if profile.monthly_api_limit %}
+                                {{ profile.monthly_api_limit|floatformat:0 }}/month
+                            {% else %}
+                                <span class="unlimited-badge">Unlimited</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-coins info-icon"></i>
+                            Token Limit
+                        </div>
+                        <div class="info-value">
+                            {% if profile.monthly_token_limit %}
+                                {{ profile.monthly_token_limit|floatformat:0 }}/month
+                            {% else %}
+                                <span class="unlimited-badge">Unlimited</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if profile.approved_at %}
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-thumbs-up info-icon"></i>
+                            Approved
+                        </div>
+                        <div class="info-value">{{ profile.approved_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                    {% endif %}
+                    {% if profile.suspended_at %}
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-ban info-icon"></i>
+                            Suspended
+                        </div>
+                        <div class="info-value">{{ profile.suspended_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card-modern h-100">
+            <div class="card-header-modern">
+                <div class="header-content">
+                    <h5 class="header-title">
+                        <i class="fas fa-chart-line me-2"></i>Usage Statistics
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body-modern">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">{{ profile.api_requests_count }}</div>
+                            <div class="stat-label">Total API Requests</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">{{ profile.tokens_used|floatformat:0 }}</div>
+                            <div class="stat-label">Total Tokens</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">{{ profile.current_month_api_requests }}</div>
+                            <div class="stat-label">This Month API</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">{{ profile.current_month_tokens|floatformat:0 }}</div>
+                            <div class="stat-label">This Month Tokens</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">{{ total_chat_sessions }}</div>
+                            <div class="stat-label">Chat Sessions</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">{{ total_messages }}</div>
+                            <div class="stat-label">Total Messages</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-number">{{ total_knowledge_items }}</div>
+                            <div class="stat-label">Knowledge Items</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- AI Assistant Info -->
+    <!-- Modern Actions Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="header-content">
+                        <h5 class="header-title">
+                            <i class="fas fa-cogs me-2"></i>User Management Actions
+                        </h5>
+                    </div>
+                </div>
+                <div class="card-body-modern">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="action-section">
+                                <h6 class="action-title">
+                                    <i class="fas fa-user-check me-2"></i>Status Management
+                                </h6>
+                                <div class="action-buttons">
+                                    {% if profile.status == 'pending' %}
+                                        <a href="{% url 'admin_approve_user' user.id %}" 
+                                           class="btn-success-modern"
+                                           onclick="return confirm('Approve {{ user.username }}?')">
+                                            <i class="fas fa-check me-2"></i>Approve User
+                                        </a>
+                                        <a href="{% url 'admin_reject_user' user.id %}" 
+                                           class="btn-danger-modern"
+                                           onclick="return confirm('Reject {{ user.username }}?')">
+                                            <i class="fas fa-times me-2"></i>Reject User
+                                        </a>
+                                    {% elif profile.status == 'approved' %}
+                                        <a href="{% url 'admin_suspend_user' user.id %}" 
+                                           class="btn-warning-modern"
+                                           onclick="return confirm('Suspend {{ user.username }}?')">
+                                            <i class="fas fa-ban me-2"></i>Suspend User
+                                        </a>
+                                    {% elif profile.status == 'suspended' %}
+                                        <a href="{% url 'admin_reactivate_user' user.id %}" 
+                                           class="btn-success-modern"
+                                           onclick="return confirm('Reactivate {{ user.username }}?')">
+                                            <i class="fas fa-undo me-2"></i>Reactivate User
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="action-section">
+                                <h6 class="action-title">
+                                    <i class="fas fa-crown me-2"></i>Subscription Management
+                                </h6>
+                                <form method="post" action="{% url 'admin_update_subscription' user.id %}" 
+                                      class="subscription-form" id="subscriptionForm">
+                                    {% csrf_token %}
+                                    <div class="form-group-modern">
+                                        <label class="form-label-modern">Select Plan</label>
+                                        <div class="input-group-modern">
+                                            <select name="subscription_plan" class="form-control-modern" required>
+                                                {% for plan in available_plans %}
+                                                    <option value="{{ plan.name }}" 
+                                                            {% if profile.subscription_plan == plan.name %}selected{% endif %}
+                                                            data-price="{{ plan.price }}"
+                                                            data-api="{{ plan.monthly_api_limit }}"
+                                                            data-tokens="{{ plan.monthly_token_limit }}">
+                                                        {{ plan.name|title }}
+                                                        {% if plan.price > 0 %} - ${{ plan.price }}/month{% else %} - Free{% endif %}
+                                                    </option>
+                                                {% empty %}
+                                                    <option value="free" {% if profile.subscription_plan == 'free' %}selected{% endif %}>
+                                                        Free (Fallback)
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn-primary-modern"
+                                                    onclick="return confirm('Update subscription for {{ user.username }}?')">
+                                                <i class="fas fa-save me-2"></i>Update
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if available_plans %}
+                                        <div class="plan-preview" id="planPreview">
+                                            <div class="preview-item">
+                                                <span class="preview-label">API Limit:</span>
+                                                <span class="preview-value" id="previewApiLimit">-</span>
+                                            </div>
+                                            <div class="preview-item">
+                                                <span class="preview-label">Token Limit:</span>
+                                                <span class="preview-value" id="previewTokenLimit">-</span>
+                                            </div>
+                                            <div class="preview-item">
+                                                <span class="preview-label">Monthly Cost:</span>
+                                                <span class="preview-value" id="previewPrice">-</span>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern AI Assistant Info -->
     {% if assistant %}
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">AI Assistant</h5>
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="header-content">
+                        <h5 class="header-title">
+                            <i class="fas fa-robot me-2"></i>AI Assistant Configuration
+                        </h5>
+                        <div class="header-badge">
+                            {% if assistant.is_active %}
+                                <span class="status-badge success">
+                                    <i class="fas fa-check me-1"></i>Active
+                                </span>
+                            {% else %}
+                                <span class="status-badge secondary">
+                                    <i class="fas fa-pause me-1"></i>Inactive
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
+                <div class="card-body-modern">
+                    <div class="row g-4">
                         <div class="col-md-6">
-                            <p><strong>Business Type:</strong> {{ assistant.business_type.name }}</p>
-                            <p><strong>Language:</strong> {{ assistant.get_preferred_language_display }}</p>
-                            <p><strong>Status:</strong> 
-                                {% if assistant.is_active %}
-                                    <span class="badge bg-success">Active</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Inactive</span>
-                                {% endif %}
-                            </p>
+                            <div class="assistant-info">
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-building info-icon"></i>
+                                        Business Type
+                                    </div>
+                                    <div class="info-value">{{ assistant.business_type.name }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-language info-icon"></i>
+                                        Language
+                                    </div>
+                                    <div class="info-value">{{ assistant.get_preferred_language_display }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-calendar-plus info-icon"></i>
+                                        Created
+                                    </div>
+                                    <div class="info-value">{{ assistant.created_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Created:</strong> {{ assistant.created_at|date:"M d, Y H:i" }}</p>
-                            <p><strong>Last Updated:</strong> {{ assistant.updated_at|date:"M d, Y H:i" }}</p>
-                            <p><strong>OpenAI ID:</strong> {{ assistant.openai_assistant_id|default:"Not set" }}</p>
+                            <div class="assistant-info">
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-edit info-icon"></i>
+                                        Last Updated
+                                    </div>
+                                    <div class="info-value">{{ assistant.updated_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-key info-icon"></i>
+                                        OpenAI ID
+                                    </div>
+                                    <div class="info-value">
+                                        {% if assistant.openai_assistant_id %}
+                                            <code class="openai-id">{{ assistant.openai_assistant_id }}</code>
+                                        {% else %}
+                                            <span class="text-muted">Not configured</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -267,57 +470,93 @@
     </div>
     {% endif %}
 
-    <!-- Recent API Usage -->
+    <!-- Modern Recent API Usage -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Recent API Usage</h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_api_usage %}
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Endpoint</th>
-                                    <th>Method</th>
-                                    <th>Tokens</th>
-                                    <th>Status</th>
-                                    <th>Response Time</th>
-                                    <th>Timestamp</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for log in recent_api_usage %}
-                                <tr>
-                                    <td><code>{{ log.endpoint }}</code></td>
-                                    <td><span class="badge bg-info">{{ log.method }}</span></td>
-                                    <td>{{ log.tokens_used }}</td>
-                                    <td>
-                                        {% if log.status_code %}
-                                            {% if log.status_code < 300 %}
-                                                <span class="badge bg-success">{{ log.status_code }}</span>
-                                            {% elif log.status_code < 400 %}
-                                                <span class="badge bg-warning">{{ log.status_code }}</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">{{ log.status_code }}</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if log.response_time_ms %}
-                                            {{ log.response_time_ms }}ms
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ log.created_at|date:"M d H:i" }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <div class="header-content">
+                        <h5 class="header-title">
+                            <i class="fas fa-history me-2"></i>Recent API Usage
+                        </h5>
+                        <div class="header-actions">
+                            <button class="btn-outline-modern btn-sm" onclick="refreshApiUsage()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                        </div>
                     </div>
+                </div>
+                <div class="card-body-modern">
+                    {% if recent_api_usage %}
+                        <div class="table-responsive">
+                            <table class="table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Endpoint</th>
+                                        <th>Method</th>
+                                        <th>Tokens</th>
+                                        <th>Status</th>
+                                        <th>Response Time</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_api_usage %}
+                                    <tr>
+                                        <td>
+                                            <code class="endpoint-code">{{ log.endpoint }}</code>
+                                        </td>
+                                        <td>
+                                            <span class="method-badge {{ log.method|lower }}">{{ log.method }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="token-info">
+                                                <span class="token-count">{{ log.tokens_used }}</span>
+                                                <span class="token-label">tokens</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if log.status_code %}
+                                                {% if log.status_code < 300 %}
+                                                    <span class="status-badge success">{{ log.status_code }}</span>
+                                                {% elif log.status_code < 400 %}
+                                                    <span class="status-badge warning">{{ log.status_code }}</span>
+                                                {% else %}
+                                                    <span class="status-badge danger">{{ log.status_code }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if log.response_time_ms %}
+                                                <div class="response-time">
+                                                    <span class="time-value">{{ log.response_time_ms }}</span>
+                                                    <span class="time-unit">ms</span>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="timestamp-info">
+                                                <span class="timestamp-date">{{ log.created_at|date:"M d" }}</span>
+                                                <span class="timestamp-time">{{ log.created_at|date:"H:i" }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     {% else %}
-                    <p class="text-muted">No API usage recorded yet.</p>
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h6 class="empty-title">No API Usage Recorded</h6>
+                            <p class="empty-description">This user hasn't made any API requests yet.</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -325,30 +564,722 @@
     </div>
 </div>
 
+<!-- Modern CSS Styling -->
 <style>
-.card {
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
-    border: none;
+/* Info List Styling */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.table-borderless td {
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--light-bg);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 140px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.info-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.info-value {
+    flex: 1;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.status-badge.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+}
+
+.status-badge.danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.status-badge.secondary {
+    background: rgba(107, 114, 128, 0.15);
+    color: var(--text-muted);
+}
+
+/* Subscription Badge */
+.subscription-badge {
+    background: var(--gradient-primary);
+    color: var(--white);
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.unlimited-badge {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Alert Mini */
+.alert-mini {
     padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.alert-mini.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 173, 181, 0.1);
+    border-color: var(--primary);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 173, 181, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Action Sections */
+.action-section {
+    background: var(--light-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+.action-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Form Styling */
+.subscription-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group-modern {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label-modern {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.input-group-modern {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.input-group-modern select {
+    flex: 1;
+}
+
+.form-control-modern {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    background: var(--white);
+}
+
+.form-control-modern:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    outline: none;
+}
+
+/* Plan Preview */
+.plan-preview {
+    background: rgba(0, 173, 181, 0.05);
+    border: 1px solid rgba(0, 173, 181, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+}
+
+.preview-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.preview-value {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Assistant Info */
+.assistant-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.openai-id {
+    background: var(--light-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+/* Table Modern */
+.table-modern {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-modern thead th {
+    background: var(--gradient-primary);
+    color: var(--white);
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
     border: none;
+    font-size: 0.875rem;
 }
 
-.table-sm th, .table-sm td {
-    padding: 0.5rem;
-    font-size: 0.85rem;
+.table-modern thead th:first-child {
+    border-top-left-radius: 12px;
 }
 
-.badge {
+.table-modern thead th:last-child {
+    border-top-right-radius: 12px;
+}
+
+.table-modern tbody tr {
+    background: var(--white);
+    transition: all 0.3s ease;
+}
+
+.table-modern tbody tr:hover {
+    background: rgba(0, 173, 181, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 173, 181, 0.1);
+}
+
+.table-modern tbody td {
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    vertical-align: middle;
+}
+
+/* Endpoint Code */
+.endpoint-code {
+    background: var(--light-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+/* Method Badges */
+.method-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.method-badge.get {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22C55E;
+}
+
+.method-badge.post {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3B82F6;
+}
+
+.method-badge.put {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+}
+
+.method-badge.delete {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+/* Token Info */
+.token-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.token-count {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.875rem;
+}
+
+.token-label {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Response Time */
+.response-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.time-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.time-unit {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+}
+
+/* Timestamp Info */
+.timestamp-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.timestamp-date {
+    font-weight: 600;
+    color: var(--text-primary);
     font-size: 0.75rem;
 }
 
-code {
-    background-color: #f8f9fa;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
+.timestamp-time {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 173, 181, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem auto;
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.empty-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-description {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+    }
+    
+    .header-actions .btn-outline-modern {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 0.75rem;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .info-label {
+        min-width: auto;
+    }
+    
+    .action-buttons {
+        gap: 0.5rem;
+    }
+    
+    .input-group-modern {
+        flex-direction: column;
+    }
+    
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .table-modern thead {
+        display: none;
+    }
+    
+    .table-modern tbody tr {
+        display: block;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--white);
+    }
+    
+    .table-modern tbody td {
+        display: block;
+        border: none;
+        padding: 0.5rem 0;
+        text-align: left !important;
+    }
+    
+    .table-modern tbody td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-section {
+        padding: 1rem;
+    }
+    
+    .action-buttons {
+        align-items: stretch;
+    }
+    
+    .action-buttons .btn-success-modern,
+    .action-buttons .btn-danger-modern,
+    .action-buttons .btn-warning-modern {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Loading states */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-modern {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.card-modern:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.card-modern:nth-child(3) {
+    animation-delay: 0.2s;
 }
 </style>
+
+<!-- Enhanced JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize page
+    initializePage();
+    
+    // Add mobile table labels
+    addMobileTableLabels();
+    
+    // Initialize plan preview
+    initializePlanPreview();
+});
+
+function initializePage() {
+    console.log('User detail page initialized');
+    
+    // Add entrance animations
+    const cards = document.querySelectorAll('.card-modern');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 100 * (index + 1));
+    });
+}
+
+function addMobileTableLabels() {
+    const table = document.querySelector('.table-modern');
+    if (!table) return;
+    
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+            if (headers[index]) {
+                cell.setAttribute('data-label', headers[index]);
+            }
+        });
+    });
+}
+
+function initializePlanPreview() {
+    const select = document.querySelector('select[name="subscription_plan"]');
+    if (!select) return;
+    
+    function updatePreview() {
+        const selectedOption = select.options[select.selectedIndex];
+        const price = selectedOption.getAttribute('data-price') || '0';
+        const apiLimit = selectedOption.getAttribute('data-api') || '0';
+        const tokenLimit = selectedOption.getAttribute('data-tokens') || '0';
+        
+        const apiLimitElement = document.getElementById('previewApiLimit');
+        const tokenLimitElement = document.getElementById('previewTokenLimit');
+        const priceElement = document.getElementById('previewPrice');
+        
+        if (apiLimitElement) {
+            apiLimitElement.textContent = apiLimit === '0' ? 'Unlimited' : parseInt(apiLimit).toLocaleString() + '/month';
+        }
+        
+        if (tokenLimitElement) {
+            tokenLimitElement.textContent = tokenLimit === '0' ? 'Unlimited' : parseInt(tokenLimit).toLocaleString() + '/month';
+        }
+        
+        if (priceElement) {
+            priceElement.textContent = price === '0' ? 'Free' : '$' + parseFloat(price).toFixed(2) + '/month';
+        }
+    }
+    
+    // Initialize preview
+    updatePreview();
+    
+    // Update on change
+    select.addEventListener('change', updatePreview);
+}
+
+function refreshApiUsage() {
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+    
+    // Simulate refresh (replace with actual AJAX call)
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Enhanced form submission with loading states
+document.addEventListener('submit', function(e) {
+    const form = e.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    if (submitButton) {
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+        
+        // Re-enable button if form submission fails
+        setTimeout(() => {
+            if (submitButton.disabled) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        }, 5000);
+    }
+});
+
+// Handle window resize for mobile responsiveness
+window.addEventListener('resize', function() {
+    if (window.innerWidth <= 768) {
+        addMobileTableLabels();
+    }
+});
+</script>
 {% endblock %}

@@ -4,243 +4,785 @@
 {% block title %}Edit Subscription Plan{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-edit"></i> Edit Plan: {{ plan.name }}</h2>
-                <a href="{% url 'subscription_plans' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Plans
-                </a>
+<!-- Modern Page Header -->
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <div class="d-flex align-items-center">
+            <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-edit text-white fs-3"></i>
             </div>
+            <div>
+                <h1 class="h2 mb-0 fw-bold" style="color: var(--text-primary);">Edit Plan</h1>
+                <p class="text-muted mt-1 mb-0">Modify "{{ plan.name }}" subscription plan</p>
+            </div>
+        </div>
+        <div class="header-actions mt-3 mt-md-0">
+            <a href="{% url 'subscription_plans' %}" class="btn-outline-modern">
+                <i class="fas fa-arrow-left me-2"></i>Back to Plans
+            </a>
+        </div>
+    </div>
+</div>
 
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+<!-- Alert Messages -->
+{% if messages %}
+    <div class="container-fluid">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+                <div class="d-flex align-items-center">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Plan Details</h5>
+<!-- Main Content -->
+<div class="container-fluid">
+    <div class="row g-4">
+        <!-- Main Form -->
+        <div class="col-xl-8">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-cog text-white"></i>
                         </div>
-                        <div class="card-body">
-                            <form method="post">
-                                {% csrf_token %}
-                                
-                                <div class="row">
-                                    <!-- Basic Information -->
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="name" class="form-label">Plan Name *</label>
-                                            <input type="text" class="form-control" id="name" name="name" 
-                                                   value="{{ plan.name }}" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="price" class="form-label">Price ($)</label>
-                                            <input type="number" class="form-control" id="price" name="price" 
-                                                   step="0.01" min="0" value="{{ plan.price }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="order" class="form-label">Display Order</label>
-                                            <input type="number" class="form-control" id="order" name="order" 
-                                                   min="0" value="{{ plan.order }}">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="description" name="description" 
-                                              rows="3" placeholder="Brief description of the plan">{{ plan.description }}</textarea>
-                                </div>
-
-                                <!-- Usage Limits -->
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="monthly_api_limit" class="form-label">Monthly API Requests</label>
-                                            <input type="number" class="form-control" id="monthly_api_limit" 
-                                                   name="monthly_api_limit" min="0" value="{{ plan.monthly_api_limit }}">
-                                            <div class="form-text">Set to 0 for unlimited</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="monthly_token_limit" class="form-label">Monthly Token Limit</label>
-                                            <input type="number" class="form-control" id="monthly_token_limit" 
-                                                   name="monthly_token_limit" min="0" value="{{ plan.monthly_token_limit }}">
-                                            <div class="form-text">Set to 0 for unlimited</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Resource Limits -->
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="max_assistants" class="form-label">Max AI Assistants</label>
-                                            <input type="number" class="form-control" id="max_assistants" 
-                                                   name="max_assistants" min="1" value="{{ plan.max_assistants }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="max_knowledge_bases" class="form-label">Max Knowledge Bases</label>
-                                            <input type="number" class="form-control" id="max_knowledge_bases" 
-                                                   name="max_knowledge_bases" min="1" value="{{ plan.max_knowledge_bases }}">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Features -->
-                                <div class="mb-3">
-                                    <label for="features" class="form-label">Plan Features</label>
-                                    <textarea class="form-control" id="features" name="features" 
-                                              rows="5" placeholder="Enter one feature per line">{{ features_text }}</textarea>
-                                    <div class="form-text">Enter one feature per line, or provide JSON array</div>
-                                </div>
-
-                                <!-- Status -->
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_active" 
-                                               name="is_active" {% if plan.is_active %}checked{% endif %}>
-                                        <label class="form-check-label" for="is_active">
-                                            Active (available for new subscriptions)
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <a href="{% url 'subscription_plans' %}" class="btn btn-secondary me-md-2">Cancel</a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Update Plan
-                                    </button>
-                                </div>
-                            </form>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Plan Configuration</h5>
+                            <p class="text-muted small mb-0">Update subscription plan settings and limits</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Preview Card -->
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">Preview</h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="plan-preview" class="border rounded p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 id="preview-name" class="mb-0">{{ plan.name }}</h6>
-                                    <span id="preview-price" class="badge {% if plan.price > 0 %}bg-primary{% else %}bg-success{% endif %}">
-                                        {% if plan.price > 0 %}${{ plan.price }}/mo{% else %}Free{% endif %}
-                                    </span>
+                <div class="info-card-body">
+                    <form method="post" id="plan-form">
+                        {% csrf_token %}
+                                
+                        <!-- Basic Information Section -->
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <h6 class="fw-bold text-primary mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Basic Information
+                                </h6>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-lg-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="name" name="name" 
+                                               value="{{ plan.name }}" placeholder="Plan Name" required>
+                                        <label for="name">Plan Name *</label>
+                                    </div>
                                 </div>
-                                <p id="preview-description" class="text-muted small mb-3">{{ plan.description|default:"Plan description" }}</p>
-                                
-                                <ul class="list-unstyled small">
-                                    <li><i class="fas fa-api text-primary"></i> API: <span id="preview-api">{% if plan.monthly_api_limit > 0 %}{{ plan.monthly_api_limit }}{% else %}Unlimited{% endif %}</span>/month</li>
-                                    <li><i class="fas fa-coins text-warning"></i> Tokens: <span id="preview-tokens">{% if plan.monthly_token_limit > 0 %}{{ plan.monthly_token_limit }}{% else %}Unlimited{% endif %}</span>/month</li>
-                                    <li><i class="fas fa-robot text-info"></i> Assistants: <span id="preview-assistants">{{ plan.max_assistants }}</span></li>
-                                    <li><i class="fas fa-database text-success"></i> Knowledge Bases: <span id="preview-kb">{{ plan.max_knowledge_bases }}</span></li>
-                                </ul>
-                                
-                                <div id="preview-features" {% if not plan.features %}style="display: none;"{% endif %}>
-                                    <hr>
-                                    <ul id="preview-features-list" class="list-unstyled small">
-                                        {% for feature in plan.features %}
-                                            <li><i class="fas fa-check text-success"></i> {{ feature }}</li>
-                                        {% endfor %}
-                                    </ul>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="price" name="price" 
+                                               step="0.01" min="0" value="{{ plan.price }}" placeholder="Price">
+                                        <label for="price">Price ($)</label>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="order" name="order" 
+                                               min="0" value="{{ plan.order }}" placeholder="Display Order">
+                                        <label for="order">Display Order</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" id="description" name="description" 
+                                                  style="height: 100px" placeholder="Description">{{ plan.description }}</textarea>
+                                        <label for="description">Description</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Usage Limits Section -->
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <h6 class="fw-bold text-warning mb-0">
+                                    <i class="fas fa-chart-line me-2"></i>Usage Limits
+                                </h6>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="monthly_api_limit" 
+                                               name="monthly_api_limit" min="0" value="{{ plan.monthly_api_limit }}" placeholder="API Limit">
+                                        <label for="monthly_api_limit">Monthly API Requests</label>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle text-info me-1"></i>Set to 0 for unlimited
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="monthly_token_limit" 
+                                               name="monthly_token_limit" min="0" value="{{ plan.monthly_token_limit }}" placeholder="Token Limit">
+                                        <label for="monthly_token_limit">Monthly Token Limit</label>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle text-info me-1"></i>Set to 0 for unlimited
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resource Limits Section -->
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <h6 class="fw-bold text-success mb-0">
+                                    <i class="fas fa-server me-2"></i>Resource Limits
+                                </h6>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="max_assistants" 
+                                               name="max_assistants" min="1" value="{{ plan.max_assistants }}" placeholder="Max Assistants">
+                                        <label for="max_assistants">Max AI Assistants</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="number" class="form-control" id="max_knowledge_bases" 
+                                               name="max_knowledge_bases" min="1" value="{{ plan.max_knowledge_bases }}" placeholder="Max Knowledge Bases">
+                                        <label for="max_knowledge_bases">Max Knowledge Bases</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Features Section -->
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <h6 class="fw-bold text-info mb-0">
+                                    <i class="fas fa-star me-2"></i>Plan Features
+                                </h6>
+                            </div>
+                            <div class="form-floating">
+                                <textarea class="form-control" id="features" name="features" 
+                                          style="height: 120px" placeholder="Features">{{ features_text }}</textarea>
+                                <label for="features">Plan Features</label>
+                            </div>
+                            <div class="form-text mt-2">
+                                <i class="fas fa-lightbulb text-warning me-1"></i>Enter one feature per line, or provide JSON array
+                            </div>
+                        </div>
+
+                        <!-- Status Section -->
+                        <div class="form-section">
+                            <div class="form-section-header">
+                                <h6 class="fw-bold text-secondary mb-0">
+                                    <i class="fas fa-toggle-on me-2"></i>Status & Availability
+                                </h6>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" 
+                                       name="is_active" {% if plan.is_active %}checked{% endif %}>
+                                <label class="form-check-label fw-medium" for="is_active">
+                                    Active (available for new subscriptions)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-end">
+                                <a href="{% url 'subscription_plans' %}" class="btn-outline-modern order-sm-1">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn-primary-modern order-sm-2">
+                                    <i class="fas fa-save me-2"></i>Update Plan
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Sidebar -->
+        <div class="col-xl-4">
+            <!-- Plan Preview Card -->
+            <div class="info-card sticky-top">
+                <div class="info-card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-eye text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Live Preview</h6>
+                            <p class="text-muted small mb-0">See how your plan will look</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card-body">
+                    <div id="plan-preview" class="plan-preview-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h6 id="preview-name" class="mb-0 fw-bold">{{ plan.name }}</h6>
+                            <span id="preview-price" class="price-badge {% if plan.price > 0 %}price-paid{% else %}price-free{% endif %}">
+                                {% if plan.price > 0 %}${{ plan.price }}/mo{% else %}Free{% endif %}
+                            </span>
+                        </div>
+                        <p id="preview-description" class="text-muted small mb-3 lh-base">{{ plan.description|default:"Plan description will appear here" }}</p>
+                        
+                        <div class="preview-limits">
+                            <div class="limit-item">
+                                <i class="fas fa-api text-primary"></i>
+                                <span class="limit-label">API Requests:</span>
+                                <span id="preview-api" class="limit-value">{% if plan.monthly_api_limit > 0 %}{{ plan.monthly_api_limit|floatformat:0 }}{% else %}Unlimited{% endif %}/month</span>
+                            </div>
+                            <div class="limit-item">
+                                <i class="fas fa-coins text-warning"></i>
+                                <span class="limit-label">Tokens:</span>
+                                <span id="preview-tokens" class="limit-value">{% if plan.monthly_token_limit > 0 %}{{ plan.monthly_token_limit|floatformat:0 }}{% else %}Unlimited{% endif %}/month</span>
+                            </div>
+                            <div class="limit-item">
+                                <i class="fas fa-robot text-info"></i>
+                                <span class="limit-label">AI Assistants:</span>
+                                <span id="preview-assistants" class="limit-value">{{ plan.max_assistants }}</span>
+                            </div>
+                            <div class="limit-item">
+                                <i class="fas fa-database text-success"></i>
+                                <span class="limit-label">Knowledge Bases:</span>
+                                <span id="preview-kb" class="limit-value">{{ plan.max_knowledge_bases }}</span>
+                            </div>
+                        </div>
+                        
+                        <div id="preview-features" class="preview-features {% if not plan.features %}d-none{% endif %}">
+                            <hr class="my-3">
+                            <div class="features-header">
+                                <i class="fas fa-star text-warning me-1"></i>
+                                <span class="fw-medium small">Features included:</span>
+                            </div>
+                            <ul id="preview-features-list" class="features-list">
+                                {% for feature in plan.features %}
+                                    <li><i class="fas fa-check text-success"></i>{{ feature }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Usage Statistics Card -->
+            <div class="info-card mt-4">
+                <div class="info-card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-chart-bar text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Current Usage</h6>
+                            <p class="text-muted small mb-0">Plan statistics</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card-body">
+                    <div class="usage-stat">
+                        <div class="stat-icon bg-primary">
+                            <i class="fas fa-users text-white"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">{{ plan.user_count }}</div>
+                            <div class="stat-label">Active Users</div>
+                        </div>
                     </div>
                     
-                    <!-- Current Usage Info -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Current Usage</h6>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-2"><strong>{{ plan.user_count }}</strong> users currently on this plan</p>
-                            {% if plan.user_count > 0 %}
-                                <div class="alert alert-warning small">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    Changes to limits will affect existing users immediately.
+                    {% if plan.user_count > 0 %}
+                        <div class="alert alert-warning border-0 rounded-3 mt-3">
+                            <div class="d-flex align-items-start">
+                                <i class="fas fa-exclamation-triangle text-warning me-2 mt-1"></i>
+                                <div class="small">
+                                    <strong>Impact Notice:</strong> Changes to limits will affect all {{ plan.user_count }} existing user(s) immediately.
                                 </div>
-                                <a href="{% url 'plan_usage_stats' plan.id %}" class="btn btn-sm btn-outline-info">
-                                    <i class="fas fa-chart-bar"></i> View Detailed Stats
-                                </a>
-                            {% endif %}
+                            </div>
                         </div>
-                    </div>
+                        <div class="d-grid">
+                            <a href="{% url 'plan_usage_stats' plan.id %}" class="btn-outline-modern">
+                                <i class="fas fa-chart-line me-2"></i>View Detailed Stats
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info border-0 rounded-3 mt-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-info-circle text-info me-2"></i>
+                                <div class="small">No users are currently subscribed to this plan.</div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+/* Modern Admin Styling */
+:root {
+    --primary-color: #667eea;
+    --primary-dark: #5a6fd8;
+    --secondary-color: #764ba2;
+    --success-color: #48bb78;
+    --warning-color: #ed8936;
+    --info-color: #4299e1;
+    --danger-color: #f56565;
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --bg-light: #f7fafc;
+    --bg-white: #ffffff;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 1.5rem;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.header-actions .btn-outline-modern {
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.header-actions .btn-outline-modern:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    color: white;
+    text-decoration: none;
+}
+
+.info-card {
+    background: var(--bg-white);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.info-card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-card-body {
+    padding: 1.5rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.form-section-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.form-floating > .form-control {
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    padding: 1rem 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-floating > .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    transform: translateY(-1px);
+}
+
+.form-floating > label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e2e8f0;
+}
+
+.btn-primary-modern {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border: none;
+    color: white;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.btn-primary-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn-outline-modern {
+    color: var(--text-secondary);
+    border: 2px solid #e2e8f0;
+    background: white;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-modern:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+}
+
+.plan-preview-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.price-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.price-paid {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+}
+
+.price-free {
+    background: linear-gradient(135deg, var(--success-color) 0%, #38a169 100%);
+    color: white;
+}
+
+.preview-limits {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.limit-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.limit-item i {
+    width: 20px;
+    text-align: center;
+}
+
+.limit-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    min-width: 100px;
+}
+
+.limit-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-left: auto;
+}
+
+.preview-features {
+    margin-top: 1rem;
+}
+
+.features-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.features-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    padding: 0.25rem 0;
+}
+
+.features-list li i {
+    width: 16px;
+    text-align: center;
+}
+
+.usage-stat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem 1rem;
+        margin: -1rem -1rem 1.5rem -1rem;
+        border-radius: 0 0 15px 15px;
+    }
+    
+    .info-card-body {
+        padding: 1rem;
+    }
+    
+    .form-section {
+        padding: 1rem;
+    }
+    
+    .form-actions .btn-primary-modern,
+    .form-actions .btn-outline-modern {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .plan-preview-card {
+        padding: 1rem;
+    }
+    
+    .limit-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .limit-label {
+        min-width: auto;
+    }
+    
+    .limit-value {
+        margin-left: 0;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.bounce-in {
+    animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
+
 <script>
-// Real-time preview updates
+// Enhanced preview functionality with animations
 document.addEventListener('DOMContentLoaded', function() {
     const inputs = ['name', 'description', 'price', 'monthly_api_limit', 'monthly_token_limit', 'max_assistants', 'max_knowledge_bases', 'features'];
     
     inputs.forEach(inputName => {
         const input = document.getElementById(inputName);
         if (input) {
-            input.addEventListener('input', updatePreview);
+            input.addEventListener('input', debounce(updatePreview, 300));
+            
+            // Add focus animations
+            input.addEventListener('focus', function() {
+                this.closest('.form-floating, .form-section').classList.add('bounce-in');
+            });
         }
     });
+    
+    // Initialize form validation
+    initializeFormValidation();
+    
+    // Add loading states
+    const form = document.getElementById('plan-form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
 });
 
+// Debounce function for better performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 function updatePreview() {
-    // Basic info
+    // Get form values
     const name = document.getElementById('name').value || 'Plan Name';
-    const description = document.getElementById('description').value || 'Plan description';
+    const description = document.getElementById('description').value || 'Plan description will appear here';
     const price = parseFloat(document.getElementById('price').value) || 0;
     
-    // Limits
     const apiLimit = parseInt(document.getElementById('monthly_api_limit').value) || 0;
     const tokenLimit = parseInt(document.getElementById('monthly_token_limit').value) || 0;
     const maxAssistants = parseInt(document.getElementById('max_assistants').value) || 1;
     const maxKB = parseInt(document.getElementById('max_knowledge_bases').value) || 1;
     
-    // Features
     const featuresText = document.getElementById('features').value || '';
     
-    // Update preview
-    document.getElementById('preview-name').textContent = name;
-    document.getElementById('preview-description').textContent = description;
+    // Update preview with animations
+    updateElementWithAnimation('preview-name', name);
+    updateElementWithAnimation('preview-description', description);
     
-    // Price
+    // Update price badge
     const priceSpan = document.getElementById('preview-price');
-    if (price > 0) {
-        priceSpan.textContent = `$${price.toFixed(2)}/mo`;
-        priceSpan.className = 'badge bg-primary';
-    } else {
-        priceSpan.textContent = 'Free';
-        priceSpan.className = 'badge bg-success';
+    const newPriceText = price > 0 ? `$${price.toFixed(2)}/mo` : 'Free';
+    const newPriceClass = price > 0 ? 'price-badge price-paid' : 'price-badge price-free';
+    
+    if (priceSpan.textContent !== newPriceText) {
+        priceSpan.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+            priceSpan.textContent = newPriceText;
+            priceSpan.className = newPriceClass;
+            priceSpan.style.transform = 'scale(1)';
+        }, 150);
     }
     
-    // Limits
-    document.getElementById('preview-api').textContent = apiLimit > 0 ? apiLimit.toLocaleString() : 'Unlimited';
-    document.getElementById('preview-tokens').textContent = tokenLimit > 0 ? tokenLimit.toLocaleString() : 'Unlimited';
-    document.getElementById('preview-assistants').textContent = maxAssistants;
-    document.getElementById('preview-kb').textContent = maxKB;
+    // Update limits
+    updateElementWithAnimation('preview-api', apiLimit > 0 ? apiLimit.toLocaleString() : 'Unlimited');
+    updateElementWithAnimation('preview-tokens', tokenLimit > 0 ? tokenLimit.toLocaleString() : 'Unlimited');
+    updateElementWithAnimation('preview-assistants', maxAssistants.toString());
+    updateElementWithAnimation('preview-kb', maxKB.toString());
     
-    // Features
+    // Update features
+    updateFeatures(featuresText);
+}
+
+function updateElementWithAnimation(elementId, newValue) {
+    const element = document.getElementById(elementId);
+    if (element && element.textContent !== newValue) {
+        element.style.opacity = '0.5';
+        setTimeout(() => {
+            element.textContent = newValue;
+            element.style.opacity = '1';
+        }, 150);
+    }
+}
+
+function updateFeatures(featuresText) {
     const featuresList = document.getElementById('preview-features-list');
+    const featuresContainer = document.getElementById('preview-features');
+    
     featuresList.innerHTML = '';
     
     if (featuresText.trim()) {
@@ -256,18 +798,99 @@ function updatePreview() {
         }
         
         if (features.length > 0) {
-            document.getElementById('preview-features').style.display = 'block';
-            features.forEach(feature => {
+            featuresContainer.classList.remove('d-none');
+            features.forEach((feature, index) => {
                 const li = document.createElement('li');
-                li.innerHTML = `<i class="fas fa-check text-success"></i> ${feature.trim()}`;
+                li.innerHTML = `<i class="fas fa-check text-success"></i>${feature.trim()}`;
+                li.style.animationDelay = `${index * 0.1}s`;
+                li.classList.add('fade-in');
                 featuresList.appendChild(li);
             });
         } else {
-            document.getElementById('preview-features').style.display = 'none';
+            featuresContainer.classList.add('d-none');
         }
     } else {
-        document.getElementById('preview-features').style.display = 'none';
+        featuresContainer.classList.add('d-none');
     }
 }
+
+function initializeFormValidation() {
+    const form = document.getElementById('plan-form');
+    if (!form) return;
+    
+    const inputs = form.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid')) {
+                validateField(this);
+            }
+        });
+    });
+}
+
+function validateField(field) {
+    const value = field.value.trim();
+    let isValid = true;
+    let errorMessage = '';
+    
+    // Basic validation rules
+    if (field.hasAttribute('required') && !value) {
+        isValid = false;
+        errorMessage = 'This field is required';
+    } else if (field.type === 'number' && value && isNaN(value)) {
+        isValid = false;
+        errorMessage = 'Please enter a valid number';
+    } else if (field.type === 'number' && field.hasAttribute('min') && parseFloat(value) < parseFloat(field.getAttribute('min'))) {
+        isValid = false;
+        errorMessage = `Minimum value is ${field.getAttribute('min')}`;
+    }
+    
+    // Update field appearance
+    if (isValid) {
+        field.classList.remove('is-invalid');
+        field.classList.add('is-valid');
+        removeErrorMessage(field);
+    } else {
+        field.classList.remove('is-valid');
+        field.classList.add('is-invalid');
+        showErrorMessage(field, errorMessage);
+    }
+    
+    return isValid;
+}
+
+function showErrorMessage(field, message) {
+    removeErrorMessage(field);
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'invalid-feedback';
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    
+    field.parentNode.appendChild(errorDiv);
+}
+
+function removeErrorMessage(field) {
+    const existingError = field.parentNode.querySelector('.invalid-feedback');
+    if (existingError) {
+        existingError.remove();
+    }
+}
+
+// Mobile responsiveness
+function handleMobileLayout() {
+    if (window.innerWidth <= 768) {
+        document.querySelectorAll('.info-card').forEach(card => {
+            card.style.marginBottom = '1rem';
+        });
+    }
+}
+
+window.addEventListener('resize', debounce(handleMobileLayout, 250));
+handleMobileLayout();
 </script>
 {% endblock %}

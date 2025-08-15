@@ -85,17 +85,20 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            text-decoration: none !important;
         }
         
         .nav-link-modern:hover {
             color: var(--white) !important;
             background: rgba(0, 173, 181, 0.1);
             transform: translateY(-1px);
+            text-decoration: none !important;
         }
         
         .nav-link-modern.active {
             color: var(--white) !important;
             background: rgba(0, 173, 181, 0.2);
+            text-decoration: none !important;
         }
         
         .dropdown-menu-modern {
@@ -116,12 +119,14 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            text-decoration: none !important;
         }
         
         .dropdown-item-modern:hover {
             background: rgba(0, 173, 181, 0.1);
             color: var(--white);
             transform: translateX(4px);
+            text-decoration: none !important;
         }
         
         .navbar-toggler-modern {
@@ -365,9 +370,9 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-modern">
                                 <li>
-                                    <a class="dropdown-item-modern" href="{% url 'dashboard' %}">
-                                        <i class="fas fa-tachometer-alt"></i>
-                                        <span>Profile</span>
+                                    <a class="dropdown-item-modern" href="{% url 'user_settings' %}">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Settings</span>
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,0.1);"></li>

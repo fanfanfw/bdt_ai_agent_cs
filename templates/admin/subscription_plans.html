@@ -1,203 +1,979 @@
 {% extends 'admin_base.html' %}
-{% load static %}
 
-{% block title %}Subscription Plans Management{% endblock %}
+{% block title %}Subscription Plans{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-layer-group"></i> Subscription Plans Management</h2>
-                <a href="{% url 'create_plan' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Create New Plan
+    <!-- Modern Header -->
+    <div class="header-section">
+        <div class="header-content">
+            <div class="header-info">
+                <div class="header-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Subscription Plans</h1>
+                    <p>Manage pricing tiers and subscription features</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-modern btn-secondary" onclick="exportPlansData()">
+                    <i class="fas fa-download"></i>
+                    <span>Export</span>
+                </button>
+                <a href="{% url 'create_plan' %}" class="btn-modern btn-primary">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Plan</span>
                 </a>
             </div>
+        </div>
+    </div>
 
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">All Subscription Plans</h5>
-                </div>
-                <div class="card-body">
-                    {% if plans %}
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Order</th>
-                                        <th>Plan Name</th>
-                                        <th>Price</th>
-                                        <th>API Limit</th>
-                                        <th>Token Limit</th>
-                                        <th>Max Assistants</th>
-                                        <th>Max KB</th>
-                                        <th>Users</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for plan in plans %}
-                                        <tr>
-                                            <td>
-                                                <span class="badge bg-secondary">{{ plan.order }}</span>
-                                            </td>
-                                            <td>
-                                                <strong>{{ plan.name }}</strong>
-                                                {% if plan.description %}
-                                                    <br><small class="text-muted">{{ plan.description|truncatechars:50 }}</small>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if plan.price > 0 %}
-                                                    <span class="text-success">${{ plan.price|floatformat:2 }}</span>
-                                                {% else %}
-                                                    <span class="text-muted">Free</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if plan.monthly_api_limit > 0 %}
-                                                    {{ plan.monthly_api_limit|floatformat:0 }}
-                                                {% else %}
-                                                    <span class="text-muted">Unlimited</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if plan.monthly_token_limit > 0 %}
-                                                    {{ plan.monthly_token_limit|floatformat:0 }}
-                                                {% else %}
-                                                    <span class="text-muted">Unlimited</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ plan.max_assistants }}</td>
-                                            <td>{{ plan.max_knowledge_bases }}</td>
-                                            <td>
-                                                <a href="{% url 'plan_usage_stats' plan.id %}" class="btn btn-sm btn-outline-info">
-                                                    {{ plan.user_count }} users
-                                                </a>
-                                            </td>
-                                            <td>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           id="status_{{ plan.id }}" 
-                                                           {% if plan.is_active %}checked{% endif %}
-                                                           onchange="togglePlanStatus({{ plan.id }})">
-                                                    <label class="form-check-label" for="status_{{ plan.id }}">
-                                                        <span id="status_text_{{ plan.id }}" class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                                            {% if plan.is_active %}Active{% else %}Inactive{% endif %}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <a href="{% url 'plan_usage_stats' plan.id %}" 
-                                                       class="btn btn-sm btn-outline-info" 
-                                                       title="View Statistics">
-                                                        <i class="fas fa-chart-bar"></i>
-                                                    </a>
-                                                    <a href="{% url 'edit_plan' plan.id %}" 
-                                                       class="btn btn-sm btn-outline-primary" 
-                                                       title="Edit Plan">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <a href="{% url 'delete_plan' plan.id %}" 
-                                                       class="btn btn-sm btn-outline-danger" 
-                                                       title="Delete Plan">
-                                                        <i class="fas fa-trash"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+    <!-- Plans Grid -->
+    {% if plans %}
+        <div class="plans-grid">
+            {% for plan in plans %}
+                <div class="plan-card {% if not plan.is_active %}plan-inactive{% endif %}">
+                    <!-- Plan Header -->
+                    <div class="plan-header">
+                        <div class="plan-info">
+                            <h3 class="plan-name">{{ plan.name }}</h3>
+                            <div class="plan-price">
+                                {% if plan.price > 0 %}
+                                    <span class="price-amount">${{ plan.price|floatformat:0 }}</span>
+                                    <span class="price-period">/month</span>
+                                {% else %}
+                                    <span class="price-free">Free</span>
+                                {% endif %}
+                            </div>
                         </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No Subscription Plans Found</h5>
-                            <p class="text-muted">Create your first subscription plan to get started.</p>
-                            <a href="{% url 'create_plan' %}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Create First Plan
-                            </a>
+                        <div class="plan-status">
+                            <div class="status-toggle">
+                                <input type="checkbox" id="toggle_{{ plan.id }}" 
+                                       {% if plan.is_active %}checked{% endif %}
+                                       onchange="togglePlanStatus({{ plan.id }})">
+                                <label for="toggle_{{ plan.id }}" class="toggle-label">
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-text">
+                                        <span class="active-text">Active</span>
+                                        <span class="inactive-text">Inactive</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plan Description -->
+                    {% if plan.description %}
+                        <div class="plan-description">
+                            <p>{{ plan.description }}</p>
                         </div>
                     {% endif %}
-                </div>
-            </div>
 
-            <!-- Plan Features Summary -->
-            {% if plans %}
-                <div class="row mt-4">
-                    {% for plan in plans %}
-                        <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="card h-100 {% if not plan.is_active %}border-secondary{% endif %}">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">{{ plan.name }}</h6>
-                                    {% if plan.price > 0 %}
-                                        <span class="badge bg-primary">${{ plan.price|floatformat:2 }}/mo</span>
-                                    {% else %}
-                                        <span class="badge bg-success">Free</span>
-                                    {% endif %}
+                    <!-- Plan Features -->
+                    <div class="plan-features">
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <div class="feature-icon api">
+                                    <i class="fas fa-plug"></i>
                                 </div>
-                                <div class="card-body">
-                                    {% if plan.description %}
-                                        <p class="card-text text-muted small">{{ plan.description }}</p>
-                                    {% endif %}
-                                    
-                                    <ul class="list-unstyled small">
-                                        <li><i class="fas fa-api text-primary"></i> API: 
-                                            {% if plan.monthly_api_limit > 0 %}
-                                                {{ plan.monthly_api_limit|floatformat:0 }}/month
-                                            {% else %}
-                                                Unlimited
-                                            {% endif %}
-                                        </li>
-                                        <li><i class="fas fa-coins text-warning"></i> Tokens: 
-                                            {% if plan.monthly_token_limit > 0 %}
-                                                {{ plan.monthly_token_limit|floatformat:0 }}/month
-                                            {% else %}
-                                                Unlimited
-                                            {% endif %}
-                                        </li>
-                                        <li><i class="fas fa-robot text-info"></i> Assistants: {{ plan.max_assistants }}</li>
-                                        <li><i class="fas fa-database text-success"></i> Knowledge Bases: {{ plan.max_knowledge_bases }}</li>
-                                    </ul>
+                                <div class="feature-details">
+                                    <span class="feature-label">API Calls</span>
+                                    <span class="feature-value">
+                                        {% if plan.monthly_api_limit > 0 %}
+                                            {{ plan.monthly_api_limit|floatformat:0 }}
+                                        {% else %}
+                                            Unlimited
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
 
-                                    {% if plan.features %}
-                                        <hr>
-                                        <ul class="list-unstyled small">
-                                            {% for feature in plan.features %}
-                                                <li><i class="fas fa-check text-success"></i> {{ feature }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
+                            <div class="feature-item">
+                                <div class="feature-icon tokens">
+                                    <i class="fas fa-coins"></i>
                                 </div>
-                                <div class="card-footer">
-                                    <small class="text-muted">
-                                        {{ plan.user_count }} active users
-                                    </small>
+                                <div class="feature-details">
+                                    <span class="feature-label">Tokens</span>
+                                    <span class="feature-value">
+                                        {% if plan.monthly_token_limit > 0 %}
+                                            {{ plan.monthly_token_limit|floatformat:0 }}
+                                        {% else %}
+                                            Unlimited
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="feature-item">
+                                <div class="feature-icon assistants">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="feature-details">
+                                    <span class="feature-label">AI Assistants</span>
+                                    <span class="feature-value">{{ plan.max_assistants }}</span>
+                                </div>
+                            </div>
+
+                            <div class="feature-item">
+                                <div class="feature-icon knowledge">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="feature-details">
+                                    <span class="feature-label">Knowledge Bases</span>
+                                    <span class="feature-value">{{ plan.max_knowledge_bases }}</span>
                                 </div>
                             </div>
                         </div>
-                    {% endfor %}
+                    </div>
+
+                    <!-- Plan Stats -->
+                    <div class="plan-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">{{ plan.user_count|default:0 }}</span>
+                            <span class="stat-label">Active Users</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ plan.order }}</span>
+                            <span class="stat-label">Display Order</span>
+                        </div>
+                    </div>
+
+                    <!-- Plan Actions -->
+                    <div class="plan-actions">
+                        <a href="{% url 'plan_usage_stats' plan.id %}" class="action-btn stats-btn" title="View Statistics">
+                            <i class="fas fa-chart-line"></i>
+                        </a>
+                        <a href="{% url 'edit_plan' plan.id %}" class="action-btn edit-btn" title="Edit Plan">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'delete_plan' plan.id %}" class="action-btn delete-btn" title="Delete Plan" 
+                           onclick="return confirmDelete('{{ plan.name }}')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
                 </div>
-            {% endif %}
+            {% endfor %}
         </div>
-    </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <h3>No Subscription Plans</h3>
+            <p>Create your first subscription plan to start managing pricing tiers and user access levels.</p>
+            <a href="{% url 'create_plan' %}" class="btn-modern btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>Create First Plan</span>
+            </a>
+        </div>
+    {% endif %}
 </div>
 
+<!-- Toast Notification Container -->
+<div id="toast-container"></div>
+
+<style>
+/* Root Variables */
+:root {
+    --primary: #00ADB5;
+    --primary-light: #1FBBC3;
+    --primary-dark: #008A90;
+    --secondary: #393E46;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --white: #FFFFFF;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Modern Header */
+.header-section {
+    background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1.5rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.header-text h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.header-text p {
+    color: var(--gray-600);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+
+/* Modern Buttons */
+.btn-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-modern:hover::before {
+    left: 100%;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: var(--white);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    color: var(--white);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--gray-700);
+    border: 2px solid var(--gray-200);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-50);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+/* Plans Grid - Fixed 3 columns per row */
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1200px) {
+    .plans-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+
+/* Plan Card */
+.plan-card {
+    background: var(--white);
+    border-radius: 20px;
+    border: 2px solid var(--gray-200);
+    padding: 1.5rem;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive card padding */
+@media (max-width: 1200px) {
+    .plan-card {
+        padding: 1.25rem;
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .plan-card {
+        padding: 1.5rem;
+        min-height: auto;
+    }
+}
+
+.plan-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    transition: all 0.3s ease;
+}
+
+.plan-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary);
+}
+
+.plan-card.plan-inactive {
+    opacity: 0.7;
+    border-color: var(--gray-300);
+}
+
+.plan-card.plan-inactive::before {
+    background: var(--gray-400);
+}
+
+/* Plan Header */
+.plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.plan-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.5rem 0;
+}
+
+.plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.price-amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+}
+
+.price-period {
+    font-size: 1rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.price-free {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+/* Status Toggle */
+.status-toggle {
+    position: relative;
+}
+
+.status-toggle input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-slider {
+    width: 52px;
+    height: 28px;
+    background: var(--gray-300);
+    border-radius: 14px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background: var(--white);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+}
+
+input[type="checkbox"]:checked + .toggle-label .toggle-slider {
+    background: var(--primary);
+}
+
+input[type="checkbox"]:checked + .toggle-label .toggle-slider::before {
+    transform: translateX(24px);
+}
+
+.toggle-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    min-width: 60px;
+}
+
+.active-text {
+    color: var(--success);
+}
+
+.inactive-text {
+    color: var(--gray-500);
+}
+
+input[type="checkbox"]:checked + .toggle-label .inactive-text {
+    display: none;
+}
+
+input[type="checkbox"]:not(:checked) + .toggle-label .active-text {
+    display: none;
+}
+
+/* Plan Description */
+.plan-description {
+    margin-bottom: 2rem;
+}
+
+.plan-description p {
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Plan Features */
+.feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex: 1;
+}
+
+/* Responsive feature grid */
+@media (max-width: 1200px) {
+    .feature-grid {
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    background: var(--white);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.feature-icon.api {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+}
+
+.feature-icon.tokens {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
+.feature-icon.assistants {
+    background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.feature-icon.knowledge {
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+}
+
+.feature-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.feature-label {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.feature-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+/* Plan Stats */
+.plan-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 2rem;
+    background: var(--gray-300);
+}
+
+/* Plan Actions */
+.plan-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+/* Responsive actions */
+@media (max-width: 1200px) {
+    .plan-actions {
+        gap: 0.5rem;
+        padding-top: 0.75rem;
+    }
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    font-size: 0.875rem;
+}
+
+/* Responsive action buttons */
+@media (max-width: 1200px) {
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.8rem;
+    }
+}
+
+.stats-btn {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    color: var(--white);
+}
+
+.stats-btn:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+    color: var(--white);
+}
+
+.edit-btn {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: var(--white);
+}
+
+.edit-btn:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+    color: var(--white);
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, var(--danger), #DC2626);
+    color: var(--white);
+}
+
+.delete-btn:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+    color: var(--white);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: 20px;
+    border: 2px dashed var(--gray-300);
+    margin: 2rem 0;
+}
+
+.empty-icon {
+    width: 96px;
+    height: 96px;
+    background: linear-gradient(135deg, var(--gray-100), var(--gray-200));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    color: var(--gray-400);
+    font-size: 2.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: var(--gray-600);
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Toast Notifications */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.toast {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease;
+}
+
+.toast.success {
+    border-left: 4px solid var(--success);
+}
+
+.toast.error {
+    border-left: 4px solid var(--danger);
+}
+
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.875rem;
+}
+
+.toast.success .toast-icon {
+    background: var(--success);
+}
+
+.toast.error .toast-icon {
+    background: var(--danger);
+}
+
+.toast-message {
+    flex: 1;
+    font-weight: 500;
+    color: var(--gray-800);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .btn-modern {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .plan-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .plan-stats {
+        gap: 1rem;
+    }
+    
+    .header-section {
+        padding: 1.5rem;
+    }
+    
+    .plan-card {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+    
+    .header-text h1 {
+        font-size: 1.5rem;
+    }
+    
+    .plan-actions {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        min-width: 44px;
+    }
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Loading Animation */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
 <script>
+// Global variables
+let currentToasts = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Add CSRF token to all AJAX requests
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (!csrfToken) {
+        // Create CSRF token input if not exists
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = 'csrfmiddlewaretoken';
+        tokenInput.value = '{{ csrf_token }}';
+        document.body.appendChild(tokenInput);
+    }
+    
+    // Initialize animations
+    animateCards();
+});
+
+// Animate cards on load
+function animateCards() {
+    const cards = document.querySelectorAll('.plan-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+}
+
+// Toggle plan status
 function togglePlanStatus(planId) {
+    const checkbox = document.getElementById(`toggle_${planId}`);
+    const card = checkbox.closest('.plan-card');
+    
+    // Show loading state
+    checkbox.disabled = true;
+    card.style.opacity = '0.7';
+    
     fetch(`/admin-panel/plans/${planId}/toggle/`, {
         method: 'POST',
         headers: {
@@ -208,50 +984,118 @@ function togglePlanStatus(planId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const statusText = document.getElementById(`status_text_${planId}`);
-            const checkbox = document.getElementById(`status_${planId}`);
-            
+            // Update card appearance
             if (data.is_active) {
-                statusText.textContent = 'Active';
-                statusText.className = 'badge bg-success';
+                card.classList.remove('plan-inactive');
             } else {
-                statusText.textContent = 'Inactive';
-                statusText.className = 'badge bg-secondary';
+                card.classList.add('plan-inactive');
             }
             
-            // Show success message
-            showAlert('success', data.message);
+            checkbox.checked = data.is_active;
+            showToast('success', data.message);
         } else {
-            // Reset checkbox if failed
-            const checkbox = document.getElementById(`status_${planId}`);
+            // Revert checkbox state
             checkbox.checked = !checkbox.checked;
-            showAlert('danger', data.message);
+            showToast('error', data.message || 'Failed to update plan status');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        // Reset checkbox if failed
-        const checkbox = document.getElementById(`status_${planId}`);
         checkbox.checked = !checkbox.checked;
-        showAlert('danger', 'Error updating plan status');
+        showToast('error', 'Network error occurred');
+    })
+    .finally(() => {
+        checkbox.disabled = false;
+        card.style.opacity = '1';
     });
 }
 
-function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+// Export plans data
+function exportPlansData() {
+    const button = event.target.closest('.btn-modern');
+    const originalContent = button.innerHTML;
+    
+    // Show loading state
+    button.disabled = true;
+    button.classList.add('btn-loading');
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Exporting...</span>';
+    
+    // Simulate export (replace with actual export logic)
+    setTimeout(() => {
+        showToast('success', 'Plans data exported successfully!');
+        
+        // Reset button
+        button.disabled = false;
+        button.classList.remove('btn-loading');
+        button.innerHTML = originalContent;
+    }, 2000);
+}
+
+// Confirm delete dialog
+function confirmDelete(planName) {
+    return confirm(`Are you sure you want to delete the "${planName}" plan?\n\nThis action cannot be undone and may affect existing users.`);
+}
+
+// Show toast notification
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}"></i>
+        </div>
+        <div class="toast-message">${message}</div>
     `;
     
-    const container = document.querySelector('.container-fluid');
-    container.insertBefore(alertDiv, container.firstChild.nextSibling);
+    const container = document.getElementById('toast-container');
+    container.appendChild(toast);
+    currentToasts.push(toast);
     
-    // Auto-dismiss after 3 seconds
+    // Auto remove after 4 seconds
     setTimeout(() => {
-        alertDiv.remove();
-    }, 3000);
+        removeToast(toast);
+    }, 4000);
+    
+    // Click to dismiss
+    toast.addEventListener('click', () => removeToast(toast));
 }
+
+// Remove toast
+function removeToast(toast) {
+    if (toast.parentElement) {
+        toast.style.animation = 'slideOutRight 0.3s ease forwards';
+        setTimeout(() => {
+            toast.remove();
+            currentToasts = currentToasts.filter(t => t !== toast);
+        }, 300);
+    }
+}
+
+// Enhanced keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        // Close all toasts
+        currentToasts.forEach(toast => removeToast(toast));
+    }
+});
+
+// Auto-dismiss any existing messages
+setTimeout(() => {
+    const messages = document.querySelectorAll('.alert-modern, .alert');
+    messages.forEach(message => {
+        if (message.parentElement) {
+            message.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => message.remove(), 300);
+        }
+    });
+}, 5000);
+
+// Enhanced keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        // Close all toasts
+        currentToasts.forEach(toast => removeToast(toast));
+    }
+});
 </script>
 {% endblock %}

@@ -4,126 +4,228 @@
 {% block title %}Delete Subscription Plan{% endblock %}
 
 {% block content %}
+<!-- Modern Page Header -->
+<div class="page-header danger-header">
+    <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <div class="d-flex align-items-center">
+            <div class="bg-gradient-danger rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-trash text-white fs-3"></i>
+            </div>
+            <div>
+                <h1 class="h2 mb-0 fw-bold text-white">Delete Subscription Plan</h1>
+                <p class="text-white-50 mt-1 mb-0">Permanently remove "{{ plan.name }}" from the system</p>
+            </div>
+        </div>
+        <div class="header-actions mt-3 mt-md-0">
+            <a href="{% url 'subscription_plans' %}" class="btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back to Plans
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Messages -->
+{% if messages %}
+    <div class="container-fluid">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+                <div class="d-flex align-items-center">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- Main Content -->
 <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-trash text-danger"></i> Delete Subscription Plan</h2>
-                <a href="{% url 'subscription_plans' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Plans
-                </a>
-            </div>
-
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="col-xl-10">
+            <!-- Danger Warning Card -->
+            <div class="danger-card">
+                <div class="danger-card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-gradient-danger rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-exclamation-triangle text-white"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-white">Confirm Plan Deletion</h5>
+                            <p class="text-white-75 small mb-0">This action cannot be undone</p>
+                        </div>
                     </div>
-                {% endfor %}
-            {% endif %}
-
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h5>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-warning">
-                        <h6><i class="fas fa-warning"></i> Warning!</h6>
-                        You are about to permanently delete the subscription plan: <strong>"{{ plan.name }}"</strong>
-                    </div>
-
-                    <!-- Plan Details -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Plan Details:</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Name:</strong> {{ plan.name }}</li>
-                                <li><strong>Price:</strong> 
-                                    {% if plan.price > 0 %}
-                                        ${{ plan.price }}/month
-                                    {% else %}
-                                        Free
-                                    {% endif %}
-                                </li>
-                                <li><strong>API Limit:</strong> 
-                                    {% if plan.monthly_api_limit > 0 %}
-                                        {{ plan.monthly_api_limit|floatformat:0 }}/month
-                                    {% else %}
-                                        Unlimited
-                                    {% endif %}
-                                </li>
-                                <li><strong>Token Limit:</strong> 
-                                    {% if plan.monthly_token_limit > 0 %}
-                                        {{ plan.monthly_token_limit|floatformat:0 }}/month
-                                    {% else %}
-                                        Unlimited
-                                    {% endif %}
-                                </li>
-                                <li><strong>Status:</strong> 
-                                    {% if plan.is_active %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    {% endif %}
-                                </li>
-                            </ul>
+                <div class="danger-card-body">
+                    <!-- Main Warning -->
+                    <div class="warning-alert">
+                        <div class="warning-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <div class="col-md-6">
-                            <h6>Usage Information:</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Current Users:</strong> 
-                                    {% if users_count > 0 %}
-                                        <span class="badge bg-warning text-dark">{{ users_count }} users</span>
-                                    {% else %}
-                                        <span class="badge bg-success">No users</span>
-                                    {% endif %}
-                                </li>
-                                {% if plan.features %}
-                                    <li><strong>Features:</strong></li>
-                                    <ul class="small">
-                                        {% for feature in plan.features %}
-                                            <li>{{ feature }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </div>
-
-                    {% if users_count > 0 %}
-                        <div class="alert alert-danger">
-                            <h6><i class="fas fa-times-circle"></i> Cannot Delete Plan</h6>
-                            <p class="mb-0">
-                                This plan cannot be deleted because it is currently being used by <strong>{{ users_count }}</strong> user(s). 
-                                You must first migrate all users to different plans before deletion is possible.
+                        <div class="warning-content">
+                            <h6 class="warning-title">Permanent Deletion Warning</h6>
+                            <p class="warning-text">
+                                You are about to permanently delete the subscription plan: 
+                                <strong class="plan-name">"{{ plan.name }}"</strong>
                             </p>
                         </div>
+                    </div>
+
+                    <!-- Plan Details Grid -->
+                    <div class="row g-4 mt-3">
+                        <!-- Plan Information -->
+                        <div class="col-md-6">
+                            <div class="info-section">
+                                <div class="info-section-header">
+                                    <h6 class="fw-bold text-primary">
+                                        <i class="fas fa-info-circle me-2"></i>Plan Details
+                                    </h6>
+                                </div>
+                                <div class="info-list">
+                                    <div class="info-item">
+                                        <span class="info-label">Name:</span>
+                                        <span class="info-value fw-bold">{{ plan.name }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Price:</span>
+                                        <span class="info-value">
+                                            {% if plan.price > 0 %}
+                                                <span class="price-badge price-paid">${{ plan.price }}/month</span>
+                                            {% else %}
+                                                <span class="price-badge price-free">Free</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">API Limit:</span>
+                                        <span class="info-value">
+                                            {% if plan.monthly_api_limit > 0 %}
+                                                {{ plan.monthly_api_limit|floatformat:0 }}/month
+                                            {% else %}
+                                                <span class="unlimited-badge">Unlimited</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Token Limit:</span>
+                                        <span class="info-value">
+                                            {% if plan.monthly_token_limit > 0 %}
+                                                {{ plan.monthly_token_limit|floatformat:0 }}/month
+                                            {% else %}
+                                                <span class="unlimited-badge">Unlimited</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Status:</span>
+                                        <span class="info-value">
+                                            {% if plan.is_active %}
+                                                <span class="status-badge status-active">Active</span>
+                                            {% else %}
+                                                <span class="status-badge status-inactive">Inactive</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'subscription_plans' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Back to Plans
+                        <!-- Usage Information -->
+                        <div class="col-md-6">
+                            <div class="info-section">
+                                <div class="info-section-header">
+                                    <h6 class="fw-bold text-warning">
+                                        <i class="fas fa-chart-bar me-2"></i>Usage Information
+                                    </h6>
+                                </div>
+                                <div class="usage-summary">
+                                    <div class="usage-stat-card">
+                                        <div class="usage-icon">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="usage-info">
+                                            <div class="usage-number">{{ users_count }}</div>
+                                            <div class="usage-label">Active Users</div>
+                                        </div>
+                                        {% if users_count > 0 %}
+                                            <div class="usage-status danger">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </div>
+                                        {% else %}
+                                            <div class="usage-status safe">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if plan.features %}
+                                        <div class="features-preview">
+                                            <h6 class="features-title">
+                                                <i class="fas fa-star text-warning me-1"></i>Features:
+                                            </h6>
+                                            <ul class="features-mini-list">
+                                                {% for feature in plan.features %}
+                                                    <li>{{ feature }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Decision Section -->
+                    {% if users_count > 0 %}
+                        <div class="decision-section cannot-delete">
+                            <div class="decision-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="decision-content">
+                                <h6 class="decision-title">Cannot Delete Plan</h6>
+                                <p class="decision-text">
+                                    This plan cannot be deleted because it is currently being used by <strong>{{ users_count }}</strong> user(s). 
+                                    You must first migrate all users to different plans before deletion is possible.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons blocked">
+                            <a href="{% url 'subscription_plans' %}" class="btn-outline-modern">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Plans
                             </a>
-                            <a href="{% url 'plan_usage_stats' plan.id %}" class="btn btn-info">
-                                <i class="fas fa-users"></i> View Users on This Plan
+                            <a href="{% url 'plan_usage_stats' plan.id %}" class="btn-info-modern">
+                                <i class="fas fa-users me-2"></i>View Users on This Plan
                             </a>
                         </div>
                     {% else %}
-                        <div class="alert alert-info">
-                            <h6><i class="fas fa-info-circle"></i> Safe to Delete</h6>
-                            <p class="mb-0">
-                                This plan is not currently being used by any users and can be safely deleted.
-                            </p>
+                        <div class="decision-section can-delete">
+                            <div class="decision-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="decision-content">
+                                <h6 class="decision-title">Safe to Delete</h6>
+                                <p class="decision-text">
+                                    This plan is not currently being used by any users and can be safely deleted.
+                                    This action is permanent and cannot be undone.
+                                </p>
+                            </div>
                         </div>
 
-                        <form method="post" class="mt-4">
+                        <form method="post" id="delete-form" class="mt-4">
                             {% csrf_token %}
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <a href="{% url 'subscription_plans' %}" class="btn btn-secondary me-md-2">
-                                    <i class="fas fa-times"></i> Cancel
+                            <div class="action-buttons">
+                                <a href="{% url 'subscription_plans' %}" class="btn-outline-modern">
+                                    <i class="fas fa-times me-2"></i>Cancel
                                 </a>
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure you want to delete this plan? This action cannot be undone.')">
-                                    <i class="fas fa-trash"></i> Yes, Delete Plan
+                                <button type="button" class="btn-danger-modern" onclick="confirmDeletion()">
+                                    <i class="fas fa-trash me-2"></i>Yes, Delete Plan
                                 </button>
                             </div>
                         </form>
@@ -131,22 +233,60 @@
                 </div>
             </div>
 
+            <!-- Alternative Actions Card -->
             {% if users_count > 0 %}
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">Alternative Actions</h6>
+                <div class="info-card mt-4">
+                    <div class="info-card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-tools text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Alternative Actions</h6>
+                                <p class="text-muted small mb-0">Consider these options instead of deletion</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p>Instead of deleting this plan, you might want to:</p>
-                        <div class="d-grid gap-2 d-md-flex">
-                            <a href="{% url 'edit_plan' plan.id %}" class="btn btn-outline-primary">
-                                <i class="fas fa-edit"></i> Deactivate Plan
+                    <div class="info-card-body">
+                        <p class="text-muted mb-3">Instead of deleting this plan, you might want to:</p>
+                        <div class="alternative-actions">
+                            <a href="{% url 'edit_plan' plan.id %}" class="action-card">
+                                <div class="action-icon bg-warning">
+                                    <i class="fas fa-toggle-off text-white"></i>
+                                </div>
+                                <div class="action-content">
+                                    <div class="action-title">Deactivate Plan</div>
+                                    <div class="action-description">Hide from new subscriptions but keep existing users</div>
+                                </div>
+                                <div class="action-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
                             </a>
-                            <a href="{% url 'edit_plan' plan.id %}" class="btn btn-outline-warning">
-                                <i class="fas fa-edit"></i> Modify Plan Limits
+                            
+                            <a href="{% url 'edit_plan' plan.id %}" class="action-card">
+                                <div class="action-icon bg-info">
+                                    <i class="fas fa-edit text-white"></i>
+                                </div>
+                                <div class="action-content">
+                                    <div class="action-title">Modify Plan Limits</div>
+                                    <div class="action-description">Adjust API limits, pricing, or features</div>
+                                </div>
+                                <div class="action-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
                             </a>
-                            <a href="{% url 'plan_usage_stats' plan.id %}" class="btn btn-outline-info">
-                                <i class="fas fa-chart-bar"></i> View Usage Statistics
+                            
+                            <a href="{% url 'plan_usage_stats' plan.id %}" class="action-card">
+                                <div class="action-icon bg-success">
+                                    <i class="fas fa-chart-bar text-white"></i>
+                                </div>
+                                <div class="action-content">
+                                    <div class="action-title">View Usage Statistics</div>
+                                    <div class="action-description">Analyze plan performance and user activity</div>
+                                </div>
+                                <div class="action-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
                             </a>
                         </div>
                     </div>
@@ -155,4 +295,845 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Modern Admin Styling */
+:root {
+    --primary-color: #667eea;
+    --primary-dark: #5a6fd8;
+    --secondary-color: #764ba2;
+    --success-color: #48bb78;
+    --warning-color: #ed8936;
+    --info-color: #4299e1;
+    --danger-color: #f56565;
+    --danger-dark: #e53e3e;
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --bg-light: #f7fafc;
+    --bg-white: #ffffff;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-dark) 100%);
+}
+
+.page-header.danger-header {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+    padding: 2rem 1.5rem;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.header-actions .btn-outline-light {
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.header-actions .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    color: white;
+    text-decoration: none;
+}
+
+.danger-card {
+    background: var(--bg-white);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    border: 2px solid var(--danger-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.danger-card-header {
+    background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-dark) 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--danger-color);
+}
+
+.danger-card-body {
+    padding: 2rem;
+}
+
+.text-white-75 {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.warning-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+    border: 2px solid #feb2b2;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.warning-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--danger-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.warning-content {
+    flex: 1;
+}
+
+.warning-title {
+    color: var(--danger-color);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.warning-text {
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.plan-name {
+    color: var(--danger-color);
+    background: rgba(245, 101, 101, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.info-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+.info-section-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.info-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.info-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: right;
+}
+
+.price-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.price-paid {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+}
+
+.price-free {
+    background: linear-gradient(135deg, var(--success-color) 0%, #38a169 100%);
+    color: white;
+}
+
+.unlimited-badge {
+    background: linear-gradient(135deg, var(--info-color) 0%, #3182ce 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: linear-gradient(135deg, var(--success-color) 0%, #38a169 100%);
+    color: white;
+}
+
+.status-inactive {
+    background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+    color: white;
+}
+
+.usage-summary {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.usage-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.usage-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.usage-info {
+    flex: 1;
+}
+
+.usage-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.usage-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.usage-status {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.usage-status.danger {
+    background: var(--danger-color);
+}
+
+.usage-status.safe {
+    background: var(--success-color);
+}
+
+.features-preview {
+    margin-top: 1rem;
+}
+
+.features-title {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.features-mini-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.25rem;
+}
+
+.features-mini-list li {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    border-left: 3px solid var(--warning-color);
+}
+
+.decision-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin: 2rem 0;
+}
+
+.decision-section.cannot-delete {
+    background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+    border: 2px solid #feb2b2;
+}
+
+.decision-section.can-delete {
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    border: 2px solid #9ae6b4;
+}
+
+.decision-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.cannot-delete .decision-icon {
+    background: var(--danger-color);
+}
+
+.can-delete .decision-icon {
+    background: var(--success-color);
+}
+
+.decision-content {
+    flex: 1;
+}
+
+.decision-title {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.cannot-delete .decision-title {
+    color: var(--danger-color);
+}
+
+.can-delete .decision-title {
+    color: var(--success-color);
+}
+
+.decision-text {
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.action-buttons.blocked {
+    justify-content: space-between;
+}
+
+.btn-outline-modern {
+    color: var(--text-secondary);
+    border: 2px solid #e2e8f0;
+    background: white;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-modern:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+}
+
+.btn-info-modern {
+    background: linear-gradient(135deg, var(--info-color) 0%, #3182ce 100%);
+    border: none;
+    color: white;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-info-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(66, 153, 225, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-danger-modern {
+    background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-dark) 100%);
+    border: none;
+    color: white;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.btn-danger-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 101, 101, 0.4);
+    color: white;
+}
+
+.info-card {
+    background: var(--bg-white);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.info-card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-card-body {
+    padding: 1.5rem;
+}
+
+.alternative-actions {
+    display: grid;
+    gap: 1rem;
+}
+
+.action-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    color: inherit;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.action-description {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.action-arrow {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header.danger-header {
+        padding: 1.5rem 1rem;
+        margin: -1rem -1rem 1.5rem -1rem;
+        border-radius: 0 0 15px 15px;
+    }
+    
+    .danger-card-body {
+        padding: 1.5rem;
+    }
+    
+    .warning-alert {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .usage-stat-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .decision-section {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.shake {
+    animation: shake 0.6s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.pulse-danger {
+    animation: pulseDanger 2s infinite;
+}
+
+@keyframes pulseDanger {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(245, 101, 101, 0); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add entry animations
+    setTimeout(() => {
+        document.querySelector('.danger-card').classList.add('fade-in');
+    }, 100);
+    
+    // Add staggered animations for info sections
+    const infoSections = document.querySelectorAll('.info-section');
+    infoSections.forEach((section, index) => {
+        setTimeout(() => {
+            section.classList.add('fade-in');
+        }, 200 + (index * 100));
+    });
+    
+    // Add pulse animation to danger elements if users exist
+    const usersCount = {{ users_count }};
+    if (usersCount > 0) {
+        setTimeout(() => {
+            const warningAlert = document.querySelector('.warning-alert');
+            if (warningAlert) {
+                warningAlert.classList.add('pulse-danger');
+            }
+        }, 1000);
+    }
+    
+    // Add animations for alternative actions
+    const actionCards = document.querySelectorAll('.action-card');
+    actionCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.classList.add('fade-in');
+        }, 500 + (index * 100));
+    });
+});
+
+function confirmDeletion() {
+    // Create custom confirmation modal
+    const modal = document.createElement('div');
+    modal.className = 'deletion-modal';
+    modal.innerHTML = `
+        <div class="modal-backdrop">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4>Final Confirmation</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Are you absolutely sure you want to delete this plan?</p>
+                    <p><strong>This action cannot be undone.</strong></p>
+                    <div class="confirmation-input">
+                        <label>Type "DELETE" to confirm:</label>
+                        <input type="text" id="delete-confirmation" placeholder="DELETE" />
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button onclick="closeModal()" class="btn-outline-modern">Cancel</button>
+                    <button onclick="submitDeletion()" class="btn-danger-modern" id="confirm-delete-btn" disabled>
+                        <i class="fas fa-trash me-2"></i>Delete Plan
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal styles
+    const modalStyles = `
+        <style>
+            .deletion-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1000;
+                animation: fadeIn 0.3s ease;
+            }
+            
+            .modal-backdrop {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(5px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+            }
+            
+            .modal-content {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                max-width: 400px;
+                width: 100%;
+                animation: bounceIn 0.4s ease;
+            }
+            
+            .modal-header {
+                text-align: center;
+                padding: 2rem 1.5rem 1rem;
+            }
+            
+            .modal-icon {
+                width: 64px;
+                height: 64px;
+                background: var(--danger-color);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 1rem;
+                color: white;
+                font-size: 1.5rem;
+            }
+            
+            .modal-header h4 {
+                color: var(--text-primary);
+                font-weight: 700;
+                margin: 0;
+            }
+            
+            .modal-body {
+                padding: 0 1.5rem 1rem;
+                text-align: center;
+            }
+            
+            .modal-body p {
+                color: var(--text-secondary);
+                margin-bottom: 0.5rem;
+            }
+            
+            .confirmation-input {
+                margin-top: 1rem;
+            }
+            
+            .confirmation-input label {
+                display: block;
+                color: var(--text-secondary);
+                font-size: 0.875rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .confirmation-input input {
+                width: 100%;
+                padding: 0.75rem;
+                border: 2px solid #e2e8f0;
+                border-radius: 8px;
+                text-align: center;
+                font-weight: 600;
+                font-size: 1rem;
+            }
+            
+            .confirmation-input input:focus {
+                outline: none;
+                border-color: var(--danger-color);
+            }
+            
+            .modal-actions {
+                padding: 1rem 1.5rem 1.5rem;
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+            }
+            
+            .modal-actions button {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.875rem;
+            }
+        </style>
+    `;
+    
+    document.head.insertAdjacentHTML('beforeend', modalStyles);
+    document.body.appendChild(modal);
+    
+    // Focus on input
+    setTimeout(() => {
+        document.getElementById('delete-confirmation').focus();
+    }, 400);
+    
+    // Enable/disable confirm button based on input
+    document.getElementById('delete-confirmation').addEventListener('input', function() {
+        const confirmBtn = document.getElementById('confirm-delete-btn');
+        if (this.value === 'DELETE') {
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
+        } else {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+        }
+    });
+    
+    // Close modal on backdrop click
+    modal.querySelector('.modal-backdrop').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+}
+
+function closeModal() {
+    const modal = document.querySelector('.deletion-modal');
+    if (modal) {
+        modal.style.animation = 'fadeOut 0.3s ease forwards';
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
+    }
+}
+
+function submitDeletion() {
+    const confirmInput = document.getElementById('delete-confirmation');
+    if (confirmInput.value === 'DELETE') {
+        const confirmBtn = document.getElementById('confirm-delete-btn');
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+        confirmBtn.disabled = true;
+        
+        // Submit the form
+        document.getElementById('delete-form').submit();
+    } else {
+        // Shake the input
+        confirmInput.classList.add('shake');
+        setTimeout(() => {
+            confirmInput.classList.remove('shake');
+        }, 600);
+    }
+}
+
+// Add keyframe for fadeOut
+const fadeOutStyle = document.createElement('style');
+fadeOutStyle.textContent = `
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+`;
+document.head.appendChild(fadeOutStyle);
+</script>
 {% endblock %}

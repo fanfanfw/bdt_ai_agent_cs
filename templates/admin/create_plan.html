@@ -1,178 +1,371 @@
 {% extends 'admin_base.html' %}
-{% load static %}
 
 {% block title %}Create Subscription Plan{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-plus-circle"></i> Create New Subscription Plan</h2>
-                <a href="{% url 'subscription_plans' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Plans
+    <!-- Modern Header -->
+    <div class="header-section">
+        <div class="header-content">
+            <div class="header-info">
+                <div class="header-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Create New Plan</h1>
+                    <p>Design and configure a new subscription plan</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'subscription_plans' %}" class="btn-modern btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Plans</span>
                 </a>
             </div>
+        </div>
+    </div>
 
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Plan Details</h5>
-                        </div>
-                        <div class="card-body">
-                            <form method="post">
-                                {% csrf_token %}
-                                
-                                <div class="row">
-                                    <!-- Basic Information -->
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="name" class="form-label">Plan Name *</label>
-                                            <input type="text" class="form-control" id="name" name="name" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="price" class="form-label">Price ($)</label>
-                                            <input type="number" class="form-control" id="price" name="price" 
-                                                   step="0.01" min="0" value="0">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label for="order" class="form-label">Display Order</label>
-                                            <input type="number" class="form-control" id="order" name="order" 
-                                                   min="0" value="0">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="description" name="description" 
-                                              rows="3" placeholder="Brief description of the plan"></textarea>
-                                </div>
-
-                                <!-- Usage Limits -->
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="monthly_api_limit" class="form-label">Monthly API Requests</label>
-                                            <input type="number" class="form-control" id="monthly_api_limit" 
-                                                   name="monthly_api_limit" min="0" value="1000">
-                                            <div class="form-text">Set to 0 for unlimited</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="monthly_token_limit" class="form-label">Monthly Token Limit</label>
-                                            <input type="number" class="form-control" id="monthly_token_limit" 
-                                                   name="monthly_token_limit" min="0" value="100000">
-                                            <div class="form-text">Set to 0 for unlimited</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Resource Limits -->
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="max_assistants" class="form-label">Max AI Assistants</label>
-                                            <input type="number" class="form-control" id="max_assistants" 
-                                                   name="max_assistants" min="1" value="1">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="max_knowledge_bases" class="form-label">Max Knowledge Bases</label>
-                                            <input type="number" class="form-control" id="max_knowledge_bases" 
-                                                   name="max_knowledge_bases" min="1" value="1">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Features -->
-                                <div class="mb-3">
-                                    <label for="features" class="form-label">Plan Features</label>
-                                    <textarea class="form-control" id="features" name="features" 
-                                              rows="5" placeholder="Enter one feature per line:&#10;Basic AI Assistant&#10;Email Support&#10;Standard API Access"></textarea>
-                                    <div class="form-text">Enter one feature per line, or provide JSON array</div>
-                                </div>
-
-                                <!-- Status -->
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_active" 
-                                               name="is_active" checked>
-                                        <label class="form-check-label" for="is_active">
-                                            Active (available for new subscriptions)
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <a href="{% url 'subscription_plans' %}" class="btn btn-secondary me-md-2">Cancel</a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Create Plan
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+    <div class="create-plan-layout">
+        <!-- Form Section -->
+        <div class="form-section">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2>Plan Configuration</h2>
+                    <p>Set up your new subscription plan details</p>
                 </div>
 
-                <!-- Preview Card -->
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">Preview</h6>
+                <form method="post" id="planForm" class="plan-form">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="form-group">
+                        <div class="group-header">
+                            <div class="group-icon basic">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="group-info">
+                                <h3>Basic Information</h3>
+                                <p>Essential details about your subscription plan</p>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div id="plan-preview" class="border rounded p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 id="preview-name" class="mb-0">Plan Name</h6>
-                                    <span id="preview-price" class="badge bg-primary">$0.00/mo</span>
+                        
+                        <div class="form-grid">
+                            <div class="form-field full-width">
+                                <label for="name" class="field-label">Plan Name <span class="required">*</span></label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="name" name="name" class="modern-input" 
+                                           placeholder="e.g., Premium Plan, Basic Plan" required>
+                                    <div class="input-icon">
+                                        <i class="fas fa-tag"></i>
+                                    </div>
                                 </div>
-                                <p id="preview-description" class="text-muted small mb-3">Plan description</p>
-                                
-                                <ul class="list-unstyled small">
-                                    <li><i class="fas fa-api text-primary"></i> API: <span id="preview-api">1,000</span>/month</li>
-                                    <li><i class="fas fa-coins text-warning"></i> Tokens: <span id="preview-tokens">100,000</span>/month</li>
-                                    <li><i class="fas fa-robot text-info"></i> Assistants: <span id="preview-assistants">1</span></li>
-                                    <li><i class="fas fa-database text-success"></i> Knowledge Bases: <span id="preview-kb">1</span></li>
-                                </ul>
-                                
-                                <div id="preview-features">
-                                    <hr>
-                                    <ul id="preview-features-list" class="list-unstyled small">
-                                        <!-- Features will be added here -->
-                                    </ul>
+                                <div class="field-help">Choose a clear, descriptive name for your plan</div>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="price" class="field-label">Monthly Price ($)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="price" name="price" class="modern-input" 
+                                           min="0" step="0.01" value="0" placeholder="0.00">
+                                    <div class="input-icon">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </div>
+                                </div>
+                                <div class="field-help">Set to 0 for free plans</div>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="order" class="field-label">Display Order</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="order" name="order" class="modern-input" 
+                                           min="0" value="0" placeholder="0">
+                                    <div class="input-icon">
+                                        <i class="fas fa-sort-numeric-up"></i>
+                                    </div>
+                                </div>
+                                <div class="field-help">Controls plan display order (0 = first)</div>
+                            </div>
+
+                            <div class="form-field full-width">
+                                <label for="description" class="field-label">Description</label>
+                                <div class="textarea-wrapper">
+                                    <textarea id="description" name="description" class="modern-textarea" 
+                                              rows="3" placeholder="Brief description of what this plan offers..."></textarea>
+                                </div>
+                                <div class="field-help">Describe the plan benefits and target audience</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usage Limits -->
+                    <div class="form-group">
+                        <div class="group-header">
+                            <div class="group-icon limits">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="group-info">
+                                <h3>Usage Limits</h3>
+                                <p>Define monthly usage quotas and restrictions</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="monthly_api_limit" class="field-label">API Requests / Month</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="monthly_api_limit" name="monthly_api_limit" 
+                                           class="modern-input" min="0" value="1000" placeholder="1000">
+                                    <div class="input-icon">
+                                        <i class="fas fa-plug"></i>
+                                    </div>
+                                </div>
+                                <div class="field-help">Set to 0 for unlimited requests</div>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="monthly_token_limit" class="field-label">Tokens / Month</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="monthly_token_limit" name="monthly_token_limit" 
+                                           class="modern-input" min="0" value="100000" placeholder="100000">
+                                    <div class="input-icon">
+                                        <i class="fas fa-coins"></i>
+                                    </div>
+                                </div>
+                                <div class="field-help">Set to 0 for unlimited tokens</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resource Limits -->
+                    <div class="form-group">
+                        <div class="group-header">
+                            <div class="group-icon resources">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <div class="group-info">
+                                <h3>Resource Limits</h3>
+                                <p>Set maximum allowed resources per user</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="max_assistants" class="field-label">Max AI Assistants</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="max_assistants" name="max_assistants" 
+                                           class="modern-input" min="1" value="1" placeholder="1">
+                                    <div class="input-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                </div>
+                                <div class="field-help">Number of AI assistants allowed</div>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="max_knowledge_bases" class="field-label">Max Knowledge Bases</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="max_knowledge_bases" name="max_knowledge_bases" 
+                                           class="modern-input" min="1" value="1" placeholder="1">
+                                    <div class="input-icon">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                </div>
+                                <div class="field-help">Number of knowledge bases allowed</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features -->
+                    <div class="form-group">
+                        <div class="group-header">
+                            <div class="group-icon features">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="group-info">
+                                <h3>Plan Features</h3>
+                                <p>List the key features and benefits included</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-field full-width">
+                                <label for="features" class="field-label">Features List</label>
+                                <div class="textarea-wrapper">
+                                    <textarea id="features" name="features" class="modern-textarea" 
+                                              rows="5" placeholder="AI Assistant Access&#10;Email Support&#10;API Integration&#10;Custom Templates&#10;Priority Processing"></textarea>
+                                </div>
+                                <div class="field-help">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Enter one feature per line, or provide as JSON array
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Tips</h6>
+
+                    <!-- Plan Status -->
+                    <div class="form-group">
+                        <div class="group-header">
+                            <div class="group-icon status">
+                                <i class="fas fa-toggle-on"></i>
+                            </div>
+                            <div class="group-info">
+                                <h3>Availability</h3>
+                                <p>Control when this plan becomes available to users</p>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled small">
-                                <li><i class="fas fa-lightbulb text-warning"></i> Use clear, descriptive plan names</li>
-                                <li><i class="fas fa-lightbulb text-warning"></i> Set reasonable limits based on your infrastructure</li>
-                                <li><i class="fas fa-lightbulb text-warning"></i> Use display order to control plan appearance</li>
-                                <li><i class="fas fa-lightbulb text-warning"></i> Features help users understand plan benefits</li>
-                            </ul>
+                        
+                        <div class="status-toggle-container">
+                            <div class="status-toggle">
+                                <input type="checkbox" id="is_active" name="is_active" checked>
+                                <label for="is_active" class="toggle-label">
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-text">
+                                        <span class="active-text">Plan is Active</span>
+                                        <span class="inactive-text">Plan is Inactive</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="status-help">
+                                Active plans are available for new subscriptions. Inactive plans are hidden from users but existing subscribers keep access.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" onclick="history.back()" class="btn-modern btn-secondary">
+                            <i class="fas fa-times"></i>
+                            <span>Cancel</span>
+                        </button>
+                        <button type="submit" class="btn-modern btn-primary" id="submitBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>Create Plan</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section">
+            <div class="preview-card">
+                <div class="preview-header">
+                    <h2>Live Preview</h2>
+                    <p>See how your plan will appear to users</p>
+                </div>
+                
+                <div class="plan-preview" id="planPreview">
+                    <div class="preview-plan-card">
+                        <div class="plan-header">
+                            <div class="plan-info">
+                                <h3 id="previewName">Plan Name</h3>
+                                <div class="plan-price">
+                                    <span id="previewPrice" class="price-free">Free</span>
+                                </div>
+                            </div>
+                            <div class="plan-status">
+                                <span id="previewStatus" class="status-active">Active</span>
+                            </div>
+                        </div>
+
+                        <div class="plan-description">
+                            <p id="previewDescription">Plan description will appear here...</p>
+                        </div>
+
+                        <div class="plan-features">
+                            <h4>What's Included</h4>
+                            <div class="feature-grid">
+                                <div class="feature-item">
+                                    <div class="feature-icon api">
+                                        <i class="fas fa-plug"></i>
+                                    </div>
+                                    <div class="feature-details">
+                                        <span class="feature-label">API Calls</span>
+                                        <span id="previewApi" class="feature-value">1,000/month</span>
+                                    </div>
+                                </div>
+
+                                <div class="feature-item">
+                                    <div class="feature-icon tokens">
+                                        <i class="fas fa-coins"></i>
+                                    </div>
+                                    <div class="feature-details">
+                                        <span class="feature-label">Tokens</span>
+                                        <span id="previewTokens" class="feature-value">100K/month</span>
+                                    </div>
+                                </div>
+
+                                <div class="feature-item">
+                                    <div class="feature-icon assistants">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="feature-details">
+                                        <span class="feature-label">AI Assistants</span>
+                                        <span id="previewAssistants" class="feature-value">1</span>
+                                    </div>
+                                </div>
+
+                                <div class="feature-item">
+                                    <div class="feature-icon knowledge">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <div class="feature-details">
+                                        <span class="feature-label">Knowledge Bases</span>
+                                        <span id="previewKnowledge" class="feature-value">1</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="previewFeaturesList" class="features-list">
+                                <!-- Custom features will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="tips-card">
+                <div class="tips-header">
+                    <div class="tips-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div>
+                        <h3>Pro Tips</h3>
+                        <p>Best practices for creating effective plans</p>
+                    </div>
+                </div>
+                
+                <div class="tips-list">
+                    <div class="tip-item">
+                        <div class="tip-number">1</div>
+                        <div class="tip-content">
+                            <h4>Clear Naming</h4>
+                            <p>Use descriptive names that clearly indicate the plan tier and target audience</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <div class="tip-number">2</div>
+                        <div class="tip-content">
+                            <h4>Reasonable Limits</h4>
+                            <p>Set limits based on your infrastructure capacity and business model</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <div class="tip-number">3</div>
+                        <div class="tip-content">
+                            <h4>Value Proposition</h4>
+                            <p>List clear benefits that help users understand what they get</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <div class="tip-number">4</div>
+                        <div class="tip-content">
+                            <h4>Strategic Pricing</h4>
+                            <p>Consider your costs, competitor pricing, and value delivered</p>
                         </div>
                     </div>
                 </div>
@@ -181,59 +374,961 @@
     </div>
 </div>
 
-<script>
-// Real-time preview updates
-document.addEventListener('DOMContentLoaded', function() {
-    const inputs = ['name', 'description', 'price', 'monthly_api_limit', 'monthly_token_limit', 'max_assistants', 'max_knowledge_bases', 'features'];
+<!-- Toast Container -->
+<div id="toastContainer"></div>
+
+<style>
+/* Root Variables */
+:root {
+    --primary: #00ADB5;
+    --primary-light: #1FBBC3;
+    --primary-dark: #008A90;
+    --secondary: #393E46;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --white: #FFFFFF;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
     
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Header Section */
+.header-section {
+    background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1.5rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.header-text h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.header-text p {
+    color: var(--gray-600);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Modern Buttons */
+.btn-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-modern:hover::before {
+    left: 100%;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: var(--white);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    color: var(--white);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--gray-700);
+    border: 2px solid var(--gray-200);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-50);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+/* Layout */
+.create-plan-layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Form Section */
+.form-section {
+    min-height: 100vh;
+}
+
+.form-card {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.form-header {
+    background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+    padding: 2rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.form-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.5rem 0;
+}
+
+.form-header p {
+    color: var(--gray-600);
+    margin: 0;
+}
+
+.plan-form {
+    padding: 2rem;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 3rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.form-group:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.group-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.group-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.group-icon.basic {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+}
+
+.group-icon.limits {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
+.group-icon.resources {
+    background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.group-icon.features {
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+}
+
+.group-icon.status {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+}
+
+.group-info h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.25rem 0;
+}
+
+.group-info p {
+    color: var(--gray-600);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.field-label {
+    font-weight: 600;
+    color: var(--gray-900);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.required {
+    color: var(--danger);
+}
+
+/* Input Styles */
+.input-wrapper, .textarea-wrapper {
+    position: relative;
+}
+
+.modern-input, .modern-textarea {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    font-size: 1rem;
+    color: var(--gray-900);
+    background: var(--white);
+    transition: all 0.3s ease;
+}
+
+.modern-textarea {
+    resize: vertical;
+    min-height: 120px;
+    padding: 1rem;
+}
+
+.modern-input:focus, .modern-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.1);
+    transform: translateY(-1px);
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    pointer-events: none;
+}
+
+.field-help {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Status Toggle */
+.status-toggle-container {
+    background: var(--gray-50);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--gray-200);
+}
+
+.status-toggle {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.status-toggle input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-slider {
+    width: 60px;
+    height: 32px;
+    background: var(--gray-300);
+    border-radius: 16px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 28px;
+    height: 28px;
+    background: var(--white);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+input[type="checkbox"]:checked + .toggle-label .toggle-slider {
+    background: var(--primary);
+}
+
+input[type="checkbox"]:checked + .toggle-label .toggle-slider::before {
+    transform: translateX(28px);
+}
+
+.toggle-text {
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.active-text {
+    color: var(--success);
+}
+
+.inactive-text {
+    color: var(--gray-500);
+}
+
+input[type="checkbox"]:checked + .toggle-label .inactive-text {
+    display: none;
+}
+
+input[type="checkbox"]:not(:checked) + .toggle-label .active-text {
+    display: none;
+}
+
+.status-help {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 2rem;
+}
+
+/* Preview Section */
+.preview-section {
+    position: sticky;
+    top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.preview-card, .tips-card {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.preview-header, .tips-header {
+    background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.tips-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.tips-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+}
+
+.preview-header h2, .tips-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.25rem 0;
+}
+
+.preview-header p, .tips-header p {
+    color: var(--gray-600);
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.plan-preview {
+    padding: 1.5rem;
+}
+
+.preview-plan-card {
+    background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+    border: 2px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.plan-info h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.5rem 0;
+}
+
+.plan-price .price-free {
+    background: linear-gradient(135deg, var(--success), #059669);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.plan-price .price-paid {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-inactive {
+    background: rgba(107, 114, 128, 0.1);
+    color: var(--gray-500);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.plan-description {
+    margin-bottom: 1.5rem;
+}
+
+.plan-description p {
+    color: var(--gray-600);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.plan-features h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 1rem 0;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+}
+
+.feature-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.feature-icon.api {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+}
+
+.feature-icon.tokens {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
+.feature-icon.assistants {
+    background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.feature-icon.knowledge {
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+}
+
+.feature-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.feature-label {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.feature-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.features-list {
+    border-top: 1px solid var(--gray-200);
+    padding-top: 1rem;
+}
+
+.features-list .feature-item-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+}
+
+.features-list .feature-item-custom i {
+    color: var(--success);
+    width: 16px;
+}
+
+/* Tips */
+.tips-list {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tip-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+    transition: all 0.3s ease;
+}
+
+.tip-item:hover {
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+}
+
+.tip-number {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.tip-content h4 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin: 0 0 0.25rem 0;
+}
+
+.tip-content p {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Toast Notifications */
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.toast {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease;
+}
+
+.toast.success {
+    border-left: 4px solid var(--success);
+}
+
+.toast.error {
+    border-left: 4px solid var(--danger);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .create-plan-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .preview-section {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+    }
+    
+    .btn-modern {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .group-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-section {
+        padding: 1.5rem;
+    }
+    
+    .form-card, .preview-card, .tips-card {
+        margin: 0 -1rem;
+        border-radius: 16px;
+    }
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading States */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Validation States */
+.modern-input.is-valid, .modern-textarea.is-valid {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.modern-input.is-invalid, .modern-textarea.is-invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.invalid-feedback {
+    font-size: 0.75rem;
+    color: var(--danger);
+    margin-top: 0.25rem;
+}
+
+.valid-feedback {
+    font-size: 0.75rem;
+    color: var(--success);
+    margin-top: 0.25rem;
+}
+</style>
+
+<script>
+// Form handling and live preview
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form
+    initializeForm();
+    
+    // Initialize preview
+    updatePreview();
+    
+    // Add animations
+    animateElements();
+});
+
+function initializeForm() {
+    const form = document.getElementById('planForm');
+    const inputs = ['name', 'description', 'price', 'monthly_api_limit', 'monthly_token_limit', 'max_assistants', 'max_knowledge_bases', 'features', 'is_active'];
+    
+    // Add event listeners for real-time preview
     inputs.forEach(inputName => {
         const input = document.getElementById(inputName);
         if (input) {
-            input.addEventListener('input', updatePreview);
+            input.addEventListener('input', debounce(updatePreview, 300));
+            input.addEventListener('change', updatePreview);
+            
+            // Add validation
+            if (input.type !== 'checkbox') {
+                input.addEventListener('blur', () => validateField(input));
+                input.addEventListener('input', () => {
+                    if (input.classList.contains('is-invalid')) {
+                        validateField(input);
+                    }
+                });
+            }
         }
     });
     
-    updatePreview(); // Initial update
-});
+    // Form submission
+    form.addEventListener('submit', handleFormSubmit);
+}
 
 function updatePreview() {
-    // Basic info
+    // Get form values
     const name = document.getElementById('name').value || 'Plan Name';
-    const description = document.getElementById('description').value || 'Plan description';
+    const description = document.getElementById('description').value || 'Plan description will appear here...';
     const price = parseFloat(document.getElementById('price').value) || 0;
-    
-    // Limits
     const apiLimit = parseInt(document.getElementById('monthly_api_limit').value) || 0;
     const tokenLimit = parseInt(document.getElementById('monthly_token_limit').value) || 0;
     const maxAssistants = parseInt(document.getElementById('max_assistants').value) || 1;
-    const maxKB = parseInt(document.getElementById('max_knowledge_bases').value) || 1;
+    const maxKnowledge = parseInt(document.getElementById('max_knowledge_bases').value) || 1;
+    const features = document.getElementById('features').value || '';
+    const isActive = document.getElementById('is_active').checked;
     
-    // Features
-    const featuresText = document.getElementById('features').value || '';
+    // Update preview elements with animation
+    updateElementWithAnimation('previewName', name);
+    updateElementWithAnimation('previewDescription', description);
     
-    // Update preview
-    document.getElementById('preview-name').textContent = name;
-    document.getElementById('preview-description').textContent = description;
+    // Update price
+    const priceElement = document.getElementById('previewPrice');
+    const priceText = price > 0 ? `$${price.toFixed(2)}/month` : 'Free';
+    const priceClass = price > 0 ? 'price-paid' : 'price-free';
     
-    // Price
-    const priceSpan = document.getElementById('preview-price');
-    if (price > 0) {
-        priceSpan.textContent = `$${price.toFixed(2)}/mo`;
-        priceSpan.className = 'badge bg-primary';
-    } else {
-        priceSpan.textContent = 'Free';
-        priceSpan.className = 'badge bg-success';
+    if (priceElement.textContent !== priceText) {
+        priceElement.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            priceElement.textContent = priceText;
+            priceElement.className = priceClass;
+            priceElement.style.transform = 'scale(1)';
+        }, 150);
     }
     
-    // Limits
-    document.getElementById('preview-api').textContent = apiLimit > 0 ? apiLimit.toLocaleString() : 'Unlimited';
-    document.getElementById('preview-tokens').textContent = tokenLimit > 0 ? tokenLimit.toLocaleString() : 'Unlimited';
-    document.getElementById('preview-assistants').textContent = maxAssistants;
-    document.getElementById('preview-kb').textContent = maxKB;
+    // Update status
+    const statusElement = document.getElementById('previewStatus');
+    const statusText = isActive ? 'Active' : 'Inactive';
+    const statusClass = isActive ? 'status-active' : 'status-inactive';
     
-    // Features
-    const featuresList = document.getElementById('preview-features-list');
-    featuresList.innerHTML = '';
+    if (statusElement.textContent !== statusText) {
+        statusElement.textContent = statusText;
+        statusElement.className = statusClass;
+    }
+    
+    // Update limits
+    updateElementWithAnimation('previewApi', apiLimit > 0 ? `${apiLimit.toLocaleString()}/month` : 'Unlimited');
+    updateElementWithAnimation('previewTokens', tokenLimit > 0 ? `${tokenLimit.toLocaleString()}/month` : 'Unlimited');
+    updateElementWithAnimation('previewAssistants', maxAssistants.toString());
+    updateElementWithAnimation('previewKnowledge', maxKnowledge.toString());
+    
+    // Update custom features
+    updateCustomFeatures(features);
+}
+
+function updateElementWithAnimation(elementId, newValue) {
+    const element = document.getElementById(elementId);
+    if (element && element.textContent !== newValue) {
+        element.style.opacity = '0.6';
+        setTimeout(() => {
+            element.textContent = newValue;
+            element.style.opacity = '1';
+        }, 150);
+    }
+}
+
+function updateCustomFeatures(featuresText) {
+    const featuresContainer = document.getElementById('previewFeaturesList');
+    featuresContainer.innerHTML = '';
     
     if (featuresText.trim()) {
         let features = [];
@@ -248,18 +1343,167 @@ function updatePreview() {
         }
         
         if (features.length > 0) {
-            document.getElementById('preview-features').style.display = 'block';
-            features.forEach(feature => {
-                const li = document.createElement('li');
-                li.innerHTML = `<i class="fas fa-check text-success"></i> ${feature.trim()}`;
-                featuresList.appendChild(li);
+            features.forEach((feature, index) => {
+                const featureElement = document.createElement('div');
+                featureElement.className = 'feature-item-custom';
+                featureElement.innerHTML = `
+                    <i class="fas fa-check"></i>
+                    <span>${feature.trim()}</span>
+                `;
+                featureElement.style.animationDelay = `${index * 0.1}s`;
+                featureElement.style.animation = 'fadeIn 0.3s ease forwards';
+                featuresContainer.appendChild(featureElement);
             });
-        } else {
-            document.getElementById('preview-features').style.display = 'none';
         }
-    } else {
-        document.getElementById('preview-features').style.display = 'none';
     }
 }
+
+function validateField(field) {
+    const value = field.value.trim();
+    let isValid = true;
+    let errorMessage = '';
+    
+    // Validation rules
+    if (field.hasAttribute('required') && !value) {
+        isValid = false;
+        errorMessage = 'This field is required';
+    } else if (field.type === 'number' && value && isNaN(value)) {
+        isValid = false;
+        errorMessage = 'Please enter a valid number';
+    } else if (field.type === 'number' && field.hasAttribute('min') && parseFloat(value) < parseFloat(field.getAttribute('min'))) {
+        isValid = false;
+        errorMessage = `Minimum value is ${field.getAttribute('min')}`;
+    }
+    
+    // Update field appearance
+    removeFieldFeedback(field);
+    
+    if (isValid) {
+        field.classList.remove('is-invalid');
+        field.classList.add('is-valid');
+    } else {
+        field.classList.remove('is-valid');
+        field.classList.add('is-invalid');
+        showFieldError(field, errorMessage);
+    }
+    
+    return isValid;
+}
+
+function showFieldError(field, message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'invalid-feedback';
+    errorDiv.textContent = message;
+    field.parentNode.appendChild(errorDiv);
+}
+
+function removeFieldFeedback(field) {
+    const feedback = field.parentNode.querySelector('.invalid-feedback, .valid-feedback');
+    if (feedback) {
+        feedback.remove();
+    }
+}
+
+function handleFormSubmit(event) {
+    const form = event.target;
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Validate all fields
+    const inputs = form.querySelectorAll('input[required], input[type="number"]');
+    let isValid = true;
+    
+    inputs.forEach(input => {
+        if (!validateField(input)) {
+            isValid = false;
+        }
+    });
+    
+    if (!isValid) {
+        event.preventDefault();
+        showToast('error', 'Please fix the errors before submitting');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.classList.add('btn-loading');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Creating Plan...</span>';
+}
+
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}"></i>
+        </div>
+        <div class="toast-message">${message}</div>
+    `;
+    
+    document.getElementById('toastContainer').appendChild(toast);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function animateElements() {
+    // Animate form groups
+    const formGroups = document.querySelectorAll('.form-group');
+    formGroups.forEach((group, index) => {
+        group.style.opacity = '0';
+        group.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            group.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            group.style.opacity = '1';
+            group.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Animate tips
+    setTimeout(() => {
+        const tips = document.querySelectorAll('.tip-item');
+        tips.forEach((tip, index) => {
+            tip.style.opacity = '0';
+            tip.style.transform = 'translateX(20px)';
+            
+            setTimeout(() => {
+                tip.style.transition = 'all 0.4s ease';
+                tip.style.opacity = '1';
+                tip.style.transform = 'translateX(0)';
+            }, index * 100);
+        });
+    }, 800);
+}
+
+// Utility function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Handle window resize
+window.addEventListener('resize', debounce(() => {
+    // Adjust layout for mobile
+    if (window.innerWidth <= 768) {
+        document.querySelectorAll('.form-card, .preview-card, .tips-card').forEach(card => {
+            card.style.margin = '0 -1rem';
+        });
+    } else {
+        document.querySelectorAll('.form-card, .preview-card, .tips-card').forEach(card => {
+            card.style.margin = '0';
+        });
+    }
+}, 250));
 </script>
 {% endblock %}
