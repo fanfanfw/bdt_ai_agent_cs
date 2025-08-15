@@ -4,6 +4,9 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
+from django.contrib.auth import update_session_auth_hash
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
 from datetime import timedelta
 import json
 
@@ -585,4 +588,80 @@ def plan_usage_stats(request, plan_id):
         'api_usage_percent': api_usage_percent,
         'token_usage_percent': token_usage_percent,
         'users_on_plan': users_on_plan[:10]  # Show first 10 users
+    })
+
+
+@admin_required
+def admin_settings(request):
+    """Admin settings page to update admin profile, username, email, and password"""
+    if request.method == 'POST':
+        user = request.user
+        
+        # Get form data
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        current_password = request.POST.get('current_password', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        
+        errors = []
+        success_messages = []
+        
+        # Validate and update username
+        if username and username != user.username:
+            if User.objects.filter(username=username).exclude(id=user.id).exists():
+                errors.append('Username sudah digunakan oleh user lain.')
+            else:
+                user.username = username
+                success_messages.append('Username berhasil diperbarui.')
+        
+        # Validate and update email
+        if email and email != user.email:
+            if User.objects.filter(email=email).exclude(id=user.id).exists():
+                errors.append('Email sudah digunakan oleh user lain.')
+            else:
+                user.email = email
+                success_messages.append('Email berhasil diperbarui.')
+        
+        # Update first name and last name
+        if first_name != user.first_name:
+            user.first_name = first_name
+            success_messages.append('Nama depan berhasil diperbarui.')
+        
+        if last_name != user.last_name:
+            user.last_name = last_name
+            success_messages.append('Nama belakang berhasil diperbarui.')
+        
+        # Handle password change
+        if new_password:
+            if not current_password:
+                errors.append('Password saat ini diperlukan untuk mengganti password.')
+            elif not user.check_password(current_password):
+                errors.append('Password saat ini salah.')
+            elif new_password != confirm_password:
+                errors.append('Konfirmasi password tidak sesuai.')
+            else:
+                try:
+                    validate_password(new_password, user)
+                    user.set_password(new_password)
+                    update_session_auth_hash(request, user)  # Keep user logged in
+                    success_messages.append('Password berhasil diperbarui.')
+                except ValidationError as e:
+                    errors.extend(e.messages)
+        
+        # Save user if no errors
+        if not errors:
+            user.save()
+            for msg in success_messages:
+                messages.success(request, msg)
+        else:
+            for error in errors:
+                messages.error(request, error)
+        
+        return redirect('admin_settings')
+    
+    return render(request, 'admin/admin_settings.html', {
+        'user': request.user
     })

@@ -1,5 +1,5 @@
 from django.urls import path
-from ..views.auth import home, custom_login_view, logout_view, register_view, admin_redirect_view
+from ..views.auth import home, custom_login_view, logout_view, register_view, admin_redirect_view, user_settings_view
 from ..views.dashboard import dashboard, business_type_selection, qna_customization, knowledge_base_setup, usage_stats_api
 from ..views.assistant import edit_qna_view, edit_knowledge_base_view, edit_business_type_view
 from ..views.testing import test_chat_view, test_realtime_voice_view
@@ -13,6 +13,7 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('register/', register_view, name='register'),
     path('admin/', admin_redirect_view, name='admin_redirect'),
+    path('settings/', user_settings_view, name='user_settings'),
     
     # Dashboard views
     path('dashboard/', dashboard, name='dashboard'),

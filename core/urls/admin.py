@@ -9,6 +9,9 @@ admin_urlpatterns = [
     # Admin dashboard
     path('admin-dashboard/', admin_views.admin_dashboard, name='admin_dashboard'),
     
+    # Admin settings
+    path('admin-settings/', admin_views.admin_settings, name='admin_settings'),
+    
     # User management
     path('admin-panel/users/', admin_views.user_management, name='admin_user_management'),
     path('admin-panel/users/<int:user_id>/', admin_views.user_detail, name='admin_user_detail'),
