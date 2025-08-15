@@ -3,25 +3,39 @@
 {% block title %}Welcome - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="hero-section">
-    <div class="container text-center">
-        <h1 class="display-4 mb-4">
-            <i class="fas fa-robot me-3"></i>
-            AI Customer Service Agent
-        </h1>
-        <p class="lead mb-5">
-            Create your own AI-powered customer service assistant in minutes. 
-            No technical knowledge required!
-        </p>
-        <a href="{% url 'register' %}" class="btn btn-light btn-lg me-3">
-            <i class="fas fa-rocket me-2"></i>Get Started
-        </a>
-        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">
-            <i class="fas fa-sign-in-alt me-2"></i>Login
-        </a>
+<!-- Hero Section -->
+<div class="bg-gradient-dark text-white py-5 min-vh-100 d-flex align-items-center">
+    <div class="container">
+        <div class="row align-items-center text-center">
+            <div class="col-12">
+                <div class="mb-4">
+                    <div class="bg-gradient-primary rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                        <i class="fas fa-robot text-white fs-1"></i>
+                    </div>
+                    <h1 class="display-4 fw-bold mb-4">
+                        AI Customer Service Agent
+                    </h1>
+                    <p class="lead mb-5">
+                        Create your own AI-powered customer service assistant in minutes.<br>
+                        No technical knowledge required!
+                    </p>
+                </div>
+                
+                <!-- CTA Buttons -->
+                <div class="d-flex justify-content-center gap-3 mb-4">
+                    <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4 py-3">
+                        <i class="fas fa-rocket me-2"></i>Get Started
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- How It Works Section -->
 <div class="container my-5">
     <div class="row text-center mb-5">
         <div class="col-12">
@@ -32,10 +46,10 @@
     
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="card feature-card h-100 text-center">
-                <div class="card-body p-4">
+            <div class="card-modern h-100 text-center">
+                <div class="card-body-modern p-4">
                     <div class="mb-3">
-                        <i class="fas fa-store fa-3x" style="color: var(--color-blue);"></i>
+                        <i class="fas fa-store fa-3x" style="color: #00ADB5;"></i>
                     </div>
                     <h5 class="card-title">1. Choose Business Type</h5>
                     <p class="card-text">
@@ -47,10 +61,10 @@
         </div>
         
         <div class="col-md-4">
-            <div class="card feature-card h-100 text-center">
-                <div class="card-body p-4">
+            <div class="card-modern h-100 text-center">
+                <div class="card-body-modern p-4">
                     <div class="mb-3">
-                        <i class="fas fa-edit fa-3x" style="color: var(--color-blue);"></i>
+                        <i class="fas fa-edit fa-3x" style="color: #00ADB5;"></i>
                     </div>
                     <h5 class="card-title">2. Customize Q&As</h5>
                     <p class="card-text">
@@ -62,10 +76,10 @@
         </div>
         
         <div class="col-md-4">
-            <div class="card feature-card h-100 text-center">
-                <div class="card-body p-4">
+            <div class="card-modern h-100 text-center">
+                <div class="card-body-modern p-4">
                     <div class="mb-3">
-                        <i class="fas fa-rocket fa-3x" style="color: var(--color-blue);"></i>
+                        <i class="fas fa-rocket fa-3x" style="color: #00ADB5;"></i>
                     </div>
                     <h5 class="card-title">3. Deploy & Use</h5>
                     <p class="card-text">
@@ -78,6 +92,7 @@
     </div>
 </div>
 
+<!-- Features Section -->
 <div class="container-fluid py-5" style="background-color: rgba(48, 71, 94, 0.1);">
     <div class="container">
         <div class="row align-items-center">
@@ -107,9 +122,10 @@
                 </ul>
             </div>
             <div class="col-md-6 text-center">
-                <i class="fas fa-comments fa-5x" style="color: var(--color-blue);"></i>
+                <i class="fas fa-comments fa-5x" style="color: #00ADB5;"></i>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

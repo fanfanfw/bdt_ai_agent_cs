@@ -3,63 +3,209 @@
 {% block title %}Login - AI Agent Customer Service{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card">
-                <div class="card-header text-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </h4>
-                </div>
-                <div class="card-body p-4">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="{{ form.username.id_for_label }}" class="form-label">
-                                <i class="fas fa-user me-1"></i>Username
-                            </label>
-                            {{ form.username }}
-                            {% if form.username.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.username.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.password.id_for_label }}" class="form-label">
-                                <i class="fas fa-lock me-1"></i>Password
-                            </label>
-                            {{ form.password }}
-                            {% if form.password.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.password.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {{ form.non_field_errors.0 }}
-                            </div>
-                        {% endif %}
-                        
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
-                        </button>
-                    </form>
-                    
-                    <hr>
-                    <div class="text-center">
-                        <p class="mb-0">Don't have an account?</p>
-                        <a href="{% url 'register' %}" class="btn btn-outline-primary">
-                            <i class="fas fa-user-plus me-2"></i>Register Here
-                        </a>
+<!-- Hero Section with Gradient Background -->
+<div class="bg-gradient-dark text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-12 text-center">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <div class="bg-gradient-primary rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-sign-in-alt text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h1 class="mb-1 fw-bold">Welcome Back</h1>
+                        <p class="mb-0 opacity-75">Sign in to your AI Agent dashboard</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container mt-n3 position-relative" style="z-index: 10;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+            <!-- Login Card -->
+            <div class="card-modern shadow-lg">
+                <div class="card-body-modern p-4 p-md-5">
+                        <!-- Header -->
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold text-dark mb-2">Sign In</h2>
+                            <p class="text-muted mb-0">Access your AI Agent dashboard</p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form method="post" id="loginForm">
+                            {% csrf_token %}
+                            
+                            <!-- Username Field -->
+                            <div class="mb-4">
+                                <label for="{{ form.username.id_for_label }}" class="form-label fw-medium text-dark">
+                                    <i class="fas fa-user me-2" style="color: #00ADB5;"></i>Username
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-user text-muted"></i>
+                                    </span>
+                                    {{ form.username }}
+                                </div>
+                                {% if form.username.errors %}
+                                    <div class="text-danger small mt-2">
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ form.username.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Password Field -->
+                            <div class="mb-4">
+                                <label for="{{ form.password.id_for_label }}" class="form-label fw-medium text-dark">
+                                    <i class="fas fa-lock me-2" style="color: #00ADB5;"></i>Password
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-lock text-muted"></i>
+                                    </span>
+                                    {{ form.password }}
+                                    <button class="btn btn-outline-secondary border-start-0" type="button" onclick="togglePasswordVisibility()">
+                                        <i class="fas fa-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="text-danger small mt-2">
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ form.password.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Error Messages -->
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger border-0 rounded-3 mb-4">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {{ form.non_field_errors.0 }}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Login Button -->
+                            <button type="submit" class="btn w-100 py-3 mb-4" style="background: linear-gradient(135deg, #00ADB5, #393E46); border: none; color: white;">
+                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                            </button>
+                        </form>
+                        
+                        <!-- Divider -->
+                        <div class="position-relative text-center mb-4">
+                            <hr class="my-0">
+                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
+                                or
+                            </span>
+                        </div>
+                        
+                        <!-- Register Link -->
+                        <div class="text-center">
+                            <p class="text-muted mb-3">Don't have an account yet?</p>
+                            <a href="{% url 'register' %}" class="btn w-100 py-2" style="border: 2px solid #00ADB5; color: #00ADB5; background: transparent;">
+                                <i class="fas fa-user-plus me-2"></i>Create New Account
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="loadingToast" class="toast" role="alert">
+        <div class="toast-body">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                <span>Signing you in...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form-control classes
+    const formInputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+    formInputs.forEach(input => {
+        input.classList.add('form-control', 'border-start-0');
+        input.style.fontSize = '16px'; // Prevent iOS zoom
+    });
+    
+    // Simple password toggle function
+    window.togglePasswordVisibility = function() {
+        // Find all password inputs
+        const passwordInputs = document.querySelectorAll('input[type="password"], input[type="text"]');
+        const toggleIcon = document.getElementById('toggleIcon');
+        
+        // Find the password field (usually has name 'password' or id containing 'password')
+        let passwordField = null;
+        for (let input of passwordInputs) {
+            if (input.name === 'password' || input.id.includes('password') || input.getAttribute('type') === 'password') {
+                passwordField = input;
+                break;
+            }
+        }
+        
+        if (passwordField && toggleIcon) {
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        } else {
+            console.log('Password field or icon not found');
+            console.log('Password field:', passwordField);
+            console.log('Toggle icon:', toggleIcon);
+        }
+    }
+    
+    // Form submission loading state
+    const loginForm = document.getElementById('loginForm');
+    const loadingToast = new bootstrap.Toast(document.getElementById('loadingToast'));
+    
+    loginForm.addEventListener('submit', function() {
+        loadingToast.show();
+        
+        // Disable submit button
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+    });
+    
+    // Input field focus effects
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('shadow-sm');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('shadow-sm');
+        });
+    });
+});
+</script>
+
+<style>
+/* Input Focus Styling */
+.input-group .form-control:focus {
+    border-color: #00ADB5;
+    box-shadow: 0 0 0 0.2rem rgba(0, 173, 181, 0.25);
+}
+
+/* Loading Animation */
+.toast {
+    background: rgba(0, 173, 181, 0.9);
+    color: white;
+    border: none;
+}
+</style>
+{% endblock %}
 {% endblock %}
