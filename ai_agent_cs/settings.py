@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'bootstrap5',
+    'django_google_fonts',
     'core',
 ]
 
@@ -159,7 +161,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+    BASE_DIR / 'venv' / 'lib' / 'python3.12' / 'site-packages' / 'fontawesome-free' / 'static',
+]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = 'media/'
@@ -177,3 +182,6 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
+
+# Google Fonts Configuration
+GOOGLE_FONTS = ["Inter"]
