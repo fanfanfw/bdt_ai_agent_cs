@@ -87,21 +87,68 @@ class SubscriptionService:
         except SubscriptionPlan.DoesNotExist:
             return None
     
-    def upgrade_subscription(self, new_plan_name):
-        """Upgrade user's subscription plan"""
+    def upgrade_subscription(self, new_plan_name, enable_auto_renewal=False):
+        """Upgrade user's subscription plan with new subscription cycle logic"""
         try:
             new_plan = SubscriptionPlan.objects.get(name=new_plan_name, is_active=True)
             old_plan = self.profile.subscription_plan
             
-            # Update subscription
-            self.profile.subscription_plan = new_plan_name
-            self.profile.sync_with_subscription_plan()
+            # Use the new upgrade method from UserProfile
+            success = self.profile.upgrade_subscription(new_plan_name)
             
-            return True, f"Successfully upgraded from {old_plan} to {new_plan_name}"
+            if success:
+                # Set auto renewal if requested
+                if enable_auto_renewal:
+                    self.profile.auto_renewal = True
+                    self.profile.save(update_fields=['auto_renewal'])
+                
+                return True, f"Successfully upgraded from {old_plan} to {new_plan_name}. New 30-day cycle started."
+            else:
+                return False, "Failed to upgrade subscription"
+                
         except SubscriptionPlan.DoesNotExist:
             return False, "Invalid subscription plan"
         except Exception as e:
             return False, f"Error upgrading subscription: {str(e)}"
+    
+    def downgrade_subscription(self, new_plan_name):
+        """Downgrade user's subscription plan (immediate effect)"""
+        try:
+            new_plan = SubscriptionPlan.objects.get(name=new_plan_name, is_active=True)
+            old_plan = self.profile.subscription_plan
+            
+            # Store previous plan
+            self.profile.previous_plan = old_plan
+            self.profile.plan_changed_at = timezone.now()
+            
+            # Update to new plan
+            self.profile.subscription_plan = new_plan_name
+            self.profile.monthly_api_limit = new_plan.monthly_api_limit
+            self.profile.monthly_token_limit = new_plan.monthly_token_limit
+            
+            # Keep existing billing cycle (don't reset usage)
+            # User will get new limits on next renewal
+            
+            self.profile.save()
+            
+            return True, f"Successfully downgraded from {old_plan} to {new_plan_name}. Changes take effect immediately."
+            
+        except SubscriptionPlan.DoesNotExist:
+            return False, "Invalid subscription plan"
+        except Exception as e:
+            return False, f"Error downgrading subscription: {str(e)}"
+    
+    def enable_auto_renewal(self):
+        """Enable auto-renewal for user's subscription"""
+        self.profile.auto_renewal = True
+        self.profile.save(update_fields=['auto_renewal'])
+        return True, "Auto-renewal enabled"
+    
+    def disable_auto_renewal(self):
+        """Disable auto-renewal for user's subscription"""
+        self.profile.auto_renewal = False
+        self.profile.save(update_fields=['auto_renewal'])
+        return True, "Auto-renewal disabled"
     
     def record_usage(self, endpoint, method, tokens_used=0, ip_address=None, user_agent=None, response_time_ms=None, status_code=200):
         """Record API usage with detailed logging"""
@@ -211,6 +258,31 @@ class SubscriptionService:
                 })
         
         return alerts
+    
+    def get_subscription_cycle_info(self):
+        """Get detailed subscription cycle information"""
+        if not self.profile.billing_cycle_end:
+            return {
+                'has_billing_cycle': False,
+                'needs_initialization': True
+            }
+        
+        today = timezone.now().date()
+        days_remaining = self.profile.days_until_renewal()
+        
+        return {
+            'has_billing_cycle': True,
+            'subscription_start_date': self.profile.subscription_start_date,
+            'billing_cycle_end': self.profile.billing_cycle_end,
+            'days_remaining': days_remaining,
+            'is_expired': self.profile.is_subscription_expired(),
+            'auto_renewal': self.profile.auto_renewal,
+            'previous_plan': self.profile.previous_plan,
+            'plan_changed_at': self.profile.plan_changed_at,
+            'cycle_progress_percentage': round(
+                (30 - days_remaining) / 30 * 100 if days_remaining <= 30 else 100, 1
+            ) if days_remaining > 0 else 100,
+        }
     
     @staticmethod
     def get_all_active_plans():

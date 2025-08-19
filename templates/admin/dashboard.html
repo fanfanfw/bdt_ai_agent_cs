@@ -225,6 +225,15 @@
                         <i class="fas fa-ban me-2"></i>
                         <span class="fw-medium">View Suspended Users</span>
                     </a>
+                    {% if expiring_subscriptions_count %}
+                    <a href="{% url 'admin_user_management' %}?cycle_status=expiring" class="btn btn-modern d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #F59E0B, #FBBF24); color: white;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-times me-2"></i>
+                            <span class="fw-medium">Expiring Soon</span>
+                        </div>
+                        <span class="badge bg-white bg-opacity-25 rounded-pill">{{ expiring_subscriptions_count }}</span>
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

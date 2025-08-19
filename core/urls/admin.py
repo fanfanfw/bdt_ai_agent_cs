@@ -22,6 +22,7 @@ admin_urlpatterns = [
     path('admin-panel/users/<int:user_id>/reject/', admin_views.reject_user, name='admin_reject_user'),
     path('admin-panel/users/<int:user_id>/reactivate/', admin_views.reactivate_user, name='admin_reactivate_user'),
     path('admin-panel/users/<int:user_id>/subscription/', admin_views.update_subscription, name='admin_update_subscription'),
+    path('admin-panel/users/<int:user_id>/initialize-cycle/', admin_views.initialize_user_cycle, name='admin_initialize_user_cycle'),
     
     # Pending approvals
     path('admin-panel/pending/', admin_views.pending_approvals, name='admin_pending_approvals'),

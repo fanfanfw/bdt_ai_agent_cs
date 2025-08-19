@@ -52,10 +52,19 @@ class UserProfile(models.Model):
     monthly_api_limit = models.IntegerField(default=1000)
     monthly_token_limit = models.IntegerField(default=50000)
     
-    # Monthly usage reset
+    # Subscription cycle usage tracking
     current_month_api_requests = models.IntegerField(default=0)
     current_month_tokens = models.IntegerField(default=0)
     last_reset_date = models.DateField(auto_now_add=True)
+    
+    # Subscription cycle management
+    subscription_start_date = models.DateField(null=True, blank=True)
+    billing_cycle_end = models.DateField(null=True, blank=True)
+    auto_renewal = models.BooleanField(default=False)
+    
+    # Plan change tracking
+    previous_plan = models.CharField(max_length=20, blank=True)
+    plan_changed_at = models.DateTimeField(null=True, blank=True)
     
     # Timestamps
     approved_at = models.DateTimeField(null=True, blank=True)
@@ -65,8 +74,10 @@ class UserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        is_new_user = not self.pk
+        
         # Set default subscription plan for new regular users only (not admins)
-        if not self.pk and self.subscription_plan == 'free' and self.user_type == 'user':
+        if is_new_user and self.subscription_plan == 'free' and self.user_type == 'user':
             try:
                 # Import here to avoid circular imports
                 from .subscription import SubscriptionPlan
@@ -103,6 +114,17 @@ class UserProfile(models.Model):
                 pass
         
         super().save(*args, **kwargs)
+        
+        # Initialize subscription cycle for new regular users
+        if is_new_user and self.user_type == 'user':
+            from datetime import timedelta
+            today = timezone.now().date()
+            
+            # Set subscription cycle dates
+            self.subscription_start_date = today
+            self.billing_cycle_end = today + timedelta(days=30)
+            
+            super().save(update_fields=['subscription_start_date', 'billing_cycle_end'])
         
         # Update limits after saving if needed
         if hasattr(self, '_update_limits_after_save'):
@@ -148,6 +170,19 @@ class UserProfile(models.Model):
             return True
         return (self.current_month_tokens + token_count) <= monthly_token_limit
     
+    def has_api_limit_exceeded(self):
+        """Check if user has exceeded API request limit"""
+        if self.status != 'approved':
+            return True
+        
+        # Get current limits from subscription plan
+        current_limits = self.get_current_limits()
+        monthly_api_limit = current_limits['monthly_api_limit']
+        
+        if monthly_api_limit == 0:  # Unlimited
+            return False
+        return self.current_month_api_requests >= monthly_api_limit
+    
     def has_token_limit_exceeded(self):
         """Check if user has exceeded token limit"""
         if self.status != 'approved':
@@ -166,12 +201,130 @@ class UserProfile(models.Model):
         self.save(update_fields=['last_activity'])
     
     def reset_monthly_usage_if_needed(self):
+        """Reset usage based on subscription cycle, not calendar month"""
         today = timezone.now().date()
-        if today.month != self.last_reset_date.month or today.year != self.last_reset_date.year:
-            self.current_month_api_requests = 0
-            self.current_month_tokens = 0
-            self.last_reset_date = today
-            self.save(update_fields=['current_month_api_requests', 'current_month_tokens', 'last_reset_date'])
+        
+        # If no billing cycle set, initialize it (for existing users)
+        if not self.billing_cycle_end:
+            self.initialize_subscription_cycle()
+            return
+        
+        # Check if billing cycle has ended
+        if today > self.billing_cycle_end:
+            if self.auto_renewal:
+                # Auto-renew subscription
+                self.renew_subscription()
+            else:
+                # Downgrade to free plan if not auto-renewal
+                self.handle_subscription_expiry()
+    
+    def initialize_subscription_cycle(self):
+        """Initialize subscription cycle for new or existing users"""
+        from datetime import timedelta
+        today = timezone.now().date()
+        
+        # Set subscription start date to account creation or today for existing users
+        if not self.subscription_start_date:
+            self.subscription_start_date = self.created_at.date() if self.created_at else today
+        
+        # Set billing cycle end to 30 days from start
+        self.billing_cycle_end = self.subscription_start_date + timedelta(days=30)
+        
+        # Reset usage
+        self.current_month_api_requests = 0
+        self.current_month_tokens = 0
+        self.last_reset_date = today
+        
+        self.save(update_fields=[
+            'subscription_start_date', 'billing_cycle_end', 
+            'current_month_api_requests', 'current_month_tokens', 'last_reset_date'
+        ])
+    
+    def renew_subscription(self):
+        """Renew subscription for another 30 days"""
+        from datetime import timedelta
+        
+        # Extend billing cycle by 30 days
+        self.billing_cycle_end += timedelta(days=30)
+        
+        # Reset usage counters
+        self.current_month_api_requests = 0
+        self.current_month_tokens = 0
+        self.last_reset_date = timezone.now().date()
+        
+        self.save(update_fields=[
+            'billing_cycle_end', 'current_month_api_requests', 
+            'current_month_tokens', 'last_reset_date'
+        ])
+    
+    def handle_subscription_expiry(self):
+        """Handle subscription expiry - downgrade to free plan"""
+        # Store previous plan for reference
+        self.previous_plan = self.subscription_plan
+        self.plan_changed_at = timezone.now()
+        
+        # Downgrade to free plan
+        try:
+            from .subscription import SubscriptionPlan
+            free_plan = SubscriptionPlan.objects.filter(
+                name='free', is_active=True
+            ).first()
+            if free_plan:
+                self.subscription_plan = 'free'
+                self.monthly_api_limit = free_plan.monthly_api_limit
+                self.monthly_token_limit = free_plan.monthly_token_limit
+        except:
+            # Fallback
+            self.subscription_plan = 'free'
+            self.monthly_api_limit = 1000
+            self.monthly_token_limit = 50000
+        
+        # Reset usage and start new cycle
+        self.initialize_subscription_cycle()
+    
+    def upgrade_subscription(self, new_plan_name):
+        """Upgrade subscription to new plan"""
+        from datetime import timedelta
+        
+        # Store previous plan
+        self.previous_plan = self.subscription_plan
+        self.plan_changed_at = timezone.now()
+        
+        # Update to new plan
+        try:
+            from .subscription import SubscriptionPlan
+            new_plan = SubscriptionPlan.objects.get(name=new_plan_name, is_active=True)
+            self.subscription_plan = new_plan_name
+            self.monthly_api_limit = new_plan.monthly_api_limit
+            self.monthly_token_limit = new_plan.monthly_token_limit
+        except:
+            return False
+        
+        # Reset usage and start new 30-day cycle from upgrade date
+        today = timezone.now().date()
+        self.subscription_start_date = today
+        self.billing_cycle_end = today + timedelta(days=30)
+        self.current_month_api_requests = 0
+        self.current_month_tokens = 0
+        self.last_reset_date = today
+        
+        self.save()
+        return True
+    
+    def is_subscription_expired(self):
+        """Check if subscription has expired"""
+        if not self.billing_cycle_end:
+            return True
+        return timezone.now().date() > self.billing_cycle_end
+    
+    def days_until_renewal(self):
+        """Get days remaining until subscription renewal"""
+        if not self.billing_cycle_end:
+            return 0
+        today = timezone.now().date()
+        if today > self.billing_cycle_end:
+            return 0
+        return (self.billing_cycle_end - today).days
     
     def record_api_usage(self, token_count=0):
         self.reset_monthly_usage_if_needed()

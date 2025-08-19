@@ -233,12 +233,15 @@ def reactivate_user(request, user_id):
 
 @admin_required
 def update_subscription(request, user_id):
-    """Update regular user subscription - Admins don't have subscriptions"""
+    """Update regular user subscription with admin override options"""
     user = get_object_or_404(User, id=user_id, profile__user_type='user')
     profile = user.profile
     
     if request.method == 'POST':
         new_plan = request.POST.get('subscription_plan')
+        reset_cycle = request.POST.get('reset_cycle') == 'true'
+        enable_auto_renewal = request.POST.get('enable_auto_renewal') == 'true' 
+        reset_usage = request.POST.get('reset_usage') == 'true'
         
         # Validate plan exists in SubscriptionPlan model
         try:
@@ -248,27 +251,82 @@ def update_subscription(request, user_id):
             return redirect('admin_user_detail', user_id=user_id)
         
         old_plan = profile.subscription_plan
+        actions_taken = []
         
-        # Update subscription plan
+        # Store previous plan info
+        if old_plan != new_plan:
+            profile.previous_plan = old_plan
+            profile.plan_changed_at = timezone.now()
+            actions_taken.append(f"Plan changed from {old_plan} to {new_plan}")
+        
+        # Update subscription plan and limits
         profile.subscription_plan = new_plan
+        profile.monthly_api_limit = plan_obj.monthly_api_limit
+        profile.monthly_token_limit = plan_obj.monthly_token_limit
         
-        # Apply subscription limits and save
-        profile.set_subscription_limits()
-        profile.save()  # Save changes to database
+        # Handle admin overrides
+        if reset_cycle:
+            from datetime import timedelta
+            today = timezone.now().date()
+            profile.subscription_start_date = today
+            profile.billing_cycle_end = today + timedelta(days=30)
+            actions_taken.append("Billing cycle reset (new 30-day period)")
+        
+        if enable_auto_renewal != profile.auto_renewal:
+            profile.auto_renewal = enable_auto_renewal
+            if enable_auto_renewal:
+                actions_taken.append("Auto-renewal enabled")
+            else:
+                actions_taken.append("Auto-renewal disabled")
+        
+        if reset_usage:
+            profile.current_month_api_requests = 0
+            profile.current_month_tokens = 0
+            profile.last_reset_date = timezone.now().date()
+            actions_taken.append("Usage reset to 0")
+        
+        # Initialize subscription cycle if not exists
+        if not profile.billing_cycle_end:
+            profile.initialize_subscription_cycle()
+            actions_taken.append("Subscription cycle initialized")
+        
+        # Save all changes
+        profile.save()
         
         # Force refresh from database to ensure we have the saved data
         profile.refresh_from_db()
         
         # Log the change for audit
-        print(f"[ADMIN] User {user.username} subscription updated: {old_plan} -> {new_plan}")
-        print(f"[ADMIN] Current plan in DB: {profile.subscription_plan}")
-        print(f"[ADMIN] New limits - API: {profile.monthly_api_limit}, Tokens: {profile.monthly_token_limit}")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[ADMIN] User {user.username} subscription updated by admin. Actions: {', '.join(actions_taken)}")
         
-        messages.success(
-            request, 
-            f'User {user.username} subscription updated from {old_plan} to {new_plan}. '
-            f'New limits: {profile.monthly_api_limit:,} API requests, {profile.monthly_token_limit:,} tokens per month.'
-        )
+        # Create detailed success message
+        if actions_taken:
+            actions_summary = "; ".join(actions_taken)
+            messages.success(
+                request,
+                f'Subscription updated for {user.username}. Actions taken: {actions_summary}. '
+                f'Current limits: {profile.monthly_api_limit:,} API requests, {profile.monthly_token_limit:,} tokens per month.'
+            )
+        else:
+            messages.info(request, f'No changes made to {user.username}\'s subscription.')
+    
+    return redirect('admin_user_detail', user_id=user_id)
+
+
+@admin_required
+def initialize_user_cycle(request, user_id):
+    """Initialize subscription cycle for a user who doesn't have one"""
+    user = get_object_or_404(User, id=user_id, profile__user_type='user')
+    profile = user.profile
+    
+    if request.method == 'POST':
+        if not profile.billing_cycle_end:
+            profile.initialize_subscription_cycle()
+            messages.success(request, f'Subscription cycle initialized for {user.username}. 30-day cycle started.')
+        else:
+            messages.warning(request, f'{user.username} already has a subscription cycle.')
     
     return redirect('admin_user_detail', user_id=user_id)
 
