@@ -407,11 +407,11 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="pb-3">
+    <main class="pb-5">
         {% if messages %}
-            <div class="container mt-4">
+            <div class="container mt-4 mb-4">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(57, 62, 70, 0.15);">
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(57, 62, 70, 0.15); margin-bottom: 1rem;">
                         <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
