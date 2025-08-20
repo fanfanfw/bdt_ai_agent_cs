@@ -145,11 +145,24 @@ class SessionHistoryService:
                 session__assistant=assistant
             ).count()
             
+            # Add aggregated counts for template compatibility
+            stats['voice_sessions'] = (
+                stats['by_source'].get('test_voice_realtime', {}).get('count', 0) +
+                stats['by_source'].get('widget_voice', {}).get('count', 0)
+            )
+            
+            stats['widget_sessions'] = (
+                stats['by_source'].get('widget_chat', {}).get('count', 0) +
+                stats['by_source'].get('widget_voice', {}).get('count', 0)
+            )
+            
             return stats
             
         except AIAssistant.DoesNotExist:
             return {
                 'total_sessions': 0,
                 'by_source': {},
-                'total_messages': 0
+                'total_messages': 0,
+                'voice_sessions': 0,
+                'widget_sessions': 0
             }
